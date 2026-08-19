@@ -138,8 +138,16 @@ export default function Header({ currentPage, onNavigate }) {
             })}
           </nav>
 
-          {/* Green "Contact School" Button */}
-          <div className="flex items-center gap-3">
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-2.5">
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-semibold text-green-primary bg-green-light hover:bg-emerald-100 transition-colors duration-150 border border-green-primary/20"
+            >
+              School Portal
+            </a>
+
             <button
               onClick={() => handleNavClick('contact')}
               className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-semibold text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-colors duration-150"
@@ -215,9 +223,18 @@ export default function Header({ currentPage, onNavigate }) {
                 </button>
               );
             })}
+            
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="mt-2 w-full py-3.5 rounded-lg text-[15px] font-semibold text-green-primary bg-green-light hover:bg-emerald-100 text-center border border-green-primary/20"
+            >
+              School Portal
+            </a>
+
             <button
               onClick={() => handleNavClick('contact')}
-              className="mt-4 w-full py-3.5 rounded-lg text-[15px] font-semibold text-white bg-[#06452C] hover:bg-[#0B5D3B]"
+              className="w-full py-3.5 rounded-lg text-[15px] font-semibold text-white bg-[#06452C] hover:bg-[#0B5D3B]"
             >
               Contact School
             </button>
