@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import {
   BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
-  Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User
+  Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User, Award, Sparkles
 } from 'lucide-react';
+import OfficialReportCardModal from './OfficialReportCardModal';
 
 export default function StudentDashboard({ data, onUploadReceipt, currentStudentId }) {
   const [activeTab, setActiveTab] = useState('results');
+  const [showReportModal, setShowReportModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '125000',
     reference: '',
@@ -99,18 +101,27 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       {/* 1. Results Tab */}
       {activeTab === 'results' && (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="font-extrabold text-lg text-[#1B2521]">Academic Report Card — {data.sessionInfo.currentTerm}</h3>
-              <p className="text-xs text-gray-500">{data.sessionInfo.currentSession}</p>
+              <h3 className="font-extrabold text-lg text-[#1B2521]">Academic Report Card — {data?.sessionInfo?.currentTerm || 'First Term'}</h3>
+              <p className="text-xs text-gray-500">{data?.sessionInfo?.currentSession || '2026/2027 Academic Session'}</p>
             </div>
-            <button
-              onClick={() => window.print()}
-              className="px-4 py-2 rounded-lg text-xs font-bold text-green-primary bg-green-light border border-green-primary/20 hover:bg-emerald-100 flex items-center gap-1.5"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Report Card</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="px-4 py-2 rounded-xl text-xs font-extrabold text-white bg-green-primary hover:bg-green-dark transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Award className="w-3.5 h-3.5 text-emerald-300" />
+                <span>View Official PDF Report Sheet</span>
+              </button>
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-green-primary bg-green-light border border-green-primary/20 hover:bg-emerald-100 flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print</span>
+              </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -343,6 +354,16 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
             ))}
           </div>
         </div>
+      )}
+
+      {/* Official Terminal Report Sheet Modal */}
+      {showReportModal && (
+        <OfficialReportCardModal
+          student={student}
+          results={studentResults}
+          sessionInfo={data?.sessionInfo}
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );
