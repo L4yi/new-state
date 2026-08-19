@@ -204,11 +204,11 @@ export default function Portal({ onNavigate }) {
     },
   };
 
-  if (isLoading || !portalData) {
+  if (isLoggedIn && (isLoading || !portalData)) {
     return (
       <div className="min-h-screen bg-[#06452C] flex flex-col items-center justify-center text-white relative font-sans">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
-        <p className="text-xs text-emerald-200 mt-4 font-bold tracking-wider uppercase">Connecting to MongoDB...</p>
+        <p className="text-xs text-emerald-200 mt-4 font-bold tracking-wider uppercase">Loading Dashboard...</p>
       </div>
     );
   }
