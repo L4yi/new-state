@@ -3,110 +3,182 @@ import {
   GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
   Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2
 } from 'lucide-react';
-import { initialPortalData } from '../data/mockPortalData';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
 import BursarDashboard from '../components/portal/BursarDashboard';
 import AdminDashboard from '../components/portal/AdminDashboard';
+import { API_URL } from '../config/api';
 
 export default function Portal({ onNavigate }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeRole, setActiveRole] = useState('student');
   const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
   const [loginError, setLoginError] = useState('');
-
-  const [portalData, setPortalData] = useState(() => {
-    const saved = localStorage.getItem('nshs_portal_data');
-    return saved ? JSON.parse(saved) : initialPortalData;
-  });
-
+  const [portalData, setPortalData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentStudentId, setCurrentStudentId] = useState('NSHS/2024/001');
 
+  const fetchPortalData = async () => {
+    try {
+      const res = await fetch(`${API_URL}/data`);
+      if (res.ok) {
+        const data = await res.json();
+        setPortalData(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch portal data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('nshs_portal_data', JSON.stringify(portalData));
-  }, [portalData]);
+    fetchPortalData();
+  }, []);
 
   // Handle Login
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!loginCreds.identifier.trim()) {
+    const identifier = loginCreds.identifier.trim();
+    if (!identifier) {
       setLoginError('Please enter your ID, Phone Number or Username.');
       return;
     }
-    setLoginError('');
-    setIsLoggedIn(true);
+
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier, role: activeRole }),
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setLoginError('');
+        setIsLoggedIn(true);
+        if (activeRole === 'student') {
+          setCurrentStudentId(data.user.studentId);
+        }
+      } else {
+        setLoginError(data.error || 'Authentication failed');
+      }
+    } catch (err) {
+      setLoginError('Failed to connect to backend server. Make sure it is running.');
+    }
   };
 
   // Data Handlers
-  const handleUploadReceipt = (newPayment) => {
-    setPortalData((prev) => ({
-      ...prev,
-      feePayments: [newPayment, ...prev.feePayments],
-      students: prev.students.map((s) =>
-        s.id === newPayment.studentId ? { ...s, feeStatus: 'Pending' } : s
-      ),
-    }));
+  const handleUploadReceipt = async (newPayment) => {
+    try {
+      const res = await fetch(`${API_URL}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPayment),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Payment upload failed:', err);
+    }
   };
 
-  const handleApprovePayment = (paymentId) => {
-    const targetPayment = portalData.feePayments.find((p) => p.id === paymentId);
-    setPortalData((prev) => ({
-      ...prev,
-      feePayments: prev.feePayments.map((p) =>
-        p.id === paymentId ? { ...p, status: 'Approved' } : p
-      ),
-      students: prev.students.map((s) =>
-        s.id === targetPayment?.studentId ? { ...s, feeStatus: 'Approved' } : s
-      ),
-    }));
+  const handleApprovePayment = async (paymentId) => {
+    try {
+      const res = await fetch(`${API_URL}/payments/${paymentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve' }),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Payment approval failed:', err);
+    }
   };
 
-  const handleRejectPayment = (paymentId) => {
-    setPortalData((prev) => ({
-      ...prev,
-      feePayments: prev.feePayments.map((p) =>
-        p.id === paymentId ? { ...p, status: 'Declined' } : p
-      ),
-    }));
+  const handleRejectPayment = async (paymentId) => {
+    try {
+      const res = await fetch(`${API_URL}/payments/${paymentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject' }),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Payment rejection failed:', err);
+    }
   };
 
-  const handleSaveScore = (studentId, newScore) => {
-    setPortalData((prev) => {
-      const existing = prev.results[studentId] || [];
-      const updated = [newScore, ...existing.filter((r) => r.subject !== newScore.subject)];
-      return {
-        ...prev,
-        results: { ...prev.results, [studentId]: updated },
-      };
-    });
+  const handleSaveScore = async (studentId, newScore) => {
+    try {
+      const res = await fetch(`${API_URL}/results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, result: newScore }),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to save score:', err);
+    }
   };
 
-  const handleAddAssignment = (asn) => {
-    setPortalData((prev) => ({
-      ...prev,
-      assignments: [asn, ...prev.assignments],
-    }));
+  const handleAddAssignment = async (asn) => {
+    try {
+      const res = await fetch(`${API_URL}/assignments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(asn),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to add assignment:', err);
+    }
   };
 
   const handleUploadMaterial = (mat) => {
+    // Keep local for now
     setPortalData((prev) => ({
       ...prev,
       learningMaterials: [mat, ...prev.learningMaterials],
     }));
   };
 
-  const handleAddAnnouncement = (anc) => {
-    setPortalData((prev) => ({
-      ...prev,
-      announcements: [anc, ...prev.announcements],
-    }));
+  const handleAddAnnouncement = async (anc) => {
+    try {
+      const res = await fetch(`${API_URL}/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(anc),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to add announcement:', err);
+    }
   };
 
-  const handleAddStudent = (std) => {
-    setPortalData((prev) => ({
-      ...prev,
-      students: [std, ...prev.students],
-    }));
+  const handleAddStudent = async (std) => {
+    try {
+      const res = await fetch(`${API_URL}/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(std),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to register student:', err);
+    }
   };
 
   const roleConfig = {
@@ -131,6 +203,15 @@ export default function Portal({ onNavigate }) {
       badge: 'System Admin',
     },
   };
+
+  if (isLoading || !portalData) {
+    return (
+      <div className="min-h-screen bg-[#06452C] flex flex-col items-center justify-center text-white relative font-sans">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white"></div>
+        <p className="text-xs text-emerald-200 mt-4 font-bold tracking-wider uppercase">Connecting to MongoDB...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#06452C] flex flex-col justify-between relative overflow-hidden font-sans text-white">
