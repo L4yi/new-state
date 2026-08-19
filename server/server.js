@@ -36,12 +36,16 @@ console.log('Connecting to database...');
 mongoose.connect(dbUri)
   .then(() => {
     console.log('MongoDB connection established successfully.');
-    // Start listening
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err.message);
-    console.log('Ensure MongoDB is installed and running locally on your system.');
   });
+
+// Start listening locally (skip on Vercel serverless)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+export default app;
