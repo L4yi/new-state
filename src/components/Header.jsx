@@ -140,13 +140,12 @@ export default function Header({ currentPage, onNavigate }) {
 
           {/* Header Action Buttons */}
           <div className="flex items-center gap-2.5">
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
+            <button
+              onClick={() => handleNavClick('portal')}
               className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-semibold text-green-primary bg-green-light hover:bg-emerald-100 transition-colors duration-150 border border-green-primary/20"
             >
               School Portal
-            </a>
+            </button>
 
             <button
               onClick={() => handleNavClick('contact')}
@@ -224,13 +223,12 @@ export default function Header({ currentPage, onNavigate }) {
               );
             })}
             
-            <a
-              href="#"
-              onClick={(e) => e.preventDefault()}
+            <button
+              onClick={() => handleNavClick('portal')}
               className="mt-2 w-full py-3.5 rounded-lg text-[15px] font-semibold text-green-primary bg-green-light hover:bg-emerald-100 text-center border border-green-primary/20"
             >
               School Portal
-            </a>
+            </button>
 
             <button
               onClick={() => handleNavClick('contact')}

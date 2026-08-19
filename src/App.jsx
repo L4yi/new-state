@@ -12,6 +12,7 @@ import BuyPlan from './pages/BuyPlan';
 import AiCoding from './pages/AiCoding';
 import TeachersApply from './pages/TeachersApply';
 import AlumniTestimonials from './pages/AlumniTestimonials';
+import Portal from './pages/Portal';
 import GenericPage from './pages/GenericPage';
 
 const pageMeta = {
@@ -29,6 +30,7 @@ export default function App() {
     if (currentPage === 'academics') return <Academics onNavigate={setCurrentPage} />;
     if (currentPage === 'admission') return <Admission onNavigate={setCurrentPage} />;
     if (currentPage === 'contact') return <Contact onNavigate={setCurrentPage} />;
+    if (currentPage === 'portal') return <Portal onNavigate={setCurrentPage} />;
     if (currentPage === 'exam-success') return <ExamSuccess onNavigate={setCurrentPage} />;
     if (currentPage === 'candidate-login') return <CandidateLogin onNavigate={setCurrentPage} />;
     if (currentPage === 'buy-plan') return <BuyPlan onNavigate={setCurrentPage} />;
@@ -40,11 +42,13 @@ export default function App() {
     return <GenericPage title={meta.title} description={meta.description} />;
   };
 
+  const isPortal = currentPage === 'portal';
+
   return (
     <div className="min-h-screen flex flex-col font-sans">
-      <Header currentPage={currentPage} onNavigate={setCurrentPage} />
+      {!isPortal && <Header currentPage={currentPage} onNavigate={setCurrentPage} />}
       <main className="flex-grow">{renderContent()}</main>
-      <Footer onNavigate={setCurrentPage} />
+      {!isPortal && <Footer onNavigate={setCurrentPage} />}
     </div>
   );
 }
