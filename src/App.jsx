@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import About from './pages/About';
-import Academics from './pages/Academics';
-import Admission from './pages/Admission';
-import Contact from './pages/Contact';
-import ExamSuccess from './pages/ExamSuccess';
-import CandidateLogin from './pages/CandidateLogin';
-import BuyPlan from './pages/BuyPlan';
-import AiCoding from './pages/AiCoding';
-import TeachersApply from './pages/TeachersApply';
-import AlumniTestimonials from './pages/AlumniTestimonials';
-import Portal from './pages/Portal';
-import GenericPage from './pages/GenericPage';
+
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Academics = lazy(() => import('./pages/Academics'));
+const Admission = lazy(() => import('./pages/Admission'));
+const Contact = lazy(() => import('./pages/Contact'));
+const ExamSuccess = lazy(() => import('./pages/ExamSuccess'));
+const CandidateLogin = lazy(() => import('./pages/CandidateLogin'));
+const BuyPlan = lazy(() => import('./pages/BuyPlan'));
+const AiCoding = lazy(() => import('./pages/AiCoding'));
+const TeachersApply = lazy(() => import('./pages/TeachersApply'));
+const AlumniTestimonials = lazy(() => import('./pages/AlumniTestimonials'));
+const Portal = lazy(() => import('./pages/Portal'));
+const GenericPage = lazy(() => import('./pages/GenericPage'));
 
 const pageMeta = {
   facilities: { title: 'School Facilities', description: 'Explore our state-of-the-art laboratories, ICT centers, and sports arenas.' },
@@ -47,7 +48,15 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col font-sans">
       {!isPortal && <Header currentPage={currentPage} onNavigate={setCurrentPage} />}
-      <main className="flex-grow">{renderContent()}</main>
+      <main className="flex-grow">
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0B5D3B]"></div>
+          </div>
+        }>
+          {renderContent()}
+        </Suspense>
+      </main>
       {!isPortal && <Footer onNavigate={setCurrentPage} />}
     </div>
   );

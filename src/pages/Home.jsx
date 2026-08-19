@@ -197,6 +197,7 @@ export default function Home({ onNavigate }) {
                 src="/nigerian-students.jpg" 
                 alt="Students in classroom" 
                 className="w-full h-[360px] object-cover"
+                loading="lazy"
               />
               <div className="absolute top-4 left-4 w-12 h-12 bg-green-primary rounded-lg flex items-center justify-center text-white shadow-md">
                 📖
@@ -208,6 +209,7 @@ export default function Home({ onNavigate }) {
                 src="/nigerian-students.jpg" 
                 alt="Students learning" 
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
           </div>
@@ -332,6 +334,7 @@ export default function Home({ onNavigate }) {
                 src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80" 
                 alt="Classrooms" 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-6 flex flex-col justify-end text-white">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">FACILITY</span>
@@ -351,6 +354,7 @@ export default function Home({ onNavigate }) {
                     src={fac.img} 
                     alt={fac.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-4 flex flex-col justify-end text-white">
                     <h3 className="text-sm font-bold">{fac.title}</h3>
@@ -387,6 +391,7 @@ export default function Home({ onNavigate }) {
                   src={item.img} 
                   alt={item.title} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-5 flex flex-col justify-between text-white">
                   <div className="flex justify-between items-start">
@@ -477,6 +482,7 @@ export default function Home({ onNavigate }) {
                     src={idx === 0 ? '/nigerian-students.jpg' : idx === 1 ? '/nigerian-computer-lab.jpg' : '/nigerian-science-lab.jpg'} 
                     alt={n.title} 
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </div>
                 <div className="p-6 flex-grow flex flex-col justify-between">
@@ -530,6 +536,7 @@ export default function Home({ onNavigate }) {
                   src={img.img} 
                   alt={img.title} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
                 />
               </div>
             ))}

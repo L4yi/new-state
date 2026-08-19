@@ -109,6 +109,7 @@ export default function About({ onNavigate }) {
                 src="/nigerian-students.jpg" 
                 alt="New State High School Campus and Students" 
                 className="w-full h-[400px] object-cover"
+                loading="lazy"
               />
               <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 to-transparent text-white">
                 <div className="font-bold text-lg">New State High School Campus</div>
@@ -196,6 +197,7 @@ export default function About({ onNavigate }) {
                       src={member.img} 
                       alt={member.name} 
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                   <div className="text-xs font-bold text-green-primary uppercase tracking-wider mb-1">{member.role}</div>
