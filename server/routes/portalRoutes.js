@@ -109,20 +109,31 @@ router.get('/data', async (req, res) => {
 
 // 2. ID-Based Authentication Login
 router.post('/login', async (req, res) => {
-  const { identifier, role } = req.body;
+  const { identifier, password, role } = req.body;
   
   if (!identifier) {
     return res.status(400).json({ error: 'Identifier is required' });
+  }
+  if (!password) {
+    return res.status(400).json({ error: 'Password / PIN is required' });
   }
 
   try {
     if (role === 'student') {
       const student = await Student.findOne({ studentId: identifier });
       if (student) {
-        return res.json({ success: true, user: student });
+        if (student.password === password) {
+          return res.json({ success: true, user: student });
+        }
+        return res.status(401).json({ error: 'Incorrect Password / PIN.' });
       }
       return res.status(404).json({ error: 'Invalid Student ID. Record not found.' });
     } else {
+      // General password check for all staff roles (default: '1234')
+      if (password !== '1234') {
+        return res.status(401).json({ error: 'Incorrect Password / PIN.' });
+      }
+
       // For staff, we match email from preset staff array
       const staffMember = staff.find(s => s.email.toLowerCase() === identifier.toLowerCase().trim() || s.name.toLowerCase() === identifier.toLowerCase().trim());
       if (staffMember) {

@@ -43,6 +43,10 @@ const studentSchema = new mongoose.Schema({
   paidAmount: {
     type: String,
     default: '₦0'
+  },
+  password: {
+    type: String,
+    default: '1234'
   }
 }, { timestamps: true });
 

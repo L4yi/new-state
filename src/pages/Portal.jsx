@@ -49,7 +49,7 @@ export default function Portal({ onNavigate }) {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, role: activeRole }),
+        body: JSON.stringify({ identifier, password: loginCreds.password, role: activeRole }),
       });
       const data = await res.json();
       

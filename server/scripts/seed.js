@@ -26,7 +26,8 @@ const studentsData = [
     guardianPhone: '0802 123 4567',
     feeStatus: 'Approved',
     feeAmount: '₦125,000',
-    paidAmount: '₦125,000'
+    paidAmount: '₦125,000',
+    password: '1234'
   },
   {
     studentId: 'NSHS/2024/002',
@@ -38,7 +39,8 @@ const studentsData = [
     guardianPhone: '0803 987 6543',
     feeStatus: 'Pending',
     feeAmount: '₦125,000',
-    paidAmount: '₦125,000'
+    paidAmount: '₦125,000',
+    password: '1234'
   },
   {
     studentId: 'NSHS/2024/003',
@@ -50,7 +52,8 @@ const studentsData = [
     guardianPhone: '0813 400 0644',
     feeStatus: 'Unpaid',
     feeAmount: '₦95,000',
-    paidAmount: '₦0'
+    paidAmount: '₦0',
+    password: '1234'
   }
 ];
 
