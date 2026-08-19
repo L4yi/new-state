@@ -1,4 +1,9 @@
 import React from 'react';
+import {
+  BookOpen, GraduationCap, FlaskConical, PenTool, BarChart3, Code2,
+  Trophy, Mic, Music2, Star, Atom, School, UserCheck, Calendar, Phone,
+  MapPin, ArrowRight, ShieldCheck, Users, Sparkles, CheckCircle2
+} from 'lucide-react';
 
 export default function Home({ onNavigate }) {
   const stats = [
@@ -12,63 +17,47 @@ export default function Home({ onNavigate }) {
     {
       title: 'Academic Excellence',
       desc: 'A structured curriculum that challenges students to achieve their highest academic potential through dedicated teaching and regular assessment.',
-      icon: (
-        <svg className="w-5 h-5 text-green-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
+      icon: <GraduationCap className="w-5 h-5 text-green-primary" />
     },
     {
       title: 'Character & Discipline',
       desc: 'We cultivate integrity, respect, and self-discipline — values that shape students into responsible members of the community.',
-      icon: (
-        <svg className="w-5 h-5 text-green-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-        </svg>
-      )
+      icon: <ShieldCheck className="w-5 h-5 text-green-primary" />
     },
     {
       title: 'Supportive Environment',
       desc: 'A safe, nurturing school community where every student is seen, supported, and encouraged to grow with confidence.',
-      icon: (
-        <svg className="w-5 h-5 text-green-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      )
+      icon: <Users className="w-5 h-5 text-green-primary" />
     },
     {
       title: 'Student Development',
       desc: 'Beyond the classroom, we invest in sports, cultural activities, clubs, and leadership opportunities that build well-rounded individuals.',
-      icon: (
-        <svg className="w-5 h-5 text-green-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      )
+      icon: <Sparkles className="w-5 h-5 text-green-primary" />
     }
   ];
 
   const programmes = [
-    { title: 'Junior Secondary Education', subtitle: 'JSS 1 – JSS 3 Foundation', icon: '📚' },
-    { title: 'Senior Secondary Education', subtitle: 'SSS 1 – SSS 3 Specialization', icon: '🎓' },
-    { title: 'Science & Technology', subtitle: 'STEM & Laboratory Science', icon: '🔬' },
-    { title: 'Arts & Humanities', subtitle: 'Law & Creative Studies', icon: '✏️' },
-    { title: 'Commercial Studies', subtitle: 'Business & Financial Accounting', icon: '📊' },
-    { title: 'AI & Coding Skills', subtitle: 'Python & Web Development', icon: '💻' }
+    { title: 'Junior Secondary Education', subtitle: 'JSS 1 – JSS 3 Foundation', icon: <BookOpen className="w-6 h-6 text-green-primary" /> },
+    { title: 'Senior Secondary Education', subtitle: 'SSS 1 – SSS 3 Specialization', icon: <GraduationCap className="w-6 h-6 text-green-primary" /> },
+    { title: 'Science & Technology', subtitle: 'STEM & Laboratory Science', icon: <FlaskConical className="w-6 h-6 text-green-primary" /> },
+    { title: 'Arts & Humanities', subtitle: 'Law & Creative Studies', icon: <PenTool className="w-6 h-6 text-green-primary" /> },
+    { title: 'Commercial Studies', subtitle: 'Business & Financial Accounting', icon: <BarChart3 className="w-6 h-6 text-green-primary" /> },
+    { title: 'AI & Coding Skills', subtitle: 'Python & Web Development', icon: <Code2 className="w-6 h-6 text-green-primary" /> }
   ];
 
   const studentLifeCards = [
-    { title: 'Inter-House Sports', tag: 'Athletics & Football', desc: 'Annual track & field competition & football league', img: '/nigerian-sports.jpg', icon: '🏆' },
-    { title: 'JET & Press Club', tag: 'Innovators & Writers', desc: 'Junior Engineers, Robotics, and School Press Team', img: '/nigerian-computer-lab.jpg', icon: '🎤' },
-    { title: 'Cultural Day Festival', tag: 'Heritage & Arts', desc: 'Celebrating Nigerian traditions, music & drama', img: '/nigerian-cultural.jpg', icon: '🥁' },
-    { title: 'Prefect Leadership', tag: 'Student Governance', desc: 'Developing responsibility, ethics & peer mentorship', img: '/nigerian-students.jpg', icon: '⭐' },
-    { title: 'Exhibitions & Fairs', tag: 'Science & Art Fairs', desc: 'Annual science project showcase & debates', img: '/nigerian-science-lab.jpg', icon: '🔬' }
+    { title: 'Inter-House Sports', tag: 'Athletics & Football', desc: 'Annual track & field competition & football league', img: '/nigerian-sports.jpg', icon: <Trophy className="w-4 h-4 text-white" /> },
+    { title: 'JET & Press Club', tag: 'Innovators & Writers', desc: 'Junior Engineers, Robotics, and School Press Team', img: '/nigerian-computer-lab.jpg', icon: <Mic className="w-4 h-4 text-white" /> },
+    { title: 'Cultural Day Festival', tag: 'Heritage & Arts', desc: 'Celebrating Nigerian traditions, music & drama', img: '/nigerian-cultural.jpg', icon: <Music2 className="w-4 h-4 text-white" /> },
+    { title: 'Prefect Leadership', tag: 'Student Governance', desc: 'Developing responsibility, ethics & peer mentorship', img: '/nigerian-students.jpg', icon: <Star className="w-4 h-4 text-white" /> },
+    { title: 'Exhibitions & Fairs', tag: 'Science & Art Fairs', desc: 'Annual science project showcase & debates', img: '/nigerian-science-lab.jpg', icon: <Atom className="w-4 h-4 text-white" /> }
   ];
 
   const admissionCards = [
-    { title: 'Entry Levels', desc: 'JSS 1, SSS 1 & Transfer Entry', icon: '🏫' },
-    { title: 'Who Can Apply', desc: 'Eligible prospective candidates', icon: '👤' },
-    { title: 'Admission Period', desc: 'Ongoing for 2026/2027 Session', icon: '📅' },
-    { title: 'Contact Admissions', desc: '0813 400 0644 · info@newstateschools.org', icon: '📞' }
+    { title: 'Entry Levels', desc: 'JSS 1, SSS 1 & Transfer Entry', icon: <School className="w-6 h-6 text-green-primary" /> },
+    { title: 'Who Can Apply', desc: 'Eligible prospective candidates', icon: <UserCheck className="w-6 h-6 text-green-primary" /> },
+    { title: 'Admission Period', desc: 'Ongoing for 2026/2027 Session', icon: <Calendar className="w-6 h-6 text-green-primary" /> },
+    { title: 'Contact Admissions', desc: '0813 400 0644 · info@newstateschools.org', icon: <Phone className="w-6 h-6 text-green-primary" /> }
   ];
 
   const newsList = [
@@ -200,7 +189,7 @@ export default function Home({ onNavigate }) {
                 loading="lazy"
               />
               <div className="absolute top-4 left-4 w-12 h-12 bg-green-primary rounded-lg flex items-center justify-center text-white shadow-md">
-                📖
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
             </div>
 

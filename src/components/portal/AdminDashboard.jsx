@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search, Megaphone, UserPlus, Shield, CheckCircle2, Database, Send, Users } from 'lucide-react';
 
 export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,13 +56,16 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
             <p className="text-xs text-gray-500">Search student profiles, classes, guardians, and academic status instantly</p>
           </div>
 
-          <input
-            type="text"
-            placeholder="🔍 Search name, ID, or class..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full sm:w-64 bg-[#FAFCFA]"
-          />
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search name, ID, class..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA]"
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">

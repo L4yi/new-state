@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import {
+  FileText, BarChart3, Target, GraduationCap, Clock, CheckCircle2,
+  AlertTriangle, RotateCcw, Sparkles, Lightbulb, ArrowRight, BookOpen,
+  Check, Flame, Compass
+} from 'lucide-react';
 
 // Sample Questions Bank for CBT Simulator & Hyper-Mock
 const mockQuestionBank = {
@@ -296,7 +301,7 @@ export default function ExamSuccess({ onNavigate }) {
       title: 'WAEC Past Questions & CBT Practice',
       desc: 'Simulated computer-based practice covering SSCE & UTME subjects with instant grading and step-by-step explanations.',
       badge: 'SSCE Prep',
-      icon: '📝',
+      icon: <FileText className="w-8 h-8 text-green-primary" />,
       button: 'Launch CBT Simulator'
     },
     {
@@ -304,7 +309,7 @@ export default function ExamSuccess({ onNavigate }) {
       title: 'Official JAMB Mock Analyzer',
       desc: 'Analyze your performance breakdown across subjects to identify weakness areas and safe university cut-offs.',
       badge: 'UTME Analytics',
-      icon: '📊',
+      icon: <BarChart3 className="w-8 h-8 text-green-primary" />,
       button: 'Run Mock Analyzer'
     },
     {
@@ -312,7 +317,7 @@ export default function ExamSuccess({ onNavigate }) {
       title: 'JAMB Score Predictor',
       desc: 'Diagnostic hyper-mock engine forecasting prospective university admission marks based on timed questions.',
       badge: 'Score AI',
-      icon: '🎯',
+      icon: <Target className="w-8 h-8 text-green-primary" />,
       button: 'Take Hyper-Mock'
     },
     {
@@ -320,7 +325,7 @@ export default function ExamSuccess({ onNavigate }) {
       title: 'Course & Career Advisor',
       desc: 'Match your WAEC and JAMB subject combinations directly to Nigerian university course entry cut-offs.',
       badge: 'Career Portal',
-      icon: '🎓',
+      icon: <GraduationCap className="w-8 h-8 text-green-primary" />,
       button: 'Find Eligible Courses'
     }
   ];
@@ -344,24 +349,28 @@ export default function ExamSuccess({ onNavigate }) {
           {/* Interactive Navigation Pills */}
           <div className="mt-8 flex flex-wrap gap-2.5">
             {[
-              { id: 'overview', label: '🌟 Hub Overview' },
-              { id: 'cbt-practice', label: '📝 WAEC CBT Practice' },
-              { id: 'mock-analyzer', label: '📊 JAMB Mock Analyzer' },
-              { id: 'score-predictor', label: '🎯 Score Predictor' },
-              { id: 'career-advisor', label: '🎓 Course Advisor' },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-white text-green-primary shadow-md scale-105'
-                    : 'bg-white/10 text-emerald-100 hover:bg-white/20'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              { id: 'overview', label: 'Hub Overview', icon: Sparkles },
+              { id: 'cbt-practice', label: 'WAEC CBT Practice', icon: FileText },
+              { id: 'mock-analyzer', label: 'JAMB Mock Analyzer', icon: BarChart3 },
+              { id: 'score-predictor', label: 'Score Predictor', icon: Target },
+              { id: 'career-advisor', label: 'Course Advisor', icon: GraduationCap },
+            ].map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 ${
+                    activeTab === tab.id
+                      ? 'bg-white text-green-primary shadow-md scale-105'
+                      : 'bg-white/10 text-emerald-100 hover:bg-white/20'
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronDown, Menu, X, GraduationCap, Phone } from 'lucide-react';
 
 const navItems = [
   { label: 'Home', page: 'home' },
@@ -82,24 +83,22 @@ export default function Header({ currentPage, onNavigate }) {
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
                     <button
-                      className={`px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150 flex items-center gap-1 focus:outline-none ${
+                      className={`px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150 flex items-center gap-1.5 focus:outline-none ${
                         isSubActive
                           ? 'text-green-primary bg-green-light font-bold'
                           : 'text-[#1B2521] hover:bg-[#F4F9F6]'
                       }`}
                     >
                       {item.label}
-                      <span className="text-[10px] opacity-60 group-hover:translate-y-0.5 transition-transform">
-                        ▼
-                      </span>
+                      <ChevronDown className="w-3.5 h-3.5 opacity-60 group-hover:translate-y-0.5 transition-transform" />
                     </button>
 
                     {/* Dropdown Menu */}
                     <div
                       className={`absolute top-full left-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 transition-all duration-200 z-50 ${
                         activeDropdown === idx
-                          ? 'opacity-100 visible translate-y-1'
-                          : 'opacity-0 invisible translate-y-2'
+                          ? 'opacity-100 visible translate-y-0'
+                          : 'opacity-0 invisible -translate-y-2 pointer-events-none'
                       }`}
                     >
                       {item.subItems.map((sub, sIdx) => {
@@ -108,11 +107,14 @@ export default function Header({ currentPage, onNavigate }) {
                           <button
                             key={sIdx}
                             onClick={() => handleNavClick(sub.page)}
-                            className={`w-full text-left px-4 py-2.5 text-[13px] font-medium transition-colors hover:bg-green-50 ${
-                              active ? 'text-green-primary font-bold bg-green-light/50' : 'text-[#1B2521]'
+                            className={`w-full text-left px-4 py-2.5 text-[13px] font-medium transition-colors flex items-center justify-between ${
+                              active
+                                ? 'text-green-primary font-bold bg-green-light/50'
+                                : 'text-[#1B2521] hover:bg-[#F4F9F6]'
                             }`}
                           >
-                            {sub.label}
+                            <span>{sub.label}</span>
+                            {active && <span className="w-1.5 h-1.5 rounded-full bg-green-primary" />}
                           </button>
                         );
                       })}
@@ -126,7 +128,7 @@ export default function Header({ currentPage, onNavigate }) {
                 <button
                   key={idx}
                   onClick={() => handleNavClick(item.page)}
-                  className={`px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150 focus:outline-none ${
+                  className={`px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150 ${
                     active
                       ? 'text-green-primary bg-green-light font-semibold'
                       : 'text-[#1B2521] hover:bg-[#F4F9F6]'
@@ -144,37 +146,25 @@ export default function Header({ currentPage, onNavigate }) {
               onClick={() => handleNavClick('portal')}
               className="hidden lg:inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-semibold text-green-primary bg-green-light hover:bg-emerald-100 transition-colors duration-150 border border-green-primary/20"
             >
+              <GraduationCap className="w-4 h-4 text-green-primary" />
               School Portal
             </button>
 
             <button
               onClick={() => handleNavClick('contact')}
-              className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-semibold text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-colors duration-150"
+              className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[14px] font-semibold text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-colors duration-150 shadow-sm"
             >
+              <Phone className="w-4 h-4 text-white" />
               Contact School
             </button>
 
             {/* Mobile Menu Toggle */}
             <button
-              className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-md focus:outline-none"
+              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 text-[#1B2521] hover:bg-gray-50 focus:outline-none"
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             >
-              <span
-                className={`w-5 h-0.5 bg-[#1B2521] block transition-all duration-200 ${
-                  menuOpen ? 'rotate-45 translate-y-[7px]' : ''
-                }`}
-              />
-              <span
-                className={`w-5 h-0.5 bg-[#1B2521] block transition-all duration-200 ${
-                  menuOpen ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-              <span
-                className={`w-5 h-0.5 bg-[#1B2521] block transition-all duration-200 ${
-                  menuOpen ? '-rotate-45 -translate-y-[7px]' : ''
-                }`}
-              />
+              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>

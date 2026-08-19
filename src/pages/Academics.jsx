@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FlaskConical, Code2, Briefcase, Palette, CheckCircle2, BookOpen, GraduationCap, Award, ArrowRight } from 'lucide-react';
 
 export default function Academics({ onNavigate }) {
   const [activeTrack, setActiveTrack] = useState('all');
@@ -18,7 +19,7 @@ export default function Academics({ onNavigate }) {
     {
       id: 'science',
       title: 'Science & Technology Track',
-      icon: '🔬',
+      icon: <FlaskConical className="w-8 h-8 text-green-primary" />,
       badge: 'STEM Focused',
       desc: 'Designed for future engineers, medical professionals, research scientists, and technology specialists.',
       subjects: [
@@ -30,7 +31,7 @@ export default function Academics({ onNavigate }) {
     {
       id: 'coding',
       title: 'AI & Coding Skills Program',
-      icon: '💻',
+      icon: <Code2 className="w-8 h-8 text-green-primary" />,
       badge: 'Future Tech',
       desc: 'Hands-on practical training in Python programming, Web Development, Prompt Engineering, and Robotics.',
       subjects: [
@@ -41,7 +42,7 @@ export default function Academics({ onNavigate }) {
     {
       id: 'commercial',
       title: 'Commercial Studies Track',
-      icon: '💼',
+      icon: <Briefcase className="w-8 h-8 text-green-primary" />,
       badge: 'Business & Finance',
       desc: 'Prepares students for careers in accounting, finance, economics, business management, and banking.',
       subjects: [
@@ -53,7 +54,7 @@ export default function Academics({ onNavigate }) {
     {
       id: 'arts',
       title: 'Arts & Humanities Track',
-      icon: '🎨',
+      icon: <Palette className="w-8 h-8 text-green-primary" />,
       badge: 'Law & Communication',
       desc: 'Nurtures future lawyers, journalists, diplomats, authors, political scientists, and creative artists.',
       subjects: [

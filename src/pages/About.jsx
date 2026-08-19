@@ -1,26 +1,27 @@
 import React from 'react';
+import { GraduationCap, ShieldCheck, Laptop, Users, Award, BookOpen, Clock, MapPin } from 'lucide-react';
 
 export default function About({ onNavigate }) {
   const coreValues = [
     {
       title: 'Academic Excellence',
       desc: 'Pursuing mastery in core sciences, arts, and commercial subjects through rigorous instruction, regular evaluation, and continuous academic mentorship.',
-      icon: '🎓'
+      icon: <GraduationCap className="w-8 h-8 text-green-primary" />
     },
     {
       title: 'Character & Integrity',
       desc: 'Instilling moral discipline, honesty, civic responsibility, and self-respect in every student to prepare them as dependable ethical leaders.',
-      icon: '🛡️'
+      icon: <ShieldCheck className="w-8 h-8 text-green-primary" />
     },
     {
       title: 'Innovation & Technology',
       desc: 'Equipping students with modern computer skills, digital literacy, critical thinking, and problem-solving tools required for a global world.',
-      icon: '💻'
+      icon: <Laptop className="w-8 h-8 text-green-primary" />
     },
     {
       title: 'Community & Leadership',
       desc: 'Fostering teamwork, cultural tolerance, empathy, sportsmanship, and student-led initiatives across all secondary levels.',
-      icon: '🤝'
+      icon: <Users className="w-8 h-8 text-green-primary" />
     }
   ];
 

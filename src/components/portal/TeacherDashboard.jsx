@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import {
+  Calculator, FilePlus, Upload, Users, CheckCircle2,
+  Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight
+} from 'lucide-react';
 
 export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, onUploadMaterial }) {
   const [selectedStudent, setSelectedStudent] = useState(data.students[0].id);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Quote, GraduationCap, Star } from 'lucide-react';
 
 export default function AlumniTestimonials({ onNavigate }) {
   const alumniList = [
@@ -28,8 +29,11 @@ export default function AlumniTestimonials({ onNavigate }) {
         <div className="max-w-[1280px] mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {alumniList.map((a, idx) => (
-              <div key={idx} className="p-8 rounded-3xl bg-[#F8FAFA] border border-gray-100 flex flex-col justify-between">
-                <p className="text-sm text-[#55635C] italic leading-relaxed mb-6">"{a.quote}"</p>
+              <div key={idx} className="p-8 rounded-3xl bg-[#F8FAFA] border border-gray-100 flex flex-col justify-between hover:shadow-md transition-all">
+                <div>
+                  <Quote className="w-8 h-8 text-green-primary/30 mb-4" />
+                  <p className="text-sm text-[#55635C] italic leading-relaxed mb-6">"{a.quote}"</p>
+                </div>
                 <div className="border-t pt-4">
                   <div className="font-extrabold text-base text-[#1B2521]">{a.name}</div>
                   <div className="text-xs font-bold text-green-primary mt-0.5">{a.year}</div>

@@ -1,11 +1,12 @@
 import React from 'react';
+import { Terminal, Layout, Bot, Cpu, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function AiCoding({ onNavigate }) {
   const modules = [
-    { title: 'Python Fundamentals & Problem Solving', desc: 'Variables, loops, functions, data structures, and algorithmic logic.', icon: '🐍' },
-    { title: 'Web Development (HTML, CSS & JS)', desc: 'Building responsive web interfaces, modern layout systems, and interactive UI.', icon: '💻' },
-    { title: 'AI & Prompt Engineering', desc: 'Understanding machine learning models, structured prompting, and AI productivity tools.', icon: '🤖' },
-    { title: 'Robotics & Hardware Integration', desc: 'Introduction to microcontrollers, sensors, and basic automated electronics.', icon: '⚙️' },
+    { title: 'Python Fundamentals & Problem Solving', desc: 'Variables, loops, functions, data structures, and algorithmic logic.', icon: <Terminal className="w-8 h-8 text-green-primary" /> },
+    { title: 'Web Development (HTML, CSS & JS)', desc: 'Building responsive web interfaces, modern layout systems, and interactive UI.', icon: <Layout className="w-8 h-8 text-green-primary" /> },
+    { title: 'AI & Prompt Engineering', desc: 'Understanding machine learning models, structured prompting, and AI productivity tools.', icon: <Bot className="w-8 h-8 text-green-primary" /> },
+    { title: 'Robotics & Hardware Integration', desc: 'Introduction to microcontrollers, sensors, and basic automated electronics.', icon: <Cpu className="w-8 h-8 text-green-primary" /> },
   ];
 
   return (

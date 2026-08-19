@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Phone, Mail, MapPin, MessageCircle, ChevronDown, CheckCircle2, Send } from 'lucide-react';
 
 export default function Contact({ onNavigate }) {
   const [submitted, setSubmitted] = useState(false);
@@ -30,25 +31,25 @@ export default function Contact({ onNavigate }) {
       title: 'Call or Message Us',
       detail: '+234 813 400 0644',
       sub: 'Mon – Fri: 8:00 AM – 4:00 PM',
-      icon: '📞',
+      icon: <Phone className="w-6 h-6 text-green-primary" />,
     },
     {
       title: 'Official Email',
       detail: 'info@newstateschools.org',
       sub: 'We reply within 24 business hours',
-      icon: '✉️',
+      icon: <Mail className="w-6 h-6 text-green-primary" />,
     },
     {
       title: 'Main Campus Office',
       detail: '36 Palm Avenue, Mushin, Lagos, Nigeria',
       sub: 'New State High School & Primary School',
-      icon: '📍',
+      icon: <MapPin className="w-6 h-6 text-green-primary" />,
     },
     {
       title: 'WhatsApp Support',
       detail: '+234 813 400 0644',
       sub: 'Instant inquiry & technical support',
-      icon: '💬',
+      icon: <MessageCircle className="w-6 h-6 text-green-primary" />,
     },
   ];
 
@@ -242,9 +243,9 @@ export default function Contact({ onNavigate }) {
                     className="w-full p-4 text-left font-bold text-xs sm:text-sm text-[#1B2521] flex justify-between items-center hover:bg-gray-50 transition-colors"
                   >
                     <span>{faq.q}</span>
-                    <span className="text-green-primary font-extrabold text-base ml-2">
-                      {openFaq === idx ? '−' : '+'}
-                    </span>
+                    <ChevronDown className={`w-4 h-4 text-green-primary transition-transform duration-200 ml-2 flex-shrink-0 ${
+                      openFaq === idx ? 'rotate-180' : ''
+                    }`} />
                   </button>
 
                   {openFaq === idx && (

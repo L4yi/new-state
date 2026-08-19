@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CheckCircle2, Sparkles, ArrowRight, ArrowLeft, Briefcase } from 'lucide-react';
 
 export default function TeachersApply({ onNavigate }) {
   const [submitted, setSubmitted] = useState(false);
@@ -80,19 +81,20 @@ export default function TeachersApply({ onNavigate }) {
           </div>
 
           {submitted ? (
-            <div className="p-8 rounded-2xl bg-green-light text-center border border-green-primary/20">
-              <div className="w-14 h-14 rounded-full bg-green-primary text-white text-2xl font-bold flex items-center justify-center mx-auto mb-3">
-                ✓
+            <div className="p-8 rounded-2xl bg-green-light text-center border border-green-primary/20 space-y-4">
+              <div className="w-14 h-14 rounded-full bg-green-primary text-white flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-green-primary mb-2">Thank you for your response! ✨</h3>
-              <p className="text-xs sm:text-sm text-[#55635C] mb-6">
+              <h3 className="text-xl font-bold text-green-primary">Thank you for your response!</h3>
+              <p className="text-xs sm:text-sm text-[#55635C] max-w-md mx-auto">
                 Your application has been successfully submitted to New State Schools recruitment committee. We will review your details and contact shortlisted candidates.
               </p>
               <button
                 onClick={() => setSubmitted(false)}
-                className="px-6 py-2.5 rounded-lg text-xs font-bold bg-green-primary text-white hover:bg-green-dark transition-all"
+                className="px-6 py-2.5 rounded-lg text-xs font-bold bg-green-primary text-white hover:bg-green-dark transition-all inline-flex items-center gap-1.5"
               >
-                ← Apply Again
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Apply Again</span>
               </button>
             </div>
           ) : (

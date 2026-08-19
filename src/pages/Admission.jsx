@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { School, UserCheck, Calendar, Phone, CheckCircle2, Sparkles, FileText, ArrowRight } from 'lucide-react';
 
 export default function Admission({ onNavigate }) {
   const [submitted, setSubmitted] = useState(false);
@@ -36,10 +37,10 @@ export default function Admission({ onNavigate }) {
   };
 
   const admissionOverviewCards = [
-    { title: 'Entry Levels', desc: 'JSS 1, SSS 1 & Transfer Classes (JSS 2, SSS 2)', icon: '🏫' },
-    { title: 'Who Can Apply', desc: 'Prospective students fulfilling entry requirements & assessment', icon: '👤' },
-    { title: 'Admission Period', desc: 'Ongoing for 2026/2027 Academic Session', icon: '📅' },
-    { title: 'Contact Admissions', desc: '0803 000 0000 · info@newstateschools.org', icon: '📞' }
+    { title: 'Entry Levels', desc: 'JSS 1, SSS 1 & Transfer Classes (JSS 2, SSS 2)', icon: <School className="w-6 h-6 text-green-primary" /> },
+    { title: 'Who Can Apply', desc: 'Prospective students fulfilling entry requirements & assessment', icon: <UserCheck className="w-6 h-6 text-green-primary" /> },
+    { title: 'Admission Period', desc: 'Ongoing for 2026/2027 Academic Session', icon: <Calendar className="w-6 h-6 text-green-primary" /> },
+    { title: 'Contact Admissions', desc: '0813 400 0644 · info@newstateschools.org', icon: <Phone className="w-6 h-6 text-green-primary" /> }
   ];
 
   const steps = [

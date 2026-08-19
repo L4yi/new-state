@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapPin, Phone, Mail } from 'lucide-react';
 
 export default function Footer({ onNavigate }) {
   const handleNavClick = (page) => {
@@ -48,8 +49,8 @@ export default function Footer({ onNavigate }) {
             <ul className="space-y-2 text-[14px] opacity-80">
               <li><button onClick={() => handleNavClick('news')} className="hover:text-green-light transition-colors">News & Events</button></li>
               <li><button onClick={() => handleNavClick('contact')} className="hover:text-green-light transition-colors">Contact & Directions</button></li>
-              <li><a href="#portal" className="hover:text-green-light transition-colors">Student & Parent Portal</a></li>
-              <li><a href="#calendar" className="hover:text-green-light transition-colors">Academic Calendar</a></li>
+              <li><button onClick={() => handleNavClick('portal')} className="hover:text-green-light transition-colors">Student & Parent Portal</button></li>
+              <li><button onClick={() => handleNavClick('exam-success')} className="hover:text-green-light transition-colors">WAEC & JAMB Success</button></li>
             </ul>
           </div>
 
@@ -57,9 +58,18 @@ export default function Footer({ onNavigate }) {
           <div>
             <h4 className="font-semibold text-[16px] mb-4 text-green-light">Contact Info</h4>
             <div className="space-y-3 text-[14px] opacity-80 leading-relaxed">
-              <p>📍 36 Palm Avenue, Mushin, Lagos State, Nigeria</p>
-              <p>📞 +234 813 400 0644</p>
-              <p>✉️ info@newstateschools.org</p>
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-green-light flex-shrink-0 mt-1" />
+                <span>36 Palm Avenue, Mushin, Lagos State, Nigeria</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-green-light flex-shrink-0" />
+                <span>+234 813 400 0644</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-green-light flex-shrink-0" />
+                <span>info@newstateschools.org</span>
+              </div>
             </div>
           </div>
         </div>

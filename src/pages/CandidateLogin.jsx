@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Sparkles, KeyRound, Phone, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function CandidateLogin({ onNavigate }) {
   const [phone, setPhone] = useState('');
@@ -31,15 +32,17 @@ export default function CandidateLogin({ onNavigate }) {
     <div className="pt-[72px] min-h-screen bg-[#F8FAFA] py-16 px-6 flex items-center justify-center">
       <div className="max-w-md w-full">
         {/* Top Motivational Quote Box */}
-        <div className="bg-[#F0FDF4] border border-[#DCFCE7] p-5 rounded-2xl text-center mb-6 shadow-sm">
-          <p className="text-[#166534] text-sm italic font-medium leading-relaxed">
-            <strong>Champion,</strong> may your name be among those celebrated for excellence this year; your success is non-negotiable. ✨
+        <div className="bg-[#F0FDF4] border border-[#DCFCE7] p-5 rounded-2xl text-center mb-6 shadow-sm flex items-center justify-center gap-2">
+          <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <p className="text-[#166534] text-xs sm:text-sm italic font-medium leading-relaxed">
+            <strong>Champion,</strong> may your name be among those celebrated for excellence this year; your success is non-negotiable.
           </p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center">
-          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold tracking-widest uppercase mb-3 inline-block">
+          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold tracking-widest uppercase mb-3 inline-flex items-center gap-1.5">
+            <KeyRound className="w-3 h-3" />
             CBT Examination Portal
           </span>
           <h1 className="text-2xl font-extrabold text-[#1B2521] mb-1">

@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import {
+  GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
+  Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2
+} from 'lucide-react';
 import { initialPortalData } from '../data/mockPortalData';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
@@ -157,10 +161,11 @@ export default function Portal({ onNavigate }) {
 
         <button
           onClick={() => onNavigate('home')}
-          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-emerald-200 bg-white/10 hover:bg-white/20 border border-white/15 transition-all flex items-center gap-1 sm:gap-1.5"
+          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-emerald-200 bg-white/10 hover:bg-white/20 border border-white/15 transition-all flex items-center gap-1.5"
         >
-          <span className="hidden sm:inline">← Back to Main Website</span>
-          <span className="inline sm:hidden">← Back</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Back to Main Website</span>
+          <span className="inline sm:hidden">Back</span>
         </button>
       </header>
 
@@ -190,32 +195,37 @@ export default function Portal({ onNavigate }) {
             {/* Embedded Role Selector Buttons Inside Form Box */}
             <div className="bg-[#F4F7F5] p-1.5 rounded-2xl grid grid-cols-2 sm:grid-cols-4 gap-1 mb-6 border border-gray-200/80">
               {[
-                { id: 'student', label: '👨‍🎓 Student' },
-                { id: 'teacher', label: '👨‍🏫 Teacher' },
-                { id: 'bursar', label: '💳 Bursar' },
-                { id: 'admin', label: '⚙️ Admin' },
-              ].map((role) => (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveRole(role.id);
-                    setLoginError('');
-                  }}
-                  className={`py-2 rounded-xl text-[11px] font-bold transition-all text-center ${
-                    activeRole === role.id
-                      ? 'bg-green-primary text-white shadow-sm'
-                      : 'text-[#55635C] hover:bg-white/60'
-                  }`}
-                >
-                  {role.label}
-                </button>
-              ))}
+                { id: 'student', label: 'Student', icon: GraduationCap },
+                { id: 'teacher', label: 'Teacher', icon: BookOpen },
+                { id: 'bursar', label: 'Bursar', icon: CreditCard },
+                { id: 'admin', label: 'Admin', icon: Shield },
+              ].map((role) => {
+                const RoleIcon = role.icon;
+                return (
+                  <button
+                    key={role.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveRole(role.id);
+                      setLoginError('');
+                    }}
+                    className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      activeRole === role.id
+                        ? 'bg-green-primary text-white shadow-sm'
+                        : 'text-[#55635C] hover:bg-white/60'
+                    }`}
+                  >
+                    <RoleIcon className="w-3.5 h-3.5" />
+                    <span>{role.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {loginError && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 text-center mb-4">
-                ⚠️ {loginError}
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 text-center mb-4 flex items-center justify-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-red-700" />
+                <span>{loginError}</span>
               </div>
             )}
 
@@ -274,9 +284,10 @@ export default function Portal({ onNavigate }) {
 
               <button
                 onClick={() => setIsLoggedIn(false)}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1 sm:gap-1.5 flex-shrink-0"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 flex-shrink-0"
               >
-                🔒 Sign Out
+                <LogOut className="w-3.5 h-3.5 text-red-600" />
+                <span>Sign Out</span>
               </button>
             </div>
 

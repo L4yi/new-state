@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import {
+  User, Building2, Lightbulb, Flame, ChevronDown, KeyRound,
+  CreditCard, Calendar, Check, AlertTriangle, MessageCircle, ArrowLeft, ArrowRight
+} from 'lucide-react';
 
 const jambSubjectsList = [
   'Agricultural Science', 'Arabic', 'Biology', 'Chemistry', 'Christian Religious Knowledge',
@@ -22,13 +26,13 @@ const waecSubjectsList = [
 ];
 
 const careerTips = {
-  med: '💡 Medicine & Health require Use of English, Biology, Chemistry, and Physics.',
-  eng: '💡 Engineering requires Use of English, Mathematics, Physics, and Chemistry.',
-  comp: '💡 Computer Science requires Use of English, Mathematics, Physics, and Chemistry/ICT.',
-  law: '💡 Law requires Use of English, Literature in English, Government, and CRS/IRS.',
-  mass: '💡 Mass Comm requires Use of English, Literature, Government, and any other Social Science/Art subject.',
-  acc: '💡 Accounting requires Use of English, Mathematics, Economics, and Financial Accounting/Commerce.',
-  bus: '💡 Business requires Use of English, Mathematics, Economics, and Commerce.'
+  med: 'Medicine & Health require Use of English, Biology, Chemistry, and Physics.',
+  eng: 'Engineering requires Use of English, Mathematics, Physics, and Chemistry.',
+  comp: 'Computer Science requires Use of English, Mathematics, Physics, and Chemistry/ICT.',
+  law: 'Law requires Use of English, Literature in English, Government, and CRS/IRS.',
+  mass: 'Mass Comm requires Use of English, Literature, Government, and any other Social Science/Art subject.',
+  acc: 'Accounting requires Use of English, Mathematics, Economics, and Financial Accounting/Commerce.',
+  bus: 'Business requires Use of English, Mathematics, Economics, and Commerce.'
 };
 
 export default function BuyPlan({ onNavigate }) {
@@ -101,7 +105,7 @@ export default function BuyPlan({ onNavigate }) {
           </h1>
           <div className="w-16 h-1 bg-[#4B5320] rounded-full mx-auto my-3" />
           <p className="text-xs sm:text-sm font-extrabold text-[#4B5320] tracking-wider">
-            Daily Practice Reps. Exam Success Check. 💅🏾✅
+            Daily Practice Reps. Exam Success Check.
           </p>
         </div>
 
@@ -109,19 +113,21 @@ export default function BuyPlan({ onNavigate }) {
         <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
           <button
             onClick={() => setMode('student')}
-            className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all ${
+            className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
               mode === 'student' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            👤 Private Candidate
+            <User className="w-4 h-4" />
+            <span>Private Candidate</span>
           </button>
           <button
             onClick={() => setMode('corporate')}
-            className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all ${
+            className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
               mode === 'corporate' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
-            🏢 Corporate / Sponsor
+            <Building2 className="w-4 h-4" />
+            <span>Corporate / Sponsor</span>
           </button>
         </div>
 
@@ -129,7 +135,10 @@ export default function BuyPlan({ onNavigate }) {
           <div className="max-w-lg mx-auto space-y-6">
             {/* Warning Banner */}
             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-center space-y-1">
-              <h3 className="font-extrabold text-sm uppercase tracking-wider">⚠️ Payment Required</h3>
+              <h3 className="font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                Payment Required
+              </h3>
               <p className="text-xs text-amber-800">
                 Your plan is <strong>NOT ACTIVE</strong> until payment is confirmed. You must complete payment below either via Paystack or Direct Bank Transfer.
               </p>
@@ -166,14 +175,19 @@ export default function BuyPlan({ onNavigate }) {
               }}
               className="w-full py-4 rounded-2xl font-extrabold text-sm text-white bg-[#22C55E] hover:bg-[#16A34A] transition-all shadow-md flex items-center justify-center gap-2"
             >
-              <span>💳 Pay with Paystack</span>
+              <CreditCard className="w-5 h-5 text-white" />
+              <span>Pay with Paystack</span>
             </button>
 
             {/* Manual Bank Transfer Card */}
             <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-center space-y-3 text-xs">
               <h4 className="font-extrabold text-sm text-[#0F172A]">Manual Bank Transfer</h4>
-              <p className="text-slate-600">
-                Pay directly to: <strong className="text-[#0F172A] block text-sm mt-1">🏦 Stanbic IBTC — 0047625465</strong>
+              <p className="text-slate-600 flex items-center justify-center gap-1.5 flex-wrap">
+                <span>Pay directly to:</span>
+                <strong className="text-[#0F172A] inline-flex items-center gap-1">
+                  <Building2 className="w-4 h-4 text-slate-700" />
+                  Stanbic IBTC — 0047625465
+                </strong>
               </p>
               <a
                 href="https://wa.me/2348134000644"
@@ -181,24 +195,27 @@ export default function BuyPlan({ onNavigate }) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-bold text-blue-600 hover:text-blue-800"
               >
-                Send Proof of Payment via WhatsApp 💬
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>Send Proof of Payment via WhatsApp</span>
               </a>
 
               <hr className="border-[#E2E8F0] my-2" />
 
               <button
                 onClick={() => onNavigate('candidate-login')}
-                className="font-extrabold text-green-700 hover:underline block mx-auto text-xs"
+                className="font-extrabold text-green-700 hover:underline inline-flex items-center gap-1 mx-auto text-xs"
               >
-                ✅ Approved? Login to Candidate Portal →
+                <Check className="w-4 h-4 text-green-700" />
+                <span>Approved? Login to Candidate Portal →</span>
               </button>
             </div>
 
             <button
               onClick={() => setSubmitted(false)}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600 block mx-auto pt-2"
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 flex items-center justify-center gap-1 mx-auto pt-2"
             >
-              ← Modify Selected Subjects or Plan
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Modify Selected Subjects or Plan</span>
             </button>
           </div>
         ) : mode === 'student' ? (
@@ -229,8 +246,9 @@ export default function BuyPlan({ onNavigate }) {
               </select>
 
               {selectedGoal && careerTips[selectedGoal] && (
-                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border-l-4 border-amber-400 text-xs text-amber-900 font-medium">
-                  {careerTips[selectedGoal]}
+                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border-l-4 border-amber-400 text-xs text-amber-900 font-medium flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>{careerTips[selectedGoal]}</span>
                 </div>
               )}
             </div>
@@ -266,8 +284,11 @@ export default function BuyPlan({ onNavigate }) {
             {/* Accordion: The Sauce */}
             <details className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-900 text-white overflow-hidden group">
               <summary className="p-4 sm:p-5 font-extrabold text-sm sm:text-base cursor-pointer flex justify-between items-center text-sky-400 select-none">
-                <span>🔥 Here's the Sauce to Acing WAEC & JAMB (The Marathon Method)</span>
-                <span className="text-xs transition-transform group-open:rotate-180">▼</span>
+                <span className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-amber-400" />
+                  <span>Here's the Sauce to Acing WAEC & JAMB (The Marathon Method)</span>
+                </span>
+                <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180 text-sky-400" />
               </summary>
               <div className="p-6 border-t border-slate-800 space-y-4 text-xs leading-relaxed text-slate-300">
                 <p className="italic text-slate-400">

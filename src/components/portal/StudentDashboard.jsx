@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import {
+  BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
+  Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User
+} from 'lucide-react';
 
 export default function StudentDashboard({ data, onUploadReceipt, currentStudentId }) {
   const [activeTab, setActiveTab] = useState('results');
@@ -59,25 +63,29 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       {/* Navigation Sub-Tabs */}
       <div className="flex overflow-x-auto gap-2 border-b border-gray-200 pb-2 whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
         {[
-          { id: 'results', label: '📊 Term Results & Grades' },
-          { id: 'timetable', label: '📅 Class Timetable' },
-          { id: 'assignments', label: '📝 Digital Assignments' },
-          { id: 'materials', label: '📚 Learning Materials' },
-          { id: 'fees', label: '💳 Pay Fees & Upload Receipt' },
-          { id: 'announcements', label: '📢 School Notices' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 ${
-              activeTab === tab.id
-                ? 'bg-green-primary text-white shadow-sm'
-                : 'bg-white border border-gray-200 text-[#55635C] hover:bg-gray-50'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+          { id: 'results', label: 'Term Results & Grades', icon: BarChart3 },
+          { id: 'timetable', label: 'Class Timetable', icon: Calendar },
+          { id: 'assignments', label: 'Digital Assignments', icon: FileText },
+          { id: 'materials', label: 'Learning Materials', icon: BookOpen },
+          { id: 'fees', label: 'Pay Fees & Receipt', icon: CreditCard },
+          { id: 'announcements', label: 'School Notices', icon: Megaphone },
+        ].map((tab) => {
+          const TabIcon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 flex items-center gap-1.5 ${
+                activeTab === tab.id
+                  ? 'bg-green-primary text-white shadow-sm'
+                  : 'bg-white border border-gray-200 text-[#55635C] hover:bg-gray-50'
+              }`}
+            >
+              <TabIcon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* 1. Results Tab */}
@@ -90,9 +98,10 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
             </div>
             <button
               onClick={() => window.print()}
-              className="px-4 py-2 rounded-lg text-xs font-bold text-green-primary bg-green-light border border-green-primary/20 hover:bg-emerald-100"
+              className="px-4 py-2 rounded-lg text-xs font-bold text-green-primary bg-green-light border border-green-primary/20 hover:bg-emerald-100 flex items-center gap-1.5"
             >
-              🖨️ Print Report Card
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Report Card</span>
             </button>
           </div>
 
