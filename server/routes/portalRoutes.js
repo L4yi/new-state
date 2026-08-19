@@ -4,6 +4,7 @@ import Result from '../models/Result.js';
 import Assignment from '../models/Assignment.js';
 import Payment from '../models/Payment.js';
 import Announcement from '../models/Announcement.js';
+import Staff from '../models/Staff.js';
 
 const router = express.Router();
 
@@ -58,12 +59,6 @@ const learningMaterials = [
   },
 ];
 
-const staff = [
-  { name: 'Dr. O. A. Adeleke', role: 'Principal', department: 'Administration', email: 'principal@newstateschools.org' },
-  { name: 'Mr. Babatunde Ogunlesi', role: 'Head of Science', department: 'Physics & Math', email: 'science@newstateschools.org' },
-  { name: 'Mrs. Folashade Adebayo', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar@newstateschools.org' },
-];
-
 // 1. Aggregated Portal Data Lookup
 router.get('/data', async (req, res) => {
   try {
@@ -72,6 +67,7 @@ router.get('/data', async (req, res) => {
     const assignments = await Assignment.find({}).sort({ createdAt: -1 });
     const feePayments = await Payment.find({}).sort({ createdAt: -1 });
     const announcements = await Announcement.find({}).sort({ createdAt: -1 });
+    const staff = await Staff.find({});
 
     // Group results by studentId matching the client format
     const results = {};
@@ -129,22 +125,19 @@ router.post('/login', async (req, res) => {
       }
       return res.status(404).json({ error: 'Invalid Student ID. Record not found.' });
     } else {
-      // General password check for all staff roles (default: '1234')
-      if (password !== '1234') {
-        return res.status(401).json({ error: 'Incorrect Password / PIN.' });
-      }
+      // Find staff by email or name (case-insensitive)
+      const staffMember = await Staff.findOne({
+        $or: [
+          { email: identifier.toLowerCase().trim() },
+          { name: { $regex: new RegExp('^' + identifier.trim() + '$', 'i') } }
+        ]
+      });
 
-      // For staff, we match email from preset staff array
-      const staffMember = staff.find(s => s.email.toLowerCase() === identifier.toLowerCase().trim() || s.name.toLowerCase() === identifier.toLowerCase().trim());
       if (staffMember) {
-        return res.json({ success: true, user: staffMember });
-      }
-      // Or if it's admin/bursar general identifier
-      if (role === 'admin' && identifier.toLowerCase() === 'admin') {
-        return res.json({ success: true, user: { name: 'Principal Admin', role: 'Principal' } });
-      }
-      if (role === 'bursar' && identifier.toLowerCase() === 'bursar') {
-        return res.json({ success: true, user: { name: 'Bursar Office', role: 'Bursar' } });
+        if (staffMember.password === password) {
+          return res.json({ success: true, user: staffMember });
+        }
+        return res.status(401).json({ error: 'Incorrect Password / PIN.' });
       }
       return res.status(404).json({ error: 'Invalid staff username/email.' });
     }

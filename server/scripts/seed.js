@@ -9,6 +9,7 @@ import Result from '../models/Result.js';
 import Assignment from '../models/Assignment.js';
 import Payment from '../models/Payment.js';
 import Announcement from '../models/Announcement.js';
+import Staff from '../models/Staff.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -129,6 +130,14 @@ const paymentsData = [
   }
 ];
 
+const staffData = [
+  { name: 'Dr. O. A. Adeleke', role: 'Principal', department: 'Administration', email: 'principal@newstateschools.org', password: '1234' },
+  { name: 'Mr. Babatunde Ogunlesi', role: 'Head of Science', department: 'Physics & Math', email: 'science@newstateschools.org', password: '1234' },
+  { name: 'Mrs. Folashade Adebayo', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar@newstateschools.org', password: '1234' },
+  { name: 'Principal Admin', role: 'Principal', department: 'Administration', email: 'admin', password: '1234' },
+  { name: 'Bursar Office', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar', password: '1234' }
+];
+
 async function seed() {
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/newstate';
   console.log('Connecting to database:', uri);
@@ -140,6 +149,7 @@ async function seed() {
     // Clear existing data
     try {
       await Student.collection.dropIndexes();
+      await Staff.collection.dropIndexes();
     } catch (e) {
       // Ignore index drop failures
     }
@@ -148,6 +158,7 @@ async function seed() {
     await Assignment.deleteMany({});
     await Payment.deleteMany({});
     await Announcement.deleteMany({});
+    await Staff.deleteMany({});
     console.log('Cleared old documents and dropped old indexes.');
 
     // Insert new data
@@ -156,6 +167,7 @@ async function seed() {
     await Assignment.insertMany(assignmentsData);
     await Payment.insertMany(paymentsData);
     await Announcement.insertMany(announcementsData);
+    await Staff.insertMany(staffData);
     console.log('Database successfully seeded with core data.');
     
     mongoose.connection.close();
