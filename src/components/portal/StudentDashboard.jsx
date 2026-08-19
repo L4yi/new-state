@@ -162,7 +162,15 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       {/* 3. Assignments Tab */}
       {activeTab === 'assignments' && (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-lg text-[#1B2521]">Digital Homework & Assignments</h3>
+          <div>
+            <h3 className="font-extrabold text-lg text-[#1B2521]">Homework & Assignments</h3>
+            <p className="text-xs text-gray-500">View active homework below and complete them in your physical notebooks/paper.</p>
+          </div>
+
+          <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium">
+            📝 <strong>Note:</strong> All assignments are to be completed offline on paper/notebooks. No file uploads or digital submissions are required through this portal.
+          </div>
+
           <div className="space-y-3">
             {data.assignments.map((asn) => (
               <div key={asn.id} className="p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#FAFCFA]">
@@ -171,16 +179,11 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
                     <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold">
                       {asn.subject}
                     </span>
-                    <span className="text-xs text-gray-400">Due: {asn.dueDate}</span>
+                    <span className="text-xs text-gray-400">Due Date: {asn.dueDate}</span>
                   </div>
                   <h4 className="font-bold text-sm text-[#1B2521] mt-1">{asn.title}</h4>
-                  <p className="text-xs text-gray-600 mt-0.5">{asn.desc}</p>
+                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">{asn.desc}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  asn.status === 'Submitted' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {asn.status}
-                </span>
               </div>
             ))}
           </div>

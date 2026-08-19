@@ -200,11 +200,11 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
             </form>
           </div>
 
-          {/* 2. Create & Post Digital Assignment */}
+          {/* 2. Create & Post Homework Assignment */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <div className="border-b border-gray-100 pb-3">
-              <h3 className="font-extrabold text-lg text-[#1B2521]">Create & Post Digital Assignment</h3>
-              <p className="text-xs text-gray-500">Assign homework, set deadlines, and push directly to student portals</p>
+              <h3 className="font-extrabold text-lg text-[#1B2521]">Create & Post Homework Assignment</h3>
+              <p className="text-xs text-gray-500">Publish assignment instructions and due dates directly to student portals</p>
             </div>
 
             {asnMsg && (
@@ -230,7 +230,7 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Submission Deadline</label>
+                  <label className="block font-bold text-gray-700 mb-1">Due Date</label>
                   <input
                     type="date"
                     required
