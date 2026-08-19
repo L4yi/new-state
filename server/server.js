@@ -17,9 +17,26 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/newstate';
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Database connection validation middleware
+app.use(async (req, res, next) => {
+  if (req.path !== '/health' && mongoose.connection.readyState !== 1) {
+    console.log('Database connection not active. Re-connecting...');
+    try {
+      await mongoose.connect(dbUri);
+      console.log('Database connection recovered successfully.');
+    } catch (err) {
+      console.error('Failed to recover database connection:', err.message);
+      return res.status(500).json({ error: 'Database connection offline' });
+    }
+  }
+  next();
+});
 
 // Routes registration
 app.use('/api/portal', portalRoutes);
@@ -29,10 +46,8 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'New State High School Server is Active' });
 });
 
-// Database connection
-const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/newstate';
+// Initial database connection
 console.log('Connecting to database...');
-
 mongoose.connect(dbUri)
   .then(() => {
     console.log('MongoDB connection established successfully.');
