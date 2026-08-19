@@ -120,7 +120,7 @@ router.post('/login', async (req, res) => {
 
   try {
     if (role === 'student') {
-      const student = await Student.findOne({ studentId: identifier });
+      const student = await Student.findOne({ id: identifier });
       if (student) {
         if (student.password === password) {
           return res.json({ success: true, user: student });
@@ -162,7 +162,7 @@ router.post('/payments', async (req, res) => {
 
     // Mark student feeStatus as Pending
     await Student.findOneAndUpdate(
-      { studentId: req.body.studentId },
+      { id: req.body.studentId },
       { feeStatus: 'Pending' }
     );
 
@@ -191,12 +191,12 @@ router.put('/payments/:id', async (req, res) => {
 
     if (action === 'approve') {
       await Student.findOneAndUpdate(
-        { studentId: payment.studentId },
+        { id: payment.studentId },
         { feeStatus: 'Approved', paidAmount: payment.amount }
       );
     } else {
       await Student.findOneAndUpdate(
-        { studentId: payment.studentId },
+        { id: payment.studentId },
         { feeStatus: 'Unpaid' }
       );
     }

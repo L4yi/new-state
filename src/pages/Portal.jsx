@@ -57,7 +57,7 @@ export default function Portal({ onNavigate }) {
         setLoginError('');
         setIsLoggedIn(true);
         if (activeRole === 'student') {
-          setCurrentStudentId(data.user.studentId);
+          setCurrentStudentId(data.user.id);
         }
       } else {
         setLoginError(data.error || 'Authentication failed');

@@ -17,7 +17,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const studentsData = [
   {
-    studentId: 'NSHS/2024/001',
+    id: 'NSHS/2024/001',
     name: 'Adewale Johnson',
     gender: 'Male',
     class: 'SSS 3 (Science)',
@@ -30,7 +30,7 @@ const studentsData = [
     password: '1234'
   },
   {
-    studentId: 'NSHS/2024/002',
+    id: 'NSHS/2024/002',
     name: 'Chidimma Okonkwo',
     gender: 'Female',
     class: 'SSS 3 (Science)',
@@ -43,7 +43,7 @@ const studentsData = [
     password: '1234'
   },
   {
-    studentId: 'NSHS/2024/003',
+    id: 'NSHS/2024/003',
     name: 'Babatunde Ogunlesi',
     gender: 'Male',
     class: 'JSS 2',
@@ -138,12 +138,17 @@ async function seed() {
     console.log('MongoDB Connected successfully!');
 
     // Clear existing data
+    try {
+      await Student.collection.dropIndexes();
+    } catch (e) {
+      // Ignore index drop failures
+    }
     await Student.deleteMany({});
     await Result.deleteMany({});
     await Assignment.deleteMany({});
     await Payment.deleteMany({});
     await Announcement.deleteMany({});
-    console.log('Cleared old documents.');
+    console.log('Cleared old documents and dropped old indexes.');
 
     // Insert new data
     await Student.insertMany(studentsData);
