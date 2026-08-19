@@ -13,9 +13,17 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   });
   const [submittedMessage, setSubmittedMessage] = useState('');
 
-  const student = data.students.find((s) => s.id === currentStudentId) || data.students[0];
-  const studentResults = data.results[student.id] || [];
-  const studentPayments = data.feePayments.filter((p) => p.studentId === student.id);
+  const students = data?.students || [];
+  const student = students.find((s) => s.id === currentStudentId) || students[0] || {
+    id: 'NSHS/2024/001',
+    name: 'Student',
+    class: 'SSS 3',
+    house: 'Red House',
+    feeStatus: 'Approved',
+    guardian: 'Parent',
+  };
+  const studentResults = (data?.results && data.results[student.id]) || [];
+  const studentPayments = (data?.feePayments || []).filter((p) => p.studentId === student.id);
 
   const handlePaySubmit = (e) => {
     e.preventDefault();

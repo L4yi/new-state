@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 
 export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, onUploadMaterial }) {
-  const [selectedStudent, setSelectedStudent] = useState(data.students[0].id);
+  const [selectedStudent, setSelectedStudent] = useState(data?.students?.[0]?.id || 'NSHS/2024/001');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [scores, setScores] = useState({ ca1: '', ca2: '', exam: '' });
   const [attendance, setAttendance] = useState({

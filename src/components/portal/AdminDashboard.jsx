@@ -8,7 +8,8 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   const [noticeMsg, setNoticeMsg] = useState('');
   const [studentMsg, setStudentMsg] = useState('');
 
-  const filteredStudents = data.students.filter(
+  const studentsList = data?.students || [];
+  const filteredStudents = studentsList.filter(
     (s) =>
       s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

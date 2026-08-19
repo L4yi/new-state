@@ -4,16 +4,17 @@ import { CheckCircle2, XCircle, Clock, CreditCard, Building2, Check, X, ShieldCh
 export default function BursarDashboard({ data, onApprovePayment, onRejectPayment }) {
   const [filterStatus, setFilterStatus] = useState('All');
 
-  const filteredPayments = data.feePayments.filter((p) => {
+  const paymentsList = data?.feePayments || [];
+  const filteredPayments = paymentsList.filter((p) => {
     if (filterStatus === 'All') return true;
     return p.status === filterStatus;
   });
 
-  const totalCollected = data.feePayments
+  const totalCollected = paymentsList
     .filter((p) => p.status === 'Approved')
-    .reduce((acc, p) => acc + parseInt(p.amount.replace(/[^0-9]/g, '') || 0), 0);
+    .reduce((acc, p) => acc + parseInt(p.amount?.replace(/[^0-9]/g, '') || 0), 0);
 
-  const pendingCount = data.feePayments.filter((p) => p.status === 'Pending').length;
+  const pendingCount = paymentsList.filter((p) => p.status === 'Pending').length;
 
   return (
     <div className="space-y-6">
