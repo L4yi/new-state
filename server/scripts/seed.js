@@ -131,11 +131,57 @@ const paymentsData = [
 ];
 
 const staffData = [
-  { name: 'Dr. O. A. Adeleke', role: 'Principal', department: 'Administration', email: 'principal@newstateschools.org', password: '1234' },
-  { name: 'Mr. Babatunde Ogunlesi', role: 'Head of Science', department: 'Physics & Math', email: 'science@newstateschools.org', password: '1234' },
-  { name: 'Mrs. Folashade Adebayo', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar@newstateschools.org', password: '1234' },
-  { name: 'Principal Admin', role: 'Principal', department: 'Administration', email: 'admin', password: '1234' },
-  { name: 'Bursar Office', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar', password: '1234' }
+  {
+    name: 'Dr. O. A. Adeleke',
+    role: 'Principal',
+    department: 'Administration',
+    email: 'principal@newstateschools.org',
+    password: '1234',
+    classAssigned: null,
+    subjectsTaught: [
+      { subjectName: 'Biology', className: 'SSS 3 (Science)' }
+    ]
+  },
+  {
+    name: 'Mr. Babatunde Ogunlesi',
+    role: 'Head of Science',
+    department: 'Physics & Math',
+    email: 'science@newstateschools.org',
+    password: '1234',
+    classAssigned: 'SSS 3 (Science)',
+    subjectsTaught: [
+      { subjectName: 'Mathematics', className: 'SSS 3 (Science)' },
+      { subjectName: 'Physics', className: 'SSS 3 (Science)' },
+      { subjectName: 'Mathematics', className: 'JSS 2' }
+    ]
+  },
+  {
+    name: 'Mrs. Folashade Adebayo',
+    role: 'Bursar',
+    department: 'Finance & Accounts',
+    email: 'bursar@newstateschools.org',
+    password: '1234',
+    classAssigned: null,
+    subjectsTaught: []
+  },
+  {
+    name: 'Principal Admin',
+    role: 'Principal',
+    department: 'Administration',
+    email: 'admin',
+    password: '1234',
+    classAssigned: null,
+    subjectsTaught: []
+  },
+  {
+    name: 'Bursar Office',
+    role: 'Bursar',
+    department: 'Finance & Accounts',
+    email: 'bursar',
+    password: '1234',
+    classAssigned: null,
+    subjectsTaught: []
+  }
 ];
 
 async function seed() {

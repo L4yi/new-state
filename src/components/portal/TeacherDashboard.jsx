@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calculator, FilePlus, Upload, Users, CheckCircle2,
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight
 } from 'lucide-react';
 
-export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, onUploadMaterial }) {
-  const [selectedStudent, setSelectedStudent] = useState(data?.students?.[0]?.id || 'NSHS/2024/001');
+export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
+  // 1. Filter students this teacher has access to see/grade
+  const allowedStudents = data?.students?.filter(student => {
+    if (!currentUser) return true; // Offline/fallback
+    const isClassTeacher = currentUser.classAssigned === student.class;
+    const teachesInClass = currentUser.subjectsTaught?.some(s => s.className === student.class);
+    return isClassTeacher || teachesInClass;
+  }) || [];
+
+  const [selectedStudent, setSelectedStudent] = useState(allowedStudents[0]?.id || '');
   const [selectedSubject, setSelectedSubject] = useState('Mathematics');
   const [scores, setScores] = useState({ ca1: '', ca2: '', exam: '' });
   const [attendance, setAttendance] = useState({
@@ -15,9 +23,36 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
   });
   const [savedMsg, setSavedMsg] = useState('');
 
+  // 2. Determine subjects available for the selected student
+  const studentObj = data?.students?.find(s => s.id === selectedStudent);
+  const isClassTeacherForSelected = currentUser && studentObj && currentUser.classAssigned === studentObj.class;
+
+  const availableSubjects = (() => {
+    if (!currentUser || !studentObj) {
+      return ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Computer Studies (AI & Coding)'];
+    }
+    if (isClassTeacherForSelected) {
+      return ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Computer Studies (AI & Coding)'];
+    }
+    return currentUser.subjectsTaught
+      ?.filter(s => s.className === studentObj.class)
+      ?.map(s => s.subjectName) || [];
+  })();
+
+  // 3. Reset selected subject if it's no longer available for the chosen student
+  useEffect(() => {
+    if (availableSubjects.length > 0 && !availableSubjects.includes(selectedSubject)) {
+      setSelectedSubject(availableSubjects[0]);
+    }
+  }, [selectedStudent, availableSubjects]);
+
+  const teacherSubjects = currentUser?.subjectsTaught
+    ?.map((s) => s.subjectName)
+    ?.filter((value, index, self) => self.indexOf(value) === index) || ['Mathematics'];
+
   // New Assignment Form State
   const [newAsn, setNewAsn] = useState({
-    subject: 'Mathematics',
+    subject: teacherSubjects[0] || 'Mathematics',
     title: '',
     dueDate: '',
     desc: '',
@@ -27,7 +62,7 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
   // New Study Material Form State
   const [newMat, setNewMat] = useState({
     title: '',
-    subject: 'Physics',
+    subject: teacherSubjects[0] || 'Physics',
     format: 'PDF',
   });
   const [matMsg, setMatMsg] = useState('');
@@ -97,8 +132,13 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
       {/* Teacher Profile Banner */}
       <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-[#1B2521]">Mr. Babatunde Ogunlesi</h2>
-          <p className="text-xs text-gray-500">Subject Specialist: Mathematics & Physics · SSS 3 Form Teacher</p>
+          <h2 className="text-xl font-extrabold text-[#1B2521]">{currentUser?.name || 'Mr. Babatunde Ogunlesi'}</h2>
+          <p className="text-xs text-gray-500">
+            {currentUser?.subjectsTaught?.length > 0
+              ? `Subject Specialist: ${currentUser.subjectsTaught.map(s => s.subjectName).filter((value, index, self) => self.indexOf(value) === index).join(' & ')}`
+              : 'School Administrator'}
+            {currentUser?.classAssigned ? ` · ${currentUser.classAssigned} Form Teacher` : ' · Subject Teacher'}
+          </p>
         </div>
         <span className="px-3.5 py-1.5 rounded-full bg-green-light text-green-primary text-xs font-bold border border-green-primary/20">
           Faculty Active
@@ -129,7 +169,7 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
                   onChange={(e) => setSelectedStudent(e.target.value)}
                   className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                 >
-                  {data.students.map((s) => (
+                  {allowedStudents.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name} ({s.class} - {s.id})
                     </option>
@@ -144,12 +184,11 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
                   onChange={(e) => setSelectedSubject(e.target.value)}
                   className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                 >
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="English Language">English Language</option>
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Biology">Biology</option>
-                  <option value="Computer Studies (AI Coding)">Computer Studies (AI Coding)</option>
+                  {availableSubjects.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -222,10 +261,11 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
                     onChange={(e) => setNewAsn({ ...newAsn, subject: e.target.value })}
                     className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                   >
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Computer Studies (AI Coding)">Computer Studies (AI Coding)</option>
-                    <option value="English Language">English Language</option>
+                    {teacherSubjects.map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -281,46 +321,59 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <div className="border-b border-gray-100 pb-3">
               <h3 className="font-extrabold text-lg text-[#1B2521]">Digital Attendance Register</h3>
-              <p className="text-xs text-gray-500">Mark daily attendance for class JSS 1 - SSS 3</p>
+              <p className="text-xs text-gray-500">
+                {currentUser?.classAssigned 
+                  ? `Mark daily attendance for class: ${currentUser.classAssigned}`
+                  : 'Class attendance register'}
+              </p>
             </div>
 
-            <div className="space-y-3">
-              {data.students.map((s) => (
-                <div key={s.id} className="p-3 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
-                  <div>
-                    <div className="font-bold text-[#1B2521]">{s.name}</div>
-                    <div className="text-[10px] text-gray-400">{s.class}</div>
-                  </div>
+            {currentUser?.classAssigned ? (
+              <>
+                <div className="space-y-3">
+                  {data.students.filter((s) => s.class === currentUser.classAssigned).map((s) => (
+                    <div key={s.id} className="p-3 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
+                      <div>
+                        <div className="font-bold text-[#1B2521]">{s.name}</div>
+                        <div className="text-[10px] text-gray-400">{s.class}</div>
+                      </div>
 
-                  <div className="flex gap-1">
-                    {['Present', 'Absent', 'Late'].map((st) => (
-                      <button
-                        key={st}
-                        onClick={() => setAttendance({ ...attendance, [s.id]: st })}
-                        className={`px-2.5 py-1 rounded text-[10px] font-bold ${
-                          attendance[s.id] === st
-                            ? st === 'Present'
-                              ? 'bg-green-primary text-white'
-                              : st === 'Absent'
-                              ? 'bg-red-600 text-white'
-                              : 'bg-amber-500 text-white'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {st}
-                      </button>
-                    ))}
-                  </div>
+                      <div className="flex gap-1">
+                        {['Present', 'Absent', 'Late'].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => setAttendance({ ...attendance, [s.id]: st })}
+                            className={`px-2.5 py-1 rounded text-[10px] font-bold ${
+                              attendance[s.id] === st
+                                ? st === 'Present'
+                                  ? 'bg-green-primary text-white'
+                                  : st === 'Absent'
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-amber-500 text-white'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
+                            {st}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <button
-              onClick={() => alert('Daily class attendance register saved successfully!')}
-              className="w-full py-2.5 rounded-xl font-bold text-xs bg-gray-100 hover:bg-gray-200 text-[#1B2521]"
-            >
-              Save Attendance Register
-            </button>
+                <button
+                  onClick={() => alert(`Daily attendance for class ${currentUser.classAssigned} saved successfully!`)}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-gray-100 hover:bg-gray-200 text-[#1B2521] mt-2"
+                >
+                  Save Attendance Register
+                </button>
+              </>
+            ) : (
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 text-center text-xs text-gray-500 space-y-2">
+                <div className="font-bold text-[#1B2521]">Subject Teacher Account</div>
+                <p>Daily class attendance can only be marked by Form/Class Teachers. Please contact the administrator if you need to register a Form Class.</p>
+              </div>
+            )}
           </div>
 
           {/* 4. Upload Learning Materials */}
@@ -357,10 +410,11 @@ export default function TeacherDashboard({ data, onSaveScore, onAddAssignment, o
                     onChange={(e) => setNewMat({ ...newMat, subject: e.target.value })}
                     className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                   >
-                    <option value="Physics">Physics</option>
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="AI & Coding">AI & Coding</option>
-                    <option value="Chemistry">Chemistry</option>
+                    {teacherSubjects.map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

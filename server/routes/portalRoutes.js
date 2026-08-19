@@ -203,9 +203,26 @@ router.put('/payments/:id', async (req, res) => {
 
 // 5. Save Score / Report card result (Teacher)
 router.post('/results', async (req, res) => {
-  const { studentId, result } = req.body; // result: {subject, ca1, ca2, exam, total, grade, remark}
+  const { studentId, result, teacherId } = req.body; // result: {subject, ca1, ca2, exam, total, grade, remark}
   
   try {
+    // Enforce teacher permissions
+    if (teacherId) {
+      const teacher = await Staff.findById(teacherId);
+      if (teacher) {
+        const student = await Student.findOne({ id: studentId });
+        if (student) {
+          const isClassTeacher = teacher.classAssigned === student.class;
+          const teachesSubject = teacher.subjectsTaught.some(
+            (s) => s.subjectName === result.subject && s.className === student.class
+          );
+          if (!isClassTeacher && !teachesSubject) {
+            return res.status(403).json({ error: 'You do not have permission to grade this subject for this student.' });
+          }
+        }
+      }
+    }
+
     // Check if score for this subject already exists, if so overwrite, else create
     const query = { studentId, subject: result.subject };
     const update = { ...result };

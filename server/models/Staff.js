@@ -22,7 +22,17 @@ const staffSchema = new mongoose.Schema({
   password: {
     type: String,
     default: '1234'
-  }
+  },
+  classAssigned: {
+    type: String,
+    default: null
+  },
+  subjectsTaught: [
+    {
+      subjectName: { type: String, required: true },
+      className: { type: String, required: true }
+    }
+  ]
 }, { timestamps: true });
 
 export default mongoose.model('Staff', staffSchema);

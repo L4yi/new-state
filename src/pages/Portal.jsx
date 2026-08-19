@@ -11,8 +11,12 @@ import { initialPortalData } from '../data/mockPortalData';
 import { API_URL } from '../config/api';
 
 export default function Portal({ onNavigate }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeRole, setActiveRole] = useState('student');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('nshs_is_logged_in') === 'true';
+  });
+  const [activeRole, setActiveRole] = useState(() => {
+    return localStorage.getItem('nshs_active_role') || 'student';
+  });
   const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [portalData, setPortalData] = useState(() => {
@@ -20,7 +24,13 @@ export default function Portal({ onNavigate }) {
     return saved ? JSON.parse(saved) : initialPortalData;
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStudentId, setCurrentStudentId] = useState('NSHS/2024/001');
+  const [currentStudentId, setCurrentStudentId] = useState(() => {
+    return localStorage.getItem('nshs_current_student_id') || 'NSHS/2024/001';
+  });
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('nshs_current_user');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   const fetchPortalData = async () => {
     try {
@@ -61,8 +71,15 @@ export default function Portal({ onNavigate }) {
       if (res.ok) {
         setLoginError('');
         setIsLoggedIn(true);
+        setCurrentUser(data.user);
+        
+        localStorage.setItem('nshs_is_logged_in', 'true');
+        localStorage.setItem('nshs_active_role', activeRole);
+        localStorage.setItem('nshs_current_user', JSON.stringify(data.user));
+        
         if (activeRole === 'student') {
           setCurrentStudentId(data.user.id);
+          localStorage.setItem('nshs_current_student_id', data.user.id);
         }
       } else {
         setLoginError(data.error || 'Authentication failed');
@@ -73,6 +90,15 @@ export default function Portal({ onNavigate }) {
       setLoginError('');
       setIsLoggedIn(true);
     }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    localStorage.removeItem('nshs_is_logged_in');
+    localStorage.removeItem('nshs_active_role');
+    localStorage.removeItem('nshs_current_user');
+    localStorage.removeItem('nshs_current_student_id');
   };
 
   // Data Handlers
@@ -126,7 +152,7 @@ export default function Portal({ onNavigate }) {
       const res = await fetch(`${API_URL}/results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, result: newScore }),
+        body: JSON.stringify({ studentId, result: newScore, teacherId: currentUser?._id }),
       });
       if (res.ok) {
         fetchPortalData();
@@ -363,7 +389,7 @@ export default function Portal({ onNavigate }) {
               </div>
 
               <button
-                onClick={() => setIsLoggedIn(false)}
+                onClick={handleLogout}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 flex-shrink-0"
               >
                 <LogOut className="w-3.5 h-3.5 text-red-600" />
@@ -384,6 +410,7 @@ export default function Portal({ onNavigate }) {
             {activeRole === 'teacher' && (
               <TeacherDashboard
                 data={portalData}
+                currentUser={currentUser}
                 onSaveScore={handleSaveScore}
                 onAddAssignment={handleAddAssignment}
                 onUploadMaterial={handleUploadMaterial}
