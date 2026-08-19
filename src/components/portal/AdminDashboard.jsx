@@ -5,7 +5,8 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   const [searchTerm, setSearchTerm] = useState('');
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [newStudent, setNewStudent] = useState({ name: '', class: 'JSS 1', house: 'Red House', guardian: '', guardianPhone: '' });
-  const [msg, setMsg] = useState('');
+  const [noticeMsg, setNoticeMsg] = useState('');
+  const [studentMsg, setStudentMsg] = useState('');
 
   const filteredStudents = data.students.filter(
     (s) =>
@@ -24,12 +25,15 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       content: newNotice.content,
     });
     setNewNotice({ title: '', content: '' });
-    setMsg('Announcement broadcasted to all students, parents, and teachers!');
+    setNoticeMsg('Announcement broadcasted to all students, parents, and teachers!');
+    setTimeout(() => setNoticeMsg(''), 4000);
   };
 
   const handleStudentSubmit = (e) => {
     e.preventDefault();
-    const newId = `NSHS/2024/00${data.students.length + 1}`;
+    const nextNum = data.students.length + 1;
+    const newId = `NSHS/2024/00${nextNum}`;
+    
     onAddStudent({
       id: newId,
       name: newStudent.name,
@@ -39,11 +43,12 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       guardian: newStudent.guardian,
       guardianPhone: newStudent.guardianPhone,
       feeStatus: 'Unpaid',
-      feeAmount: '₦125,000',
+      feeAmount: newStudent.class.startsWith('JSS') ? '₦95,000' : '₦125,000',
       paidAmount: '₦0',
     });
+    setStudentMsg(`Student "${newStudent.name}" registered successfully with ID: ${newId}!`);
     setNewStudent({ name: '', class: 'JSS 1', house: 'Red House', guardian: '', guardianPhone: '' });
-    setMsg(`Student ${newStudent.name} registered successfully with ID ${newId}!`);
+    setTimeout(() => setStudentMsg(''), 5000);
   };
 
   return (
@@ -108,9 +113,9 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
         <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
           <h3 className="font-extrabold text-lg text-[#1B2521]">Broadcast School Announcement</h3>
 
-          {msg && (
+          {noticeMsg && (
             <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800">
-              ✓ {msg}
+              ✓ {noticeMsg}
             </div>
           )}
 
@@ -151,6 +156,12 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
         {/* Register New Student */}
         <div className="lg:col-span-6 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
           <h3 className="font-extrabold text-lg text-[#1B2521]">Register New Student Profile</h3>
+
+          {studentMsg && (
+            <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800">
+              ✓ {studentMsg}
+            </div>
+          )}
 
           <form onSubmit={handleStudentSubmit} className="space-y-3 text-xs">
             <div>
@@ -198,13 +209,25 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Guardian Name & Phone</label>
+              <label className="block font-bold text-gray-700 mb-1">Guardian Full Name</label>
               <input
                 type="text"
                 required
-                placeholder="e.g. Mr. Davies (0802 000 1122)"
+                placeholder="e.g. Mr. Oluwaseun Davies"
                 value={newStudent.guardian}
                 onChange={(e) => setNewStudent({ ...newStudent, guardian: e.target.value })}
+                className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Guardian Phone Number</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. 0802 000 1122"
+                value={newStudent.guardianPhone}
+                onChange={(e) => setNewStudent({ ...newStudent, guardianPhone: e.target.value })}
                 className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
               />
             </div>
