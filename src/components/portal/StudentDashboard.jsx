@@ -31,33 +31,33 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   return (
     <div className="space-y-6">
       {/* Student Profile Card */}
-      <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-green-primary text-white text-xl font-bold flex items-center justify-center">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 w-full">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-primary text-white text-lg sm:text-xl font-bold flex items-center justify-center flex-shrink-0">
             {student.name.split(' ').map((n) => n[0]).join('')}
           </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-[#1B2521]">{student.name}</h2>
-            <p className="text-xs text-gray-500 font-medium">
-              ID: <span className="text-green-primary font-bold">{student.id}</span> · Class: {student.class} · House: {student.house}
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2521] truncate">{student.name}</h2>
+            <p className="text-[11px] sm:text-xs text-gray-500 font-medium leading-normal mt-0.5">
+              ID: <span className="text-green-primary font-bold">{student.id}</span> <span className="hidden sm:inline">·</span> <br className="sm:hidden" /> Class: {student.class} · House: {student.house}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <span className={`px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold ${
             student.feeStatus === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
           }`}>
             Fee Status: {student.feeStatus}
           </span>
-          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+          <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] sm:text-xs font-bold">
             Guardian: {student.guardian}
           </span>
         </div>
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+      <div className="flex overflow-x-auto gap-2 border-b border-gray-200 pb-2 whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
         {[
           { id: 'results', label: '📊 Term Results & Grades' },
           { id: 'timetable', label: '📅 Class Timetable' },
@@ -69,7 +69,7 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 ${
               activeTab === tab.id
                 ? 'bg-green-primary text-white shadow-sm'
                 : 'bg-white border border-gray-200 text-[#55635C] hover:bg-gray-50'

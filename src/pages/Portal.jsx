@@ -137,19 +137,19 @@ export default function Portal({ onNavigate }) {
       />
 
       {/* Standalone Portal Navigation Header */}
-      <header className="relative z-10 max-w-[1280px] w-full mx-auto px-6 py-6 flex justify-between items-center border-b border-emerald-800/60">
+      <header className="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center border-b border-emerald-800/60">
         <button
           onClick={() => onNavigate('home')}
-          className="flex items-center gap-3 text-left focus:outline-none group"
+          className="flex items-center gap-2 sm:gap-3 text-left focus:outline-none group"
         >
-          <div className="w-11 h-11 bg-white rounded-xl p-1.5 flex items-center justify-center shadow-md">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 bg-white rounded-xl p-1 sm:p-1.5 flex items-center justify-center shadow-md">
             <img src="/school-logo.png" alt="New State High School Logo" className="w-full h-full object-contain" />
           </div>
           <div>
-            <div className="font-extrabold text-base tracking-tight text-white group-hover:text-emerald-300 transition-colors">
+            <div className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-emerald-300 transition-colors">
               New State High School
             </div>
-            <div className="text-[10px] tracking-widest uppercase text-emerald-300/80 font-bold">
+            <div className="text-[9px] sm:text-[10px] tracking-widest uppercase text-emerald-300/80 font-bold">
               School Management Portal
             </div>
           </div>
@@ -157,9 +157,10 @@ export default function Portal({ onNavigate }) {
 
         <button
           onClick={() => onNavigate('home')}
-          className="px-4 py-2 rounded-xl text-xs font-bold text-emerald-200 bg-white/10 hover:bg-white/20 border border-white/15 transition-all flex items-center gap-1.5"
+          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-emerald-200 bg-white/10 hover:bg-white/20 border border-white/15 transition-all flex items-center gap-1 sm:gap-1.5"
         >
-          ← Back to Main Website
+          <span className="hidden sm:inline">← Back to Main Website</span>
+          <span className="inline sm:hidden">← Back</span>
         </button>
       </header>
 
@@ -260,20 +261,20 @@ export default function Portal({ onNavigate }) {
         ) : (
           /* LOGGED IN DASHBOARD VIEW */
           <div className="w-full text-[#1B2521] space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-md gap-4">
-              <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-green-primary animate-pulse" />
-                <div>
-                  <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider block">Logged in User</span>
-                  <div className="text-base font-extrabold text-[#1B2521]">
-                    {loginCreds.identifier} · <span className="text-green-primary">{roleConfig[activeRole].badge}</span>
+            <div className="flex justify-between items-center bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-md gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-primary animate-pulse flex-shrink-0" />
+                <div className="min-w-0">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block leading-none mb-1">Logged in User</span>
+                  <div className="text-sm sm:text-base font-extrabold text-[#1B2521] truncate">
+                    {loginCreds.identifier} · <span className="text-green-primary font-bold text-xs sm:text-sm">{roleConfig[activeRole].badge}</span>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setIsLoggedIn(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1 sm:gap-1.5 flex-shrink-0"
               >
                 🔒 Sign Out
               </button>
@@ -281,21 +282,6 @@ export default function Portal({ onNavigate }) {
 
             {activeRole === 'student' && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between bg-white p-3.5 rounded-2xl border border-gray-200 text-xs shadow-sm">
-                  <span className="font-bold text-gray-600">Switch Student Account:</span>
-                  <select
-                    value={currentStudentId}
-                    onChange={(e) => setCurrentStudentId(e.target.value)}
-                    className="font-bold text-green-primary bg-green-50 p-2 rounded-xl outline-none border border-green-200"
-                  >
-                    {portalData.students.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.class})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <StudentDashboard
                   data={portalData}
                   onUploadReceipt={handleUploadReceipt}
