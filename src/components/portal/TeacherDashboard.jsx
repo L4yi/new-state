@@ -131,17 +131,39 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     <div className="space-y-6">
       {/* Teacher Profile Banner */}
       <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-[#1B2521]">{currentUser?.name || 'Mr. Babatunde Ogunlesi'}</h2>
-          <p className="text-xs text-gray-500">
-            {currentUser?.subjectsTaught?.length > 0
-              ? `Subject Specialist: ${currentUser.subjectsTaught.map(s => s.subjectName).filter((value, index, self) => self.indexOf(value) === index).join(' & ')}`
-              : 'School Administrator'}
-            {currentUser?.classAssigned ? ` · ${currentUser.classAssigned} Form Teacher` : ' · Subject Teacher'}
-          </p>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-black text-[#1B2521]">{currentUser?.name || 'Mr. Babatunde Ogunlesi'}</h2>
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[11px] font-bold border border-green-primary/20">
+              {currentUser?.department || 'Faculty Staff'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {currentUser?.classAssigned ? (
+              <span className="px-3 py-1 rounded-lg bg-green-primary text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
+                <Users className="w-3.5 h-3.5" />
+                <span>Class Teacher: {currentUser.classAssigned}</span>
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-lg bg-amber-100 text-amber-900 text-xs font-extrabold flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-amber-800" />
+                <span>Subject Teacher Only (No Form Class)</span>
+              </span>
+            )}
+
+            {currentUser?.subjectsTaught?.length > 0 && (
+              <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-bold border border-emerald-200/60 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Subjects: {currentUser.subjectsTaught.map(s => `${s.subjectName} (${s.className})`).join(' · ')}</span>
+              </span>
+            )}
+          </div>
         </div>
-        <span className="px-3.5 py-1.5 rounded-full bg-green-light text-green-primary text-xs font-bold border border-green-primary/20">
-          Faculty Active
+
+        <span className="px-3.5 py-1.5 rounded-full bg-green-light text-green-primary text-xs font-bold border border-green-primary/20 flex items-center gap-1">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Active Session</span>
         </span>
       </div>
 

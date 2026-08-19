@@ -170,8 +170,70 @@ export const initialPortalData = {
   ],
 
   staff: [
-    { name: 'Dr. O. A. Adeleke', role: 'Principal', department: 'Administration', email: 'principal@newstateschools.org' },
-    { name: 'Mr. Babatunde Ogunlesi', role: 'Head of Science', department: 'Physics & Math', email: 'science@newstateschools.org' },
-    { name: 'Mrs. Folashade Adebayo', role: 'Bursar', department: 'Finance & Accounts', email: 'bursar@newstateschools.org' },
+    {
+      id: 'STF/2024/001',
+      name: 'Mr. Babatunde Ogunlesi',
+      role: 'Head of Science & Form Master',
+      department: 'Mathematics & Physics',
+      email: 'science@newstateschools.org',
+      username: 'teacher',
+      password: '1234',
+      teacherType: 'Class Teacher & Subject Teacher',
+      classAssigned: 'SSS 3 (Science)', // Assigned Form Class
+      subjectsTaught: [
+        { subjectName: 'Mathematics', className: 'SSS 3 (Science)' },
+        { subjectName: 'Physics', className: 'SSS 3 (Science)' },
+        { subjectName: 'Mathematics', className: 'JSS 2' },
+      ],
+    },
+    {
+      id: 'STF/2024/002',
+      name: 'Mrs. Ngozi Eze',
+      role: 'Senior Subject Teacher',
+      department: 'Natural Sciences',
+      email: 'subject.teacher@newstateschools.org',
+      username: 'teacher_subject',
+      password: '1234',
+      teacherType: 'Subject Teacher Only',
+      classAssigned: null, // No Form Class assigned
+      subjectsTaught: [
+        { subjectName: 'Chemistry', className: 'SSS 3 (Science)' },
+        { subjectName: 'Biology', className: 'SSS 3 (Science)' },
+      ],
+    },
+    {
+      id: 'STF/2024/003',
+      name: 'Mr. Emmanuel Adeleke',
+      role: 'Junior Form Master',
+      department: 'Junior Secondary Faculty',
+      email: 'form.master@newstateschools.org',
+      username: 'form_master',
+      password: '1234',
+      teacherType: 'Class Teacher Only',
+      classAssigned: 'JSS 2', // Form Class assigned
+      subjectsTaught: [],
+    },
+    {
+      id: 'STF/2024/004',
+      name: 'Dr. O. A. Adeleke',
+      role: 'Principal',
+      department: 'Administration',
+      email: 'admin',
+      username: 'admin',
+      password: '1234',
+      classAssigned: null,
+      subjectsTaught: [],
+    },
+    {
+      id: 'STF/2024/005',
+      name: 'Mrs. Folashade Adebayo',
+      role: 'Bursar',
+      department: 'Finance & Accounts',
+      email: 'bursar',
+      username: 'bursar',
+      password: '1234',
+      classAssigned: null,
+      subjectsTaught: [],
+    },
   ],
 };

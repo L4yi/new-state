@@ -132,23 +132,12 @@ const paymentsData = [
 
 const staffData = [
   {
-    name: 'Dr. O. A. Adeleke',
-    role: 'Principal',
-    department: 'Administration',
-    email: 'principal@newstateschools.org',
-    password: '1234',
-    classAssigned: null,
-    subjectsTaught: [
-      { subjectName: 'Biology', className: 'SSS 3 (Science)' }
-    ]
-  },
-  {
     name: 'Mr. Babatunde Ogunlesi',
-    role: 'Head of Science',
-    department: 'Physics & Math',
+    role: 'Head of Science & Form Master',
+    department: 'Mathematics & Physics',
     email: 'science@newstateschools.org',
     password: '1234',
-    classAssigned: 'SSS 3 (Science)',
+    classAssigned: 'SSS 3 (Science)', // Class Teacher + Subject Teacher
     subjectsTaught: [
       { subjectName: 'Mathematics', className: 'SSS 3 (Science)' },
       { subjectName: 'Physics', className: 'SSS 3 (Science)' },
@@ -156,16 +145,28 @@ const staffData = [
     ]
   },
   {
-    name: 'Mrs. Folashade Adebayo',
-    role: 'Bursar',
-    department: 'Finance & Accounts',
-    email: 'bursar@newstateschools.org',
+    name: 'Mrs. Ngozi Eze',
+    role: 'Senior Subject Teacher',
+    department: 'Natural Sciences',
+    email: 'subject.teacher@newstateschools.org',
     password: '1234',
-    classAssigned: null,
+    classAssigned: null, // Subject Teacher ONLY (No Class Assigned)
+    subjectsTaught: [
+      { subjectName: 'Chemistry', className: 'SSS 3 (Science)' },
+      { subjectName: 'Biology', className: 'SSS 3 (Science)' }
+    ]
+  },
+  {
+    name: 'Mr. Emmanuel Adeleke',
+    role: 'Junior Form Master',
+    department: 'Junior Secondary Faculty',
+    email: 'form.master@newstateschools.org',
+    password: '1234',
+    classAssigned: 'JSS 2', // Class Teacher ONLY
     subjectsTaught: []
   },
   {
-    name: 'Principal Admin',
+    name: 'Dr. O. A. Adeleke',
     role: 'Principal',
     department: 'Administration',
     email: 'admin',
@@ -174,7 +175,7 @@ const staffData = [
     subjectsTaught: []
   },
   {
-    name: 'Bursar Office',
+    name: 'Mrs. Folashade Adebayo',
     role: 'Bursar',
     department: 'Finance & Accounts',
     email: 'bursar',

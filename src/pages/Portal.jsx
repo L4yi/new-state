@@ -81,12 +81,32 @@ export default function Portal({ onNavigate }) {
           setCurrentStudentId(data.user.id);
           localStorage.setItem('nshs_current_student_id', data.user.id);
         }
+        return;
       } else {
         setLoginError(data.error || 'Authentication failed');
+        return;
       }
     } catch (err) {
-      // Fallback for offline demo mode
-      console.warn('API connection failed, falling back to local session');
+      // Fallback for offline/demo mode
+      console.warn('API unavailable, resolving from local staff database');
+      if (activeRole === 'teacher') {
+        const staffList = portalData?.staff || initialPortalData.staff || [];
+        const found = staffList.find(
+          (s) =>
+            s.email?.toLowerCase() === identifier.toLowerCase() ||
+            s.username?.toLowerCase() === identifier.toLowerCase() ||
+            s.name?.toLowerCase().includes(identifier.toLowerCase())
+        ) || staffList[0];
+
+        setLoginError('');
+        setIsLoggedIn(true);
+        setCurrentUser(found);
+        localStorage.setItem('nshs_is_logged_in', 'true');
+        localStorage.setItem('nshs_active_role', 'teacher');
+        localStorage.setItem('nshs_current_user', JSON.stringify(found));
+        return;
+      }
+
       setLoginError('');
       setIsLoggedIn(true);
     }
@@ -327,6 +347,57 @@ export default function Portal({ onNavigate }) {
                 );
               })}
             </div>
+
+            {/* Quick Demo Teacher Profile Selectors */}
+            {activeRole === 'teacher' && (
+              <div className="bg-[#F0F7F4] p-3.5 rounded-2xl border border-emerald-200/80 mb-5 space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 font-black text-green-primary text-[11px] uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Choose Teacher Demo Persona:</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginCreds({ identifier: 'science@newstateschools.org', password: '1234' });
+                      setLoginError('');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      loginCreds.identifier === 'science@newstateschools.org'
+                        ? 'bg-green-primary text-white border-green-primary shadow-sm'
+                        : 'bg-white border-gray-200 hover:border-green-primary text-[#1B2521]'
+                    }`}
+                  >
+                    <div className="font-bold">Mr. Babatunde Ogunlesi</div>
+                    <div className={`text-[10px] font-semibold mt-0.5 ${
+                      loginCreds.identifier === 'science@newstateschools.org' ? 'text-emerald-100' : 'text-green-primary'
+                    }`}>
+                      Class Teacher (SSS 3) + Subject Teacher (Math & Physics)
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginCreds({ identifier: 'subject.teacher@newstateschools.org', password: '1234' });
+                      setLoginError('');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                      loginCreds.identifier === 'subject.teacher@newstateschools.org'
+                        ? 'bg-green-primary text-white border-green-primary shadow-sm'
+                        : 'bg-white border-gray-200 hover:border-green-primary text-[#1B2521]'
+                    }`}
+                  >
+                    <div className="font-bold">Mrs. Ngozi Eze</div>
+                    <div className={`text-[10px] font-semibold mt-0.5 ${
+                      loginCreds.identifier === 'subject.teacher@newstateschools.org' ? 'text-emerald-100' : 'text-amber-700'
+                    }`}>
+                      Subject Teacher ONLY (Chemistry & Biology)
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {loginError && (
               <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 text-center mb-4 flex items-center justify-center gap-1.5">
