@@ -76,6 +76,9 @@ export default function Portal({ onNavigate }) {
         localStorage.setItem('nshs_is_logged_in', 'true');
         localStorage.setItem('nshs_active_role', activeRole);
         localStorage.setItem('nshs_current_user', JSON.stringify(data.user));
+        if (data.token) {
+          localStorage.setItem('nshs_auth_token', data.token);
+        }
         
         if (activeRole === 'student') {
           setCurrentStudentId(data.user.id);
@@ -119,6 +122,7 @@ export default function Portal({ onNavigate }) {
     localStorage.removeItem('nshs_active_role');
     localStorage.removeItem('nshs_current_user');
     localStorage.removeItem('nshs_current_student_id');
+    localStorage.removeItem('nshs_auth_token');
   };
 
   // Data Handlers

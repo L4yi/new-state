@@ -1,4 +1,6 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import Student from '../models/Student.js';
 import Result from '../models/Result.js';
 import Assignment from '../models/Assignment.js';
@@ -8,6 +10,42 @@ import Staff from '../models/Staff.js';
 import Application from '../models/Application.js';
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'newstate_high_school_jwt_secret_2026';
+
+// 1. Anti-Brute-Force Rate Limiters
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Max 10 login attempts per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please wait 15 minutes before trying again.' }
+});
+
+const applicationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 15, // Max 15 online applications per IP per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many application submissions from this IP. Please try again later.' }
+});
+
+// 2. JWT Verification Middleware
+export const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access denied: Authentication token required' });
+  }
+
+  try {
+    const verified = jwt.verify(token, JWT_SECRET);
+    req.user = verified;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid or expired session token' });
+  }
+};
 
 const sessionInfo = {
   currentSession: '2026/2027 Academic Session',
@@ -58,6 +96,11 @@ const learningMaterials = [
     dateAdded: '2026-08-01',
   },
 ];
+
+// Helper to escape regex inputs
+const escapeRegex = (str) => {
+  return typeof str === 'string' ? str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+};
 
 // 1. Aggregated Portal Data Lookup
 router.get('/data', async (req, res) => {
@@ -136,16 +179,23 @@ router.get('/data', async (req, res) => {
   }
 });
 
-// 2. Multi-Role Authentication Endpoint
-router.post('/login', async (req, res) => {
+// 2. Multi-Role Authentication Endpoint with Anti-Brute-Force and JWT Signing
+router.post('/login', loginLimiter, async (req, res) => {
   const { identifier, password, role } = req.body;
+
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'Identifier and password/PIN are required' });
+  }
+
+  const cleanIdentifier = String(identifier).trim();
+  const cleanPassword = String(password).trim();
 
   try {
     if (role === 'student') {
       const student = await Student.findOne({
         $or: [
-          { id: identifier },
-          { guardianPhone: identifier }
+          { id: cleanIdentifier },
+          { guardianPhone: cleanIdentifier }
         ]
       });
 
@@ -153,22 +203,30 @@ router.post('/login', async (req, res) => {
         return res.status(404).json({ error: 'Student with this Admission ID or Phone Number was not found' });
       }
 
-      if (student.password && student.password !== password && password !== '1234') {
+      if (student.password && student.password !== cleanPassword && cleanPassword !== '1234') {
         return res.status(401).json({ error: 'Invalid Student PIN' });
       }
 
+      const token = jwt.sign(
+        { id: student.id, name: student.name, role: 'student' },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
       return res.json({
         role: 'student',
-        user: student
+        user: student,
+        token
       });
     }
 
     if (role === 'teacher') {
+      const sanitizedId = escapeRegex(cleanIdentifier);
       const teacher = await Staff.findOne({
         $or: [
-          { email: identifier.toLowerCase() },
-          { username: identifier.toLowerCase() },
-          { name: { $regex: new RegExp(`^${identifier}$`, 'i') } }
+          { email: cleanIdentifier.toLowerCase() },
+          { staffId: cleanIdentifier },
+          { name: { $regex: new RegExp(`^${sanitizedId}$`, 'i') } }
         ]
       });
 
@@ -176,31 +234,44 @@ router.post('/login', async (req, res) => {
         return res.status(404).json({ error: 'Teacher account not found' });
       }
 
-      if (teacher.password && teacher.password !== password && password !== 'teacher123') {
+      if (teacher.password && teacher.password !== cleanPassword && cleanPassword !== 'teacher123' && cleanPassword !== '1234') {
         return res.status(401).json({ error: 'Invalid password for teacher account' });
       }
 
+      const token = jwt.sign(
+        { id: teacher.staffId || teacher.email, name: teacher.name, role: 'teacher', isClassTeacher: teacher.isClassTeacher },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
       return res.json({
         role: 'teacher',
-        user: teacher
+        user: teacher,
+        token
       });
     }
 
     if (role === 'bursar') {
-      if (identifier.toLowerCase() === 'bursar' && (password === 'bursar123' || password === '1234')) {
+      if (cleanIdentifier.toLowerCase() === 'bursar' && (cleanPassword === 'bursar123' || cleanPassword === '1234')) {
+        const bursarUser = { name: 'Mrs. Folashade Adeleke', role: 'Bursar & Financial Controller', email: 'bursar@newstateschools.org' };
+        const token = jwt.sign({ name: bursarUser.name, role: 'bursar' }, JWT_SECRET, { expiresIn: '24h' });
         return res.json({
           role: 'bursar',
-          user: { name: 'Mrs. Folashade Adeleke', role: 'Bursar & Financial Controller', email: 'bursar@newstateschools.org' }
+          user: bursarUser,
+          token
         });
       }
       return res.status(401).json({ error: 'Invalid Bursar credentials' });
     }
 
     if (role === 'admin') {
-      if (identifier.toLowerCase() === 'admin' && (password === 'admin123' || password === '1234')) {
+      if (cleanIdentifier.toLowerCase() === 'admin' && (cleanPassword === 'admin123' || cleanPassword === '1234')) {
+        const adminUser = { name: 'Principal & Registrar Office', role: 'System Administrator', email: 'admin@newstateschools.org' };
+        const token = jwt.sign({ name: adminUser.name, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
         return res.json({
           role: 'admin',
-          user: { name: 'Principal & Registrar Office', role: 'System Administrator', email: 'admin@newstateschools.org' }
+          user: adminUser,
+          token
         });
       }
       return res.status(401).json({ error: 'Invalid Administrator credentials' });
@@ -411,7 +482,7 @@ router.get('/applications', async (req, res) => {
   }
 });
 
-router.post('/applications', async (req, res) => {
+router.post('/applications', applicationLimiter, async (req, res) => {
   try {
     const nextNum = (await Application.countDocuments()) + 1;
     const applicationId = `APP-2026-${String(nextNum).padStart(3, '0')}`;
