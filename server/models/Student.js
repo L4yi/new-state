@@ -13,15 +13,57 @@ const studentSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
+    enum: ['Male', 'Female'],
     default: 'Male'
+  },
+  dob: {
+    type: String,
+    default: ''
+  },
+  stateOfOrigin: {
+    type: String,
+    default: 'Lagos'
+  },
+  lga: {
+    type: String,
+    default: 'Mushin'
+  },
+  nationality: {
+    type: String,
+    default: 'Nigerian'
+  },
+  bloodGroup: {
+    type: String,
+    default: 'O+'
+  },
+  genotype: {
+    type: String,
+    default: 'AA'
   },
   class: {
     type: String,
     required: true
   },
+  academicTrack: {
+    type: String,
+    default: 'Science & Technology'
+  },
   house: {
     type: String,
     required: true
+  },
+  boardingStatus: {
+    type: String,
+    enum: ['Day Student', 'Boarding'],
+    default: 'Day Student'
+  },
+  previousSchool: {
+    type: String,
+    default: ''
+  },
+  medicalConditions: {
+    type: String,
+    default: 'None'
   },
   guardian: {
     type: String,
@@ -30,6 +72,18 @@ const studentSchema = new mongoose.Schema({
   guardianPhone: {
     type: String,
     required: true
+  },
+  guardianEmail: {
+    type: String,
+    default: ''
+  },
+  guardianAddress: {
+    type: String,
+    default: ''
+  },
+  emergencyContact: {
+    type: String,
+    default: ''
   },
   feeStatus: {
     type: String,
