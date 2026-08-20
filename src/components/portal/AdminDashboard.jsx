@@ -3,7 +3,7 @@ import {
   Search, Megaphone, UserPlus, Shield, CheckCircle2, Database, Send, Users, User,
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
-  KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode
+  KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock
 } from 'lucide-react';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
@@ -16,13 +16,14 @@ const generateRandomPin = () => {
   return pin;
 };
 
-export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }) {
+export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, onUpdateApplication }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('database'); // 'database', 'register', 'announcements'
+  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'announcements'
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [noticeMsg, setNoticeMsg] = useState('');
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
   const [copiedPin, setCopiedPin] = useState(false);
+  const [selectedApplicationForReview, setSelectedApplicationForReview] = useState(null);
 
   // Intricate Student Registration Form State with Internal Entrance Criteria
   const [studentForm, setStudentForm] = useState({
@@ -73,6 +74,75 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.guardian && s.guardian.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Fallback sample applications if none submitted yet
+  const defaultApplications = [
+    {
+      applicationId: 'APP-2026-081',
+      studentName: 'Chukwuemeka David Adebayo',
+      gender: 'Male',
+      dob: '2011-04-12',
+      currentClass: 'Primary 6',
+      classApplyingFor: 'JSS 1',
+      guardianName: 'Dr. Emeka Adebayo',
+      guardianRelationship: 'Father',
+      primaryPhone: '0803 456 7890',
+      email: 'emeka.adebayo@gmail.com',
+      address: '14 Palm Avenue, Mushin, Lagos',
+      previousSchool: 'St. Jude Model Primary School, Lagos',
+      medicalConditions: 'None',
+      status: 'Pending Review',
+      dateSubmitted: '2026-08-19'
+    },
+    {
+      applicationId: 'APP-2026-082',
+      studentName: 'Amina Fatima Bello',
+      gender: 'Female',
+      dob: '2010-09-24',
+      currentClass: 'JSS 3',
+      classApplyingFor: 'SSS 1 (Science)',
+      guardianName: 'Alhaji Ibrahim Bello',
+      guardianRelationship: 'Father',
+      primaryPhone: '0802 345 6789',
+      email: 'ibrahim.bello@yahoo.com',
+      address: '22 Agege Motor Road, Mushin, Lagos',
+      previousSchool: 'Federal Government College, Lagos',
+      medicalConditions: 'Asthmatic (Mild)',
+      status: 'Pending Review',
+      dateSubmitted: '2026-08-20'
+    },
+    {
+      applicationId: 'APP-2026-083',
+      studentName: 'Blessing Chioma Okafor',
+      gender: 'Female',
+      dob: '2011-02-18',
+      currentClass: 'Primary 6',
+      classApplyingFor: 'JSS 1',
+      guardianName: 'Mrs. Nkechi Okafor',
+      guardianRelationship: 'Mother',
+      primaryPhone: '0813 987 6543',
+      email: 'nkechi.okafor@outlook.com',
+      address: '5 Olateju Street, Mushin, Lagos',
+      previousSchool: 'Grace Children School, Lagos',
+      medicalConditions: 'None',
+      status: 'Pending Review',
+      dateSubmitted: '2026-08-20'
+    }
+  ];
+
+  const applicationsList = (data?.applications && data.applications.length > 0)
+    ? data.applications
+    : defaultApplications;
+
+  const pendingAppsCount = applicationsList.filter(a => a.status === 'Pending Review').length;
+
+  const filteredApplications = applicationsList.filter(
+    (app) =>
+      app.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.applicationId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.classApplyingFor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.guardianName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const nigerianStates = [
@@ -151,6 +221,54 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
 
     onAddStudent(newStudentData);
     setRegisteredStudentSlip(newStudentData);
+
+    // If enrolling an existing online application, update its status
+    if (selectedApplicationForReview && onUpdateApplication) {
+      onUpdateApplication(selectedApplicationForReview.applicationId || selectedApplicationForReview.id, 'Accepted & Enrolled');
+    }
+  };
+
+  const handleReviewAndEnroll = (app) => {
+    setSelectedApplicationForReview(app);
+    const nameParts = (app.studentName || '').trim().split(' ');
+    const surname = nameParts[nameParts.length - 1] || '';
+    const firstName = nameParts[0] || '';
+    const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+    const isJSS = (app.classApplyingFor || 'JSS 1').startsWith('JSS');
+    const track = app.classApplyingFor?.includes('Science') ? 'Science & Technology' :
+                  app.classApplyingFor?.includes('Commercial') ? 'Business & Commercial' :
+                  app.classApplyingFor?.includes('Arts') ? 'Arts & Humanities' : 'Junior Secondary Foundation';
+
+    setStudentForm((prev) => ({
+      ...prev,
+      surname,
+      firstName,
+      middleName,
+      gender: app.gender || 'Male',
+      dob: app.dob || '2010-05-15',
+      priorClass: app.currentClass || 'Primary 6',
+      entryClass: app.classApplyingFor || 'JSS 1',
+      academicTrack: track,
+      guardianName: app.guardianName || app.fatherName || app.motherName || '',
+      guardianRelationship: app.guardianRelationship || 'Father',
+      guardianPhone: app.primaryPhone || '',
+      guardianEmail: app.email || '',
+      guardianAddress: app.address || 'Mushin / Lagos, Nigeria',
+      previousSchool: app.previousSchool || '',
+      medicalConditions: app.medicalConditions || 'None',
+      entranceExamRegNo: `NSHS/EXAM/2026/${Math.floor(100 + Math.random() * 900)}`,
+      entranceExamScore: '85%',
+      portalPin: generateRandomPin(),
+    }));
+
+    setActiveAdminTab('register');
+    setRegisteredStudentSlip(null);
+  };
+
+  const handleDeclineApplication = (appId) => {
+    if (onUpdateApplication) {
+      onUpdateApplication(appId, 'Declined');
+    }
   };
 
   const handleCopyPin = (pinText) => {
@@ -162,6 +280,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   const resetForm = () => {
     setRegisteredStudentSlip(null);
     setCopiedPin(false);
+    setSelectedApplicationForReview(null);
     setStudentForm({
       surname: '',
       firstName: '',
@@ -216,12 +335,32 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage central student registry, entrance admissions, circulars, and institutional records.
+            Manage incoming online applications, student registry, admissions enrollment, and circulars.
           </p>
         </div>
 
         {/* Tab Buttons */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          {/* New Online Applications Tab */}
+          <button
+            onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 relative ${
+              activeAdminTab === 'applications'
+                ? 'bg-green-primary text-white shadow-sm'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Inbox className="w-3.5 h-3.5" />
+            <span>Online Applications</span>
+            {pendingAppsCount > 0 && (
+              <span className={`px-2 py-0.2 rounded-full text-[10px] font-black ${
+                activeAdminTab === 'applications' ? 'bg-amber-400 text-emerald-950' : 'bg-red-500 text-white'
+              }`}>
+                {pendingAppsCount}
+              </span>
+            )}
+          </button>
+
           <button
             onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -235,7 +374,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
           </button>
 
           <button
-            onClick={() => setActiveAdminTab('register')}
+            onClick={() => { setActiveAdminTab('register'); setSelectedApplicationForReview(null); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeAdminTab === 'register'
                 ? 'bg-green-primary text-white shadow-sm'
@@ -260,7 +399,119 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
         </div>
       </div>
 
-      {/* ================= 1. CENTRAL STUDENT REGISTRY DATABASE ================= */}
+      {/* ================= 1. ONLINE ADMISSIONS APPLICATIONS TAB ================= */}
+      {activeAdminTab === 'applications' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-lg text-[#1B2521]">Prospective Student Online Applications</h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
+                  {pendingAppsCount} Pending Review
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Incoming candidate admission forms submitted on the public website. Click "Review & Enroll" to admit student.
+              </p>
+            </div>
+
+            <div className="relative w-full sm:w-72">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search applicant name, class, phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
+                  <th className="p-3">App Reference</th>
+                  <th className="p-3">Applicant Full Name</th>
+                  <th className="p-3">Class Applying For</th>
+                  <th className="p-3">Prior Class & School</th>
+                  <th className="p-3">Primary Guardian Contact</th>
+                  <th className="p-3">Date Applied</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="p-8 text-center text-gray-400 italic">
+                      No online student applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredApplications.map((app) => (
+                    <tr key={app.applicationId || app.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="p-3 font-mono font-bold text-green-primary">{app.applicationId || app.id}</td>
+                      <td className="p-3">
+                        <div className="font-extrabold text-[#1B2521] uppercase text-xs">{app.studentName}</div>
+                        <div className="text-[10px] text-gray-400 font-medium">{app.gender || 'Male'} · DOB: {app.dob || 'N/A'}</div>
+                      </td>
+                      <td className="p-3">
+                        <span className="font-black text-[#06452C] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {app.classApplyingFor}
+                        </span>
+                      </td>
+                      <td className="p-3 text-gray-700">
+                        <div className="font-bold text-[#1B2521]">{app.currentClass || 'Primary 6'}</div>
+                        <div className="text-[10px] text-gray-400 truncate max-w-[140px]">{app.previousSchool || 'Crown Primary'}</div>
+                      </td>
+                      <td className="p-3 text-gray-600">
+                        <div className="font-bold text-[#1B2521]">{app.guardianName || app.fatherName}</div>
+                        <div className="text-[10px] text-green-primary font-mono font-semibold">{app.primaryPhone}</div>
+                      </td>
+                      <td className="p-3 text-gray-500 font-mono text-[11px]">{app.dateSubmitted || '2026-08-20'}</td>
+                      <td className="p-3">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                          app.status === 'Accepted & Enrolled' ? 'bg-green-100 text-green-800' :
+                          app.status === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900 animate-pulse'
+                        }`}>
+                          {app.status || 'Pending Review'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right space-x-2">
+                        {app.status === 'Accepted & Enrolled' ? (
+                          <span className="text-[11px] font-bold text-green-primary inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled
+                          </span>
+                        ) : (
+                          <div className="inline-flex gap-1.5">
+                            <button
+                              onClick={() => handleReviewAndEnroll(app)}
+                              className="px-3 py-1.5 rounded-lg bg-green-primary hover:bg-green-dark text-white font-black text-[11px] transition-all flex items-center gap-1 shadow-sm"
+                            >
+                              <span>Review & Enroll</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeclineApplication(app.applicationId || app.id)}
+                              className="px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all text-[11px]"
+                              title="Decline Application"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 2. CENTRAL STUDENT REGISTRY DATABASE ================= */}
       {activeAdminTab === 'database' && (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -337,7 +588,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
         </div>
       )}
 
-      {/* ================= 2. INTRICATE NEW STUDENT ADMISSIONS DOSSIER ================= */}
+      {/* ================= 3. INTRICATE NEW STUDENT ADMISSIONS DOSSIER ================= */}
       {activeAdminTab === 'register' && (
         <div className="bg-white rounded-3xl p-4 sm:p-8 border border-gray-200 shadow-sm space-y-6">
           {registeredStudentSlip ? (
@@ -370,10 +621,10 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                     + Register Another
                   </button>
                   <button
-                    onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
+                    onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
                     className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
                   >
-                    Registry →
+                    View Applications →
                   </button>
                 </div>
               </div>
@@ -656,9 +907,11 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                   <UserPlus className="w-4 h-4" />
                   <span>Student Admissions Dossier & Registry Form (Internal Entrance Standard)</span>
                 </div>
-                <h3 className="text-2xl font-black text-[#1B2521] mt-1">Intricate Student Enrollment</h3>
+                <h3 className="text-2xl font-black text-[#1B2521] mt-1">
+                  {selectedApplicationForReview ? `Enroll Applicant: ${selectedApplicationForReview.studentName}` : 'Intricate Student Enrollment'}
+                </h3>
                 <p className="text-xs text-gray-500">
-                  Complete student personal bio-data, internal entrance exam scores, prior class, entry class, parental records, and medical profile.
+                  {selectedApplicationForReview ? 'Pre-filled from online admissions application. Set screening score and allocate class arm.' : 'Complete student personal bio-data, internal entrance exam scores, prior class, entry class, parental records, and medical profile.'}
                 </p>
               </div>
 
@@ -1194,7 +1447,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
         </div>
       )}
 
-      {/* ================= 3. BROADCAST ANNOUNCEMENTS ================= */}
+      {/* ================= 4. BROADCAST ANNOUNCEMENTS ================= */}
       {activeAdminTab === 'announcements' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-6 max-w-2xl mx-auto">
           <div className="border-b border-gray-200 pb-4">

@@ -235,6 +235,30 @@ export default function Portal({ onNavigate }) {
     }
   };
 
+  const handleUpdateApplication = async (applicationId, status) => {
+    try {
+      const res = await fetch(`${API_URL}/applications/${applicationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to update application status:', err);
+    }
+
+    // Update local state immediately as well
+    setPortalData((prev) => {
+      const existing = prev.applications || [];
+      const updated = existing.map(app => (app.applicationId === applicationId || app.id === applicationId) ? { ...app, status } : app);
+      const nextState = { ...prev, applications: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+  };
+
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -501,6 +525,7 @@ export default function Portal({ onNavigate }) {
                 data={portalData}
                 onAddAnnouncement={handleAddAnnouncement}
                 onAddStudent={handleAddStudent}
+                onUpdateApplication={handleUpdateApplication}
               />
             )}
           </div>
