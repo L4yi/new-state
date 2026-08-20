@@ -488,34 +488,34 @@ export default function AdminDashboard({
   return (
     <div className="space-y-6">
       {/* Top Admin Summary Bar & Tab Navigation */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
+      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 print:hidden">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-[#1B2521]">Principal & Registrar Control Center</h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] font-extrabold border border-green-primary/20">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl sm:text-2xl font-black text-[#1B2521] tracking-tight">Principal & Registrar Control Center</h2>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-green-primary text-[11px] font-extrabold border border-emerald-200">
               Admin Level 1
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 mt-1">
             Manage incoming online applications, student registry, teacher class assignments, and circulars.
           </p>
         </div>
 
         {/* Tab Buttons */}
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 w-full xl:w-auto">
           {/* Online Applications Tab */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 relative ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 relative ${
               activeAdminTab === 'applications'
-                ? 'bg-green-primary text-white shadow-sm'
+                ? 'bg-green-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Inbox className="w-3.5 h-3.5" />
+            <Inbox className="w-4 h-4" />
             <span>Online Applications</span>
             {pendingAppsCount > 0 && (
-              <span className={`px-2 py-0.2 rounded-full text-[10px] font-black ${
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black leading-none ${
                 activeAdminTab === 'applications' ? 'bg-amber-400 text-emerald-950' : 'bg-red-500 text-white'
               }`}>
                 {pendingAppsCount}
@@ -525,50 +525,50 @@ export default function AdminDashboard({
 
           <button
             onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeAdminTab === 'database'
-                ? 'bg-green-primary text-white shadow-sm'
+                ? 'bg-green-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Database className="w-3.5 h-3.5" />
+            <Database className="w-4 h-4" />
             <span>Student Registry ({studentsList.length})</span>
           </button>
 
           <button
             onClick={() => { setActiveAdminTab('register'); setSelectedApplicationForReview(null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeAdminTab === 'register'
-                ? 'bg-green-primary text-white shadow-sm'
+                ? 'bg-green-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
+            <UserPlus className="w-4 h-4" />
             <span>Admissions & Enrollment</span>
           </button>
 
-          {/* New Teachers & Staff Tab */}
+          {/* Teachers & Staff Tab */}
           <button
             onClick={() => { setActiveAdminTab('staff'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeAdminTab === 'staff'
-                ? 'bg-green-primary text-white shadow-sm'
+                ? 'bg-green-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Briefcase className="w-3.5 h-3.5" />
+            <Briefcase className="w-4 h-4" />
             <span>Teachers & Staff ({staffList.length})</span>
           </button>
 
           <button
             onClick={() => { setActiveAdminTab('announcements'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               activeAdminTab === 'announcements'
-                ? 'bg-green-primary text-white shadow-sm'
+                ? 'bg-green-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            <Megaphone className="w-3.5 h-3.5" />
+            <Megaphone className="w-4 h-4" />
             <span>Broadcast Notices</span>
           </button>
         </div>
@@ -576,16 +576,16 @@ export default function AdminDashboard({
 
       {/* ================= 1. ONLINE ADMISSIONS APPLICATIONS TAB ================= */}
       {activeAdminTab === 'applications' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <h3 className="font-extrabold text-lg text-[#1B2521]">Prospective Student Online Applications</h3>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
                   {pendingAppsCount} Pending Review
                 </span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Incoming candidate admission forms submitted on the public website. Click "Review & Enroll" to admit student.
               </p>
             </div>
@@ -594,7 +594,7 @@ export default function AdminDashboard({
               <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search applicant name, class, phone..."
+                placeholder="Search applicant, class, phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
@@ -602,18 +602,18 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-200/80">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
-                  <th className="p-3">App Reference</th>
-                  <th className="p-3">Applicant Full Name</th>
-                  <th className="p-3">Class Applying For</th>
-                  <th className="p-3">Prior Class & School</th>
-                  <th className="p-3">Primary Guardian Contact</th>
-                  <th className="p-3">Date Applied</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Actions</th>
+                <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                  <th className="py-3.5 px-4 whitespace-nowrap">App Reference</th>
+                  <th className="py-3.5 px-4">Applicant Full Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Class Applying For</th>
+                  <th className="py-3.5 px-4">Prior Class & School</th>
+                  <th className="py-3.5 px-4">Primary Guardian Contact</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Date Applied</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -626,53 +626,61 @@ export default function AdminDashboard({
                 ) : (
                   filteredApplications.map((app) => (
                     <tr key={app.applicationId || app.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="p-3 font-mono font-bold text-green-primary">{app.applicationId || app.id}</td>
-                      <td className="p-3">
-                        <div className="font-extrabold text-[#1B2521] uppercase text-xs">{app.studentName}</div>
-                        <div className="text-[10px] text-gray-400 font-medium">{app.gender || 'Male'} · DOB: {app.dob || 'N/A'}</div>
+                      <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">
+                        {app.applicationId || app.id}
                       </td>
-                      <td className="p-3">
-                        <span className="font-black text-[#06452C] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <td className="py-4 px-4">
+                        <div className="font-extrabold text-[#1B2521] uppercase text-xs tracking-tight">
+                          {app.studentName}
+                        </div>
+                        <div className="text-[11px] text-gray-400 font-medium mt-0.5">
+                          {app.gender || 'Male'} · DOB: {app.dob || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="inline-block font-extrabold text-[#06452C] bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 text-xs">
                           {app.classApplyingFor}
                         </span>
                       </td>
-                      <td className="p-3 text-gray-700">
-                        <div className="font-bold text-[#1B2521]">{app.currentClass || 'Primary 6'}</div>
-                        <div className="text-[10px] text-gray-400 truncate max-w-[140px]">{app.previousSchool || 'Crown Primary'}</div>
+                      <td className="py-4 px-4 text-gray-700">
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app.currentClass || 'Primary 6'}</div>
+                        <div className="text-[11px] text-gray-400 truncate max-w-[160px] leading-snug mt-0.5">{app.previousSchool || 'Crown Primary'}</div>
                       </td>
-                      <td className="p-3 text-gray-600">
-                        <div className="font-bold text-[#1B2521]">{app.guardianName || app.fatherName}</div>
-                        <div className="text-[10px] text-green-primary font-mono font-semibold">{app.primaryPhone}</div>
+                      <td className="py-4 px-4 text-gray-600">
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app.guardianName || app.fatherName}</div>
+                        <div className="text-[11px] text-green-primary font-mono font-bold leading-snug mt-0.5">{app.primaryPhone}</div>
                       </td>
-                      <td className="p-3 text-gray-500 font-mono text-[11px]">{app.dateSubmitted || '2026-08-20'}</td>
-                      <td className="p-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                      <td className="py-4 px-4 text-gray-500 font-mono text-xs whitespace-nowrap">
+                        {app.dateSubmitted || '2026-08-20'}
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-black tracking-wide ${
                           app.status === 'Accepted & Enrolled' ? 'bg-green-100 text-green-800' :
-                          app.status === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900 animate-pulse'
+                          app.status === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
                         }`}>
                           {app.status || 'Pending Review'}
                         </span>
                       </td>
-                      <td className="p-3 text-right space-x-2">
+                      <td className="py-4 px-4 text-right whitespace-nowrap space-x-2">
                         {app.status === 'Accepted & Enrolled' ? (
-                          <span className="text-[11px] font-bold text-green-primary inline-flex items-center gap-1">
+                          <span className="text-xs font-bold text-green-primary inline-flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled
                           </span>
                         ) : (
-                          <div className="inline-flex gap-1.5">
+                          <div className="inline-flex gap-2 items-center">
                             <button
                               onClick={() => handleReviewAndEnroll(app)}
-                              className="px-3 py-1.5 rounded-lg bg-green-primary hover:bg-green-dark text-white font-black text-[11px] transition-all flex items-center gap-1 shadow-sm"
+                              className="px-3.5 py-2 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm"
                             >
                               <span>Review & Enroll</span>
-                              <ArrowRight className="w-3 h-3" />
+                              <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeclineApplication(app.applicationId || app.id)}
-                              className="px-2 py-1.5 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 transition-all text-[11px]"
+                              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all flex items-center justify-center"
                               title="Decline Application"
                             >
-                              <XCircle className="w-3.5 h-3.5" />
+                              <XCircle className="w-4 h-4" />
                             </button>
                           </div>
                         )}
@@ -707,50 +715,50 @@ export default function AdminDashboard({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-200/80">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
-                  <th className="p-3">Admission ID</th>
-                  <th className="p-3">Student Name</th>
-                  <th className="p-3">Class & Arm</th>
-                  <th className="p-3">House Allocation</th>
-                  <th className="p-3">Primary Guardian Contact</th>
-                  <th className="p-3">Tuition Status</th>
-                  <th className="p-3 text-right">Student Portal PIN</th>
+                <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Admission ID</th>
+                  <th className="py-3.5 px-4">Student Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Class & Arm</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">House Allocation</th>
+                  <th className="py-3.5 px-4">Primary Guardian Contact</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Tuition Status</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Student Portal PIN</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-6 text-center text-gray-400 italic">
+                    <td colSpan="7" className="p-8 text-center text-gray-400 italic">
                       No student records match your query.
                     </td>
                   </tr>
                 ) : (
                   filteredStudents.map((s) => (
                     <tr key={s.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="p-3 font-mono font-bold text-green-primary">{s.id}</td>
-                      <td className="p-3 font-extrabold text-[#1B2521]">{s.name}</td>
-                      <td className="p-3">
-                        <span className="font-semibold text-gray-800">{s.class}</span>
-                        {s.academicTrack && <span className="block text-[10px] text-gray-400">{s.academicTrack}</span>}
+                      <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{s.id}</td>
+                      <td className="py-4 px-4 font-extrabold text-[#1B2521] text-xs">{s.name}</td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="font-bold text-gray-800 text-xs">{s.class}</span>
+                        {s.academicTrack && <span className="block text-[11px] text-gray-400 font-medium">{s.academicTrack}</span>}
                       </td>
-                      <td className="p-3 text-gray-700 font-medium">{s.house}</td>
-                      <td className="p-3 text-gray-600">
-                        <div className="font-bold text-[#1B2521]">{s.guardian}</div>
-                        <div className="text-[10px] text-gray-400">{s.guardianPhone}</div>
+                      <td className="py-4 px-4 text-gray-700 font-medium whitespace-nowrap">{s.house}</td>
+                      <td className="py-4 px-4 text-gray-600">
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{s.guardian}</div>
+                        <div className="text-[11px] text-gray-400 font-mono leading-snug mt-0.5">{s.guardianPhone}</div>
                       </td>
-                      <td className="p-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-black tracking-wide ${
                           s.feeStatus === 'Approved' ? 'bg-green-100 text-green-800' :
-                          s.feeStatus === 'Pending' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                          s.feeStatus === 'Pending' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
                         }`}>
                           {s.feeStatus} ({s.feeAmount})
                         </span>
                       </td>
-                      <td className="p-3 text-right">
-                        <span className="font-mono font-bold text-xs bg-emerald-50 text-green-primary px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm">
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
+                        <span className="font-mono font-bold text-xs bg-emerald-50 text-green-primary px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm inline-block">
                           {s.password || '1234'}
                         </span>
                       </td>
@@ -1666,32 +1674,32 @@ export default function AdminDashboard({
             </div>
           )}
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-200/80">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
-                  <th className="p-3">Staff ID</th>
-                  <th className="p-3">Teacher Full Name</th>
-                  <th className="p-3">Department</th>
-                  <th className="p-3">Subjects Taught</th>
-                  <th className="p-3">Class Teacher Assignment (Form Master)</th>
-                  <th className="p-3 text-right">Access Status</th>
+                <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Staff ID</th>
+                  <th className="py-3.5 px-4">Teacher Full Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Department</th>
+                  <th className="py-3.5 px-4">Subjects Taught</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Class Teacher Assignment (Form Master)</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Access Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredStaff.map((teacher) => (
-                  <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="p-3 font-mono font-bold text-green-primary">{teacher.staffId || 'STF/2026/001'}</td>
-                    <td className="p-3">
+                  <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{teacher.staffId || 'STF/2026/001'}</td>
+                    <td className="py-4 px-4">
                       <div className="font-extrabold text-[#1B2521] text-xs">{teacher.name}</div>
-                      <div className="text-[10px] text-gray-400 font-medium">{teacher.email} · {teacher.phone}</div>
+                      <div className="text-[11px] text-gray-400 font-medium mt-0.5">{teacher.email} · {teacher.phone}</div>
                     </td>
-                    <td className="p-3 font-semibold text-gray-700">{teacher.department || 'Academics'}</td>
-                    <td className="p-3">
+                    <td className="py-4 px-4 font-semibold text-gray-700 whitespace-nowrap">{teacher.department || 'Academics'}</td>
+                    <td className="py-4 px-4">
                       {teacher.subjectsTaught && teacher.subjectsTaught.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {teacher.subjectsTaught.map((st, i) => (
-                            <span key={i} className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium">
+                            <span key={i} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 text-[11px] font-semibold border border-gray-200">
                               {st.subjectName} ({st.className})
                             </span>
                           ))}
@@ -1700,14 +1708,14 @@ export default function AdminDashboard({
                         <span className="text-gray-400 italic">General Subject Teacher</span>
                       )}
                     </td>
-                    <td className="p-3">
+                    <td className="py-4 px-4 whitespace-nowrap">
                       <select
                         value={teacher.classAssigned || 'None (Subject Teacher Only)'}
                         onChange={(e) => handleClassAssignmentChange(teacher, e.target.value)}
-                        className={`p-2 rounded-xl text-xs font-black border transition-all focus:outline-none ${
+                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all focus:outline-none ${
                           teacher.classAssigned
-                            ? 'bg-emerald-50 text-[#06452C] border-emerald-300'
-                            : 'bg-[#FAFCFA] text-gray-600 border-gray-200'
+                            ? 'bg-emerald-50 text-[#06452C] border-emerald-300 shadow-sm'
+                            : 'bg-[#FAFCFA] text-gray-700 border-gray-200'
                         }`}
                       >
                         {availableClassArms.map((cls) => (
@@ -1717,8 +1725,8 @@ export default function AdminDashboard({
                         ))}
                       </select>
                     </td>
-                    <td className="p-3 text-right">
-                      <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-black">
+                    <td className="py-4 px-4 text-right whitespace-nowrap">
+                      <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-black">
                         Active Teacher
                       </span>
                     </td>
