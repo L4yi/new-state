@@ -20,3 +20,87 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* =========================================================
+   GLOBAL PRINT ISOLATION ENGINE
+   Ensures ONLY the active Report Sheet or Admission Slip
+   is printed, with zero background web page chrome or navbars.
+   ========================================================= */
+@media print {
+  /* Page layout: Standard A4 portrait with clean margins */
+  @page {
+    size: A4 portrait;
+    margin: 8mm 8mm;
+  }
+
+  /* Force browsers to print exact colors, background banners & borders */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide everything on the page by default */
+  html, body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Explicitly hide all navbars, footers, sidebars, buttons, and modals backdrops */
+  nav,
+  footer,
+  header,
+  aside,
+  button,
+  .print\:hidden,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Reveal ONLY the active printable document container and its contents */
+  #printable-admission-slip,
+  #printable-admission-slip *,
+  #printable-report-sheet,
+  #printable-report-sheet * {
+    visibility: visible !important;
+  }
+
+  /* Pin the printable container to the exact top-left corner of the page */
+  #printable-admission-slip,
+  #printable-report-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #FFFFFF !important;
+    display: block !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Remove any modal overlays, scrollbars or black backgrounds */
+  .fixed,
+  .overflow-y-auto {
+    position: static !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+}

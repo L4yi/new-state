@@ -47,7 +47,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
       {/* Report Sheet Container */}
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
         
@@ -83,10 +83,17 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
         </div>
 
         {/* ================= Printable Nigerian Terminal Sheet ================= */}
-        <div id="printable-report-sheet" className="p-6 sm:p-10 text-[#1B2521] space-y-5 bg-white print:p-4 print:m-0 print:text-black">
+        <div id="printable-report-sheet" className="p-6 sm:p-10 text-[#1B2521] space-y-5 bg-[#FCFCFA] print:p-0 print:m-0 print:text-black relative overflow-hidden">
           
+          {/* Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+            <span className="font-serif font-black text-8xl sm:text-9xl text-emerald-950 rotate-[-30deg] tracking-widest uppercase">
+              NEW STATE
+            </span>
+          </div>
+
           {/* 1. Official Header & Heraldry */}
-          <div className="border-b-2 border-[#06452C] pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="border-b-2 border-[#06452C] pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left relative z-10">
             <div className="w-24 h-24 p-2 bg-emerald-50 rounded-2xl border-2 border-emerald-300/80 flex-shrink-0 flex items-center justify-center shadow-sm">
               <img src="/school-logo.png" alt="School Crest Logo" className="w-full h-full object-contain" />
             </div>
@@ -121,7 +128,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
           </div>
 
           {/* 2. Comprehensive Student Bio-Data & Attendance Grid */}
-          <div className="bg-[#F8FAFA] rounded-2xl p-4 border border-gray-300 space-y-3 text-xs">
+          <div className="bg-white rounded-2xl p-4 border border-gray-300 space-y-3 text-xs relative z-10 shadow-sm">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block">Student Full Name</span>
@@ -152,7 +159,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
 
               <div>
                 <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block">Blood Group & Genotype</span>
-                <span className="font-semibold text-gray-800">O+ · AA</span>
+                <span className="font-semibold text-gray-800">{student.bloodGroup || 'O+'} · {student.genotype || 'AA'}</span>
               </div>
 
               <div>
@@ -178,7 +185,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
           </div>
 
           {/* 3. Cognitive Domain Assessment Ledger */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative z-10">
             <div className="flex justify-between items-center">
               <h3 className="font-black text-xs uppercase tracking-wider text-[#06452C] flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-[#06452C]" />
@@ -187,7 +194,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
               <span className="text-[10px] font-bold text-gray-500">Subjects Recorded: {results.length}</span>
             </div>
 
-            <div className="overflow-x-auto border-2 border-gray-300 rounded-xl">
+            <div className="overflow-x-auto border-2 border-gray-300 rounded-xl bg-white">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-[#06452C] text-white font-black border-b border-gray-300 text-[10px] uppercase">
@@ -244,9 +251,9 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
           </div>
 
           {/* 4. Dual Matrix: Affective + Psychomotor Domains */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs relative z-10">
             {/* Affective Character Assessment */}
-            <div className="p-3.5 rounded-xl border border-gray-300 bg-[#FAFCFA] space-y-2">
+            <div className="p-3.5 rounded-xl border border-gray-300 bg-white space-y-2 shadow-sm">
               <h4 className="font-black text-[10px] text-[#06452C] uppercase tracking-wider flex items-center justify-between border-b border-gray-200 pb-1">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-[#06452C]" />
@@ -266,7 +273,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
             </div>
 
             {/* Psychomotor Skills Assessment */}
-            <div className="p-3.5 rounded-xl border border-gray-300 bg-[#FAFCFA] space-y-2">
+            <div className="p-3.5 rounded-xl border border-gray-300 bg-white space-y-2 shadow-sm">
               <h4 className="font-black text-[10px] text-[#06452C] uppercase tracking-wider flex items-center justify-between border-b border-gray-200 pb-1">
                 <span className="flex items-center gap-1">
                   <Award className="w-3 h-3 text-[#06452C]" />
@@ -296,7 +303,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
           </div>
 
           {/* 5. WAEC/NECO Grade Scale & Academic Summary */}
-          <div className="p-3 rounded-xl border border-gray-300 bg-gray-50 text-[10px] grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center font-bold">
+          <div className="p-3 rounded-xl border border-gray-300 bg-white text-[10px] grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center font-bold relative z-10 shadow-sm">
             <div className="p-1 rounded bg-green-100 text-green-900 border border-green-300">75-100% : A1 (Distinction)</div>
             <div className="p-1 rounded bg-blue-100 text-blue-900 border border-blue-300">70-74% : B2 (Very Good)</div>
             <div className="p-1 rounded bg-blue-100 text-blue-900 border border-blue-300">65-69% : B3 (Good)</div>
@@ -306,39 +313,46 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
           </div>
 
           {/* 6. Form Teacher's & Principal's Endorsements with Official Stamp */}
-          <div className="border-t-2 border-gray-300 pt-3 space-y-3 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="border-t-2 border-gray-300 pt-3 space-y-3 text-xs relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               
               {/* Form Teacher Box */}
-              <div className="p-3 rounded-xl border border-gray-300 bg-[#FAFCFA] space-y-1.5">
+              <div className="p-3 rounded-xl border border-gray-300 bg-white space-y-1.5 shadow-sm">
                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
-                  Form Teacher's Detailed Remark & Sign-off
+                  Form Teacher's Sign-off
                 </span>
                 <p className="font-semibold italic text-[#1B2521] text-[11px] leading-relaxed">
-                  "Adewale has demonstrated outstanding academic mastery across all subjects. He is exceptionally disciplined, cooperative, and a worthy class leader."
+                  "Outstanding academic mastery across all subjects. Highly disciplined and a worthy class leader."
                 </p>
                 <div className="pt-1 flex justify-between items-center text-[10px] text-gray-500 border-t border-gray-200">
-                  <span className="font-bold text-gray-800">Mr. Babatunde Ogunlesi</span>
+                  <span className="font-bold text-gray-800">Mr. B. Ogunlesi</span>
                   <span className="font-serif italic font-black text-green-primary text-xs underline">B. Ogunlesi</span>
                 </div>
               </div>
 
+              {/* Official Institutional Stamp */}
+              <div className="flex justify-center">
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-emerald-800 flex flex-col items-center justify-center text-center p-1 transform -rotate-6 text-[#06452C] bg-emerald-50/60 shadow-sm">
+                  <ShieldCheck className="w-4 h-4 text-[#06452C]" />
+                  <span className="text-[8px] font-black tracking-tighter uppercase leading-none mt-0.5">NEW STATE HIGH SCHOOL</span>
+                  <span className="text-[7px] font-bold text-red-700 tracking-widest my-0.5 font-mono">★ CERTIFIED ★</span>
+                  <span className="text-[7px] font-extrabold uppercase leading-none">ACADEMIC BOARD</span>
+                </div>
+              </div>
+
               {/* Principal Box */}
-              <div className="p-3 rounded-xl border border-gray-300 bg-[#FAFCFA] space-y-1.5">
+              <div className="p-3 rounded-xl border border-gray-300 bg-white space-y-1.5 shadow-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                    Principal's General Remark & Stamp
+                    Principal's Remark
                   </span>
-                  <div className="inline-flex items-center gap-1 font-black text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 text-[9px] uppercase tracking-widest">
-                    <CheckCircle2 className="w-2.5 h-2.5 text-green-primary" />
-                    <span>Official School Seal</span>
-                  </div>
+                  <span className="text-[9px] font-bold text-green-primary">★ Promoted</span>
                 </div>
                 <p className="font-semibold italic text-[#1B2521] text-[11px] leading-relaxed">
-                  "A brilliant terminal performance. Promoted with Distinction to the next academic level. Keep the school banner flying high."
+                  "Brilliant performance. Promoted with Distinction to the next academic level."
                 </p>
                 <div className="pt-1 flex justify-between items-center text-[10px] text-gray-500 border-t border-gray-200">
-                  <span className="font-bold text-gray-800">Dr. O. A. Adeleke (Ph.D, M.Ed)</span>
+                  <span className="font-bold text-gray-800">Dr. O. A. Adeleke</span>
                   <span className="font-serif italic font-black text-[#06452C] text-xs underline">O.A. Adeleke</span>
                 </div>
               </div>
