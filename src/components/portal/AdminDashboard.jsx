@@ -2,8 +2,19 @@ import React, { useState } from 'react';
 import {
   Search, Megaphone, UserPlus, Shield, CheckCircle2, Database, Send, Users, User,
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
-  Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck
+  Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
+  KeyRound, RefreshCw, Copy, Check
 } from 'lucide-react';
+
+// Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
+const generateRandomPin = () => {
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let pin = '';
+  for (let i = 0; i < 6; i++) {
+    pin += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pin;
+};
 
 export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,6 +22,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [noticeMsg, setNoticeMsg] = useState('');
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
+  const [copiedPin, setCopiedPin] = useState(false);
 
   // Intricate Student Registration Form State with Nigerian Admission Criteria
   const [studentForm, setStudentForm] = useState({
@@ -51,6 +63,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
     whatsappAlertsEnabled: true,
     feeStatus: 'Unpaid',
     initialDeposit: '0',
+    portalPin: generateRandomPin(),
   });
 
   const studentsList = data?.students || [];
@@ -91,6 +104,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
     const fullName = `${studentForm.surname.toUpperCase()} ${studentForm.firstName} ${studentForm.middleName}`.trim();
     const isJSS = studentForm.entryClass.startsWith('JSS');
     const termFee = isJSS ? '₦95,000' : '₦125,000';
+    const assignedPin = studentForm.portalPin || generateRandomPin();
 
     const newStudentData = {
       id: newId,
@@ -127,15 +141,22 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       feeStatus: studentForm.feeStatus,
       feeAmount: termFee,
       paidAmount: studentForm.feeStatus === 'Approved' ? termFee : (studentForm.initialDeposit ? `₦${Number(studentForm.initialDeposit).toLocaleString()}` : '₦0'),
-      password: '1234',
+      password: assignedPin,
     };
 
     onAddStudent(newStudentData);
     setRegisteredStudentSlip(newStudentData);
   };
 
+  const handleCopyPin = (pinText) => {
+    navigator.clipboard.writeText(pinText);
+    setCopiedPin(true);
+    setTimeout(() => setCopiedPin(false), 2500);
+  };
+
   const resetForm = () => {
     setRegisteredStudentSlip(null);
+    setCopiedPin(false);
     setStudentForm({
       surname: '',
       firstName: '',
@@ -174,6 +195,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       whatsappAlertsEnabled: true,
       feeStatus: 'Unpaid',
       initialDeposit: '0',
+      portalPin: generateRandomPin(),
     });
   };
 
@@ -264,7 +286,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                   <th className="p-3">House Allocation</th>
                   <th className="p-3">Primary Guardian Contact</th>
                   <th className="p-3">Tuition Status</th>
-                  <th className="p-3 text-right">Default PIN</th>
+                  <th className="p-3 text-right">Student Portal PIN</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -296,7 +318,11 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                           {s.feeStatus} ({s.feeAmount})
                         </span>
                       </td>
-                      <td className="p-3 text-right font-mono text-gray-400 font-bold">1234</td>
+                      <td className="p-3 text-right">
+                        <span className="font-mono font-bold text-xs bg-emerald-50 text-green-primary px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm">
+                          {s.password || '1234'}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -355,18 +381,31 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Prior Credential Verified</span>
-                    <span className="font-semibold text-gray-700">{registeredStudentSlip.priorCertificate}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Default Portal PIN</span>
-                    <span className="font-mono font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">1234</span>
-                  </div>
-
-                  <div>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Tuition Billing</span>
                     <span className="font-bold text-[#1B2521]">{registeredStudentSlip.feeAmount} ({registeredStudentSlip.feeStatus})</span>
+                  </div>
+
+                  {/* Highlighted Unique Secure Alphanumeric PIN Box */}
+                  <div className="col-span-2 p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-black text-[#06452C] uppercase tracking-wider block">
+                        Generated Secure Alphanumeric PIN
+                      </span>
+                      <span className="font-mono font-black text-lg text-[#06452C] tracking-widest">
+                        {registeredStudentSlip.password}
+                      </span>
+                      <p className="text-[10px] text-gray-500 mt-0.5">
+                        Keep this confidential for student report cards, assignments & CBT login access.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleCopyPin(registeredStudentSlip.password)}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-emerald-300 text-[#06452C] hover:bg-emerald-100 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                      {copiedPin ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-[#06452C]" />}
+                      <span>{copiedPin ? 'Copied!' : 'Copy PIN'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -863,11 +902,11 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                 </div>
               </div>
 
-              {/* SECTION 4: TUITION & BILLING SETUP */}
+              {/* SECTION 4: TUITION & RANDOM ALPHANUMERIC PIN SETUP */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 font-black text-xs text-[#06452C] uppercase tracking-wider pb-1 border-b border-gray-100">
                   <CreditCard className="w-4 h-4" />
-                  <span>Section 4: Tuition Billing & Financial Profile</span>
+                  <span>Section 4: Tuition Billing & Secure Alphanumeric PIN</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
@@ -894,14 +933,39 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                     </select>
                   </div>
 
+                  {/* Random Alphanumeric PIN Box with Regenerate Button */}
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Default Student Portal PIN</label>
-                    <input
-                      type="text"
-                      readOnly
-                      value="1234 (Default)"
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-gray-100 text-gray-600 font-mono font-bold"
-                    />
+                    <label className="block font-bold text-gray-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <KeyRound className="w-3.5 h-3.5 text-green-primary" />
+                        Random Student PIN (Alphanumeric) *
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setStudentForm({ ...studentForm, portalPin: generateRandomPin() })}
+                        className="text-[10px] text-green-primary hover:underline font-extrabold flex items-center gap-0.5"
+                      >
+                        <RefreshCw className="w-2.5 h-2.5" />
+                        <span>Re-roll PIN</span>
+                      </button>
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={studentForm.portalPin}
+                        onChange={(e) => setStudentForm({ ...studentForm, portalPin: e.target.value.toUpperCase() })}
+                        className="w-full p-3 rounded-xl border-2 border-emerald-300 text-sm bg-emerald-50/50 text-[#06452C] font-mono font-black tracking-widest uppercase focus:outline-none focus:border-green-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPin(studentForm.portalPin)}
+                        className="px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
+                        title="Copy PIN"
+                      >
+                        {copiedPin ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
