@@ -42,61 +42,163 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     setSubmittedMessage('Fee payment receipt submitted! The Bursar will verify and approve your payment.');
   };
 
+  const navigationItems = [
+    {
+      id: 'results',
+      label: 'Term Results & Grades',
+      desc: 'View scores & print official report sheet',
+      icon: BarChart3,
+      badge: studentResults.length > 0 ? `${studentResults.length} Subjects` : null,
+    },
+    {
+      id: 'timetable',
+      label: 'Class Timetable',
+      desc: 'Weekly schedule & classroom locations',
+      icon: Calendar,
+      badge: data?.timetable?.length ? `${data.timetable.length} Slots` : null,
+    },
+    {
+      id: 'assignments',
+      label: 'Digital Assignments',
+      desc: 'Homework questions & due dates',
+      icon: FileText,
+      badge: data?.assignments?.length ? `${data.assignments.length} Tasks` : null,
+    },
+    {
+      id: 'materials',
+      label: 'Learning Materials',
+      desc: 'Central lecture notes & PDF guides',
+      icon: BookOpen,
+      badge: data?.learningMaterials?.length ? `${data.learningMaterials.length} Files` : null,
+    },
+    {
+      id: 'fees',
+      label: 'School Fees & Receipts',
+      desc: 'Account details & payment verification',
+      icon: CreditCard,
+      badge: student.feeStatus,
+      badgeColor: student.feeStatus === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700',
+    },
+    {
+      id: 'announcements',
+      label: 'School Notices',
+      desc: 'Direct announcements & circulars',
+      icon: Megaphone,
+      badge: data?.announcements?.length ? `${data.announcements.length} New` : null,
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Student Profile Card */}
+      {/* Top Banner with Student Overview */}
       <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3 sm:gap-4 w-full">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-primary text-white text-lg sm:text-xl font-bold flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-green-primary text-white text-lg sm:text-xl font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm">
             {student.name.split(' ').map((n) => n[0]).join('')}
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg sm:text-xl font-extrabold text-[#1B2521] truncate">{student.name}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-black text-[#1B2521] truncate">{student.name}</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] font-extrabold border border-green-primary/20">
+                {student.class}
+              </span>
+            </div>
             <p className="text-[11px] sm:text-xs text-gray-500 font-medium leading-normal mt-0.5">
-              ID: <span className="text-green-primary font-bold">{student.id}</span> <span className="hidden sm:inline">·</span> <br className="sm:hidden" /> Class: {student.class} · House: {student.house}
+              Admission ID: <span className="text-green-primary font-bold">{student.id}</span> · House: <span className="font-bold text-[#1B2521]">{student.house}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <span className={`px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold ${
-            student.feeStatus === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto flex-shrink-0">
+          <span className={`px-3 py-1 rounded-xl text-xs font-black ${
+            student.feeStatus === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
           }`}>
-            Fee Status: {student.feeStatus}
+            Fee: {student.feeStatus}
           </span>
-          <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] sm:text-xs font-bold">
-            Guardian: {student.guardian}
-          </span>
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="px-4 py-2 rounded-xl text-xs font-black text-white bg-green-primary hover:bg-green-dark transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <Award className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Official Report Card</span>
+          </button>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex overflow-x-auto gap-2 border-b border-gray-200 pb-2 whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
-        {[
-          { id: 'results', label: 'Term Results & Grades', icon: BarChart3 },
-          { id: 'timetable', label: 'Class Timetable', icon: Calendar },
-          { id: 'assignments', label: 'Digital Assignments', icon: FileText },
-          { id: 'materials', label: 'Learning Materials', icon: BookOpen },
-          { id: 'fees', label: 'Pay Fees & Receipt', icon: CreditCard },
-          { id: 'announcements', label: 'School Notices', icon: Megaphone },
-        ].map((tab) => {
-          const TabIcon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 flex items-center gap-1.5 ${
-                activeTab === tab.id
-                  ? 'bg-green-primary text-white shadow-sm'
-                  : 'bg-white border border-gray-200 text-[#55635C] hover:bg-gray-50'
-              }`}
-            >
-              <TabIcon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Main Two-Column Sidebar Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Sidebar Navigation */}
+        <aside className="lg:col-span-4 xl:col-span-4 space-y-4">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-1.5">
+            <div className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center justify-between">
+              <span>Student Actions</span>
+              <span className="w-2 h-2 rounded-full bg-green-primary" />
+            </div>
+
+            <nav className="space-y-1" aria-label="Student dashboard sections">
+              {navigationItems.map((item) => {
+                const ItemIcon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full p-3 rounded-xl text-left transition-all flex items-center justify-between gap-3 group ${
+                      isActive
+                        ? 'bg-green-primary text-white shadow-md shadow-green-primary/20'
+                        : 'bg-[#FAFCFA] hover:bg-gray-100 text-[#1B2521] border border-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-white text-green-primary shadow-sm border border-gray-100'
+                      }`}>
+                        <ItemIcon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-extrabold text-xs tracking-tight truncate leading-tight">
+                          {item.label}
+                        </div>
+                        <div className={`text-[10px] truncate leading-tight mt-0.5 ${
+                          isActive ? 'text-emerald-100 font-medium' : 'text-gray-400'
+                        }`}>
+                          {item.desc}
+                        </div>
+                      </div>
+                    </div>
+
+                    {item.badge && (
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-black flex-shrink-0 ${
+                        isActive
+                          ? 'bg-white text-green-primary'
+                          : item.badgeColor || 'bg-gray-200/80 text-gray-700'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Quick Support / ICT Help Box */}
+          <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/70 text-xs space-y-2">
+            <div className="flex items-center gap-2 text-green-primary font-black">
+              <Sparkles className="w-4 h-4 text-green-primary" />
+              <span>Need Assistance?</span>
+            </div>
+            <p className="text-[11px] text-gray-600 leading-relaxed">
+              If you have any questions regarding your continuous assessment, fee clearance, or class allocations, visit the Administrative Office or contact ICT helpdesk.
+            </p>
+            <div className="font-bold text-green-primary text-[11px]">
+              📞 0813 400 0644
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Content Area */}
+        <div className="lg:col-span-8 xl:col-span-8 space-y-6">
 
       {/* 1. Results Tab */}
       {activeTab === 'results' && (
@@ -355,6 +457,8 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
           </div>
         </div>
       )}
+        </div>
+      </div>
 
       {/* Official Terminal Report Sheet Modal */}
       {showReportModal && (
