@@ -3,7 +3,7 @@ import {
   Search, Megaphone, UserPlus, Shield, CheckCircle2, Database, Send, Users, User,
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
-  KeyRound, RefreshCw, Copy, Check
+  KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode
 } from 'lucide-react';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
@@ -123,12 +123,16 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       entranceExamRegNo: studentForm.entranceExamRegNo,
       priorClass: studentForm.priorClass,
       class: `${studentForm.entryClass} - ${studentForm.classArm}`,
+      entryClass: studentForm.entryClass,
+      classArm: studentForm.classArm,
       academicTrack: studentForm.academicTrack,
       house: studentForm.house,
       boardingStatus: studentForm.boardingStatus,
       previousSchool: studentForm.previousSchool,
       medicalConditions: studentForm.medicalConditions,
       guardian: `${studentForm.guardianName} (${studentForm.guardianRelationship})`,
+      guardianName: studentForm.guardianName,
+      guardianRelationship: studentForm.guardianRelationship,
       guardianPhone: studentForm.guardianPhone,
       guardianEmail: studentForm.guardianEmail,
       fatherOccupation: studentForm.fatherOccupation,
@@ -142,6 +146,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       feeAmount: termFee,
       paidAmount: studentForm.feeStatus === 'Approved' ? termFee : (studentForm.initialDeposit ? `₦${Number(studentForm.initialDeposit).toLocaleString()}` : '₦0'),
       password: assignedPin,
+      admissionDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
     };
 
     onAddStudent(newStudentData);
@@ -202,7 +207,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   return (
     <div className="space-y-6">
       {/* Top Admin Summary Bar & Tab Navigation */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-black text-[#1B2521]">Principal & Registrar Control Center</h2>
@@ -334,103 +339,312 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
 
       {/* ================= 2. INTRICATE NEW STUDENT ADMISSIONS DOSSIER ================= */}
       {activeAdminTab === 'register' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-6">
+        <div className="bg-white rounded-3xl p-4 sm:p-8 border border-gray-200 shadow-sm space-y-6">
           {registeredStudentSlip ? (
-            /* Printable Official Admission & Enrolment Slip */
-            <div className="space-y-6 max-w-2xl mx-auto">
-              <div className="p-6 sm:p-8 rounded-3xl bg-emerald-50/80 border-2 border-green-primary text-center space-y-4">
-                <div className="w-16 h-16 rounded-2xl bg-green-primary text-white flex items-center justify-center mx-auto shadow-md">
-                  <CheckCircle2 className="w-10 h-10 text-white" />
+            /* ================= EXECUTIVE PROFESSIONAL OFFICIAL ADMISSION LETTER & SLIP ================= */
+            <div className="space-y-6 max-w-4xl mx-auto">
+              {/* Screen-Only Control Toolbar */}
+              <div className="print:hidden p-4 rounded-2xl bg-emerald-900 text-white flex flex-col sm:flex-row justify-between items-center gap-3 shadow-md">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/30 flex items-center justify-center border border-emerald-400/40">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm text-white">Student Successfully Enrolled!</h4>
+                    <p className="text-[11px] text-emerald-200">Official Admission Letter ready for physical printing or PDF download</p>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <span className="px-3 py-1 bg-green-primary text-white text-[10px] font-black uppercase tracking-widest rounded-full">
-                    Admissions Directorate Verified
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Official Letter (PDF)</span>
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                  >
+                    + Register Another
+                  </button>
+                  <button
+                    onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                  >
+                    Registry →
+                  </button>
+                </div>
+              </div>
+
+              {/* ================= PRINTABLE OFFICIAL LETTERHEAD DOCUMENT ================= */}
+              <div id="printable-admission-slip" className="bg-[#FCFCFA] rounded-2xl p-6 sm:p-10 border-2 border-emerald-900/40 shadow-xl relative overflow-hidden text-[#1B2521] print:border-0 print:shadow-none print:p-0 print:bg-white print:m-0">
+                
+                {/* Official Watermark Background */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
+                  <span className="font-serif font-black text-8xl sm:text-9xl text-emerald-950 rotate-[-30deg] tracking-widest uppercase">
+                    NEW STATE
                   </span>
-                  <h3 className="text-2xl font-black text-[#06452C] mt-2">Student Enrolled Successfully!</h3>
-                  <p className="text-xs text-gray-600">
-                    Official admission dossier created in the central school database via Internal Entrance Examination.
+                </div>
+
+                {/* 1. Official Nigerian School Crest Header */}
+                <div className="border-b-2 border-[#06452C] pb-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left relative z-10">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 p-2 bg-emerald-50 rounded-2xl border-2 border-emerald-300/80 flex-shrink-0 flex items-center justify-center shadow-sm">
+                    <img src="/school-logo.png" alt="School Crest Logo" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex-grow space-y-1">
+                    <div className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-[#06452C]">
+                      Lagos State Ministry of Basic & Secondary Education
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-[#06452C] tracking-tight uppercase leading-none font-serif">
+                      NEW STATE HIGH SCHOOL
+                    </h1>
+                    <div className="text-xs font-black text-[#1B2521] tracking-wide">
+                      MOTTO: <span className="text-[#06452C] italic">DOMINE DIRIGE NOS</span> (LORD DIRECT US)
+                    </div>
+                    <p className="text-[11px] text-gray-600 leading-tight">
+                      36 Palm Avenue, Mushin, Lagos State, Nigeria · Tel: +234 813 400 0644 · Email: info@newstateschools.org
+                    </p>
+                    <div className="inline-flex items-center gap-2 pt-0.5 text-[10px] font-extrabold text-[#06452C] bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200">
+                      <span>Govt. Approved Comprehensive Secondary School</span>
+                      <span>•</span>
+                      <span>WAEC & NECO Center No: 0481903</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center sm:text-right flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-200 pt-2 sm:pt-0 sm:pl-4 space-y-1">
+                    <span className="inline-block px-3 py-1 bg-[#06452C] text-white text-[10px] font-black rounded-lg uppercase tracking-wider shadow-sm">
+                      OFFICIAL ADMISSION SLIP
+                    </span>
+                    <div className="text-xs font-mono font-black text-green-primary">{registeredStudentSlip.id}</div>
+                    <div className="text-[10px] text-gray-500 font-bold">Session: 2026/2027</div>
+                    <div className="text-[10px] text-gray-500">{registeredStudentSlip.admissionDate || 'August 20, 2026'}</div>
+                  </div>
+                </div>
+
+                {/* 2. Official Provisional Admission Title & Formal Salutation */}
+                <div className="mt-5 space-y-2 relative z-10">
+                  <div className="text-center py-2 px-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <h2 className="text-sm sm:text-base font-black text-[#06452C] uppercase tracking-wider font-serif">
+                      PROVISIONAL LETTER OF ADMISSION & ENROLMENT DOSSIER
+                    </h2>
+                  </div>
+
+                  <p className="text-xs text-gray-700 leading-relaxed pt-1">
+                    This is to officially certify that upon satisfactory performance in the <strong className="text-[#06452C]">New State High School Internal Entrance Screening Examination</strong>, the candidate named below has been offered provisional admission into New State High School for the <strong className="text-[#06452C]">2026/2027 Academic Session</strong>.
                   </p>
                 </div>
 
-                {/* Admission Summary Card */}
-                <div className="bg-white rounded-2xl p-5 border border-emerald-200 text-left grid grid-cols-2 gap-3 text-xs shadow-sm">
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Official Admission ID</span>
-                    <span className="font-mono font-black text-green-primary text-base">{registeredStudentSlip.id}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Student Full Name</span>
-                    <span className="font-black text-[#1B2521] text-sm uppercase">{registeredStudentSlip.name}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Entry Class & Arm</span>
-                    <span className="font-extrabold text-[#1B2521]">{registeredStudentSlip.class}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Prior Class Passed</span>
-                    <span className="font-bold text-[#1B2521]">{registeredStudentSlip.priorClass || 'Primary 6'}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Internal Screening Score</span>
-                    <span className="font-extrabold text-green-primary">{registeredStudentSlip.entranceExamScore || '84% (Passed)'}</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Tuition Billing</span>
-                    <span className="font-bold text-[#1B2521]">{registeredStudentSlip.feeAmount} ({registeredStudentSlip.feeStatus})</span>
-                  </div>
-
-                  {/* Highlighted Unique Secure Alphanumeric PIN Box */}
-                  <div className="col-span-2 p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center justify-between gap-3">
-                    <div>
-                      <span className="text-[10px] font-black text-[#06452C] uppercase tracking-wider block">
-                        Generated Secure Alphanumeric PIN
-                      </span>
-                      <span className="font-mono font-black text-lg text-[#06452C] tracking-widest">
-                        {registeredStudentSlip.password}
-                      </span>
-                      <p className="text-[10px] text-gray-500 mt-0.5">
-                        Keep this confidential for student report cards, assignments & CBT login access.
-                      </p>
+                {/* 3. Comprehensive Official 4-Quadrant Data Grid */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs relative z-10">
+                  
+                  {/* Quadrant 1: Candidate Identity */}
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-2.5">
+                    <div className="flex items-center gap-2 text-[#06452C] font-black text-[11px] uppercase tracking-wider pb-1 border-b border-gray-100">
+                      <User className="w-3.5 h-3.5" />
+                      <span>1. Candidate Bio-Data & Identity</span>
                     </div>
 
-                    <button
-                      onClick={() => handleCopyPin(registeredStudentSlip.password)}
-                      className="px-3.5 py-2 rounded-xl bg-white border border-emerald-300 text-[#06452C] hover:bg-emerald-100 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
-                    >
-                      {copiedPin ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-[#06452C]" />}
-                      <span>{copiedPin ? 'Copied!' : 'Copy PIN'}</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Full Legal Name</span>
+                        <span className="font-black text-[#1B2521] text-xs uppercase">{registeredStudentSlip.name}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Admission Number</span>
+                        <span className="font-mono font-black text-green-primary text-xs">{registeredStudentSlip.id}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Gender & DOB</span>
+                        <span className="font-semibold text-gray-800">{registeredStudentSlip.gender} · {registeredStudentSlip.dob}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">State & LGA</span>
+                        <span className="font-semibold text-gray-800">{registeredStudentSlip.stateOfOrigin} State ({registeredStudentSlip.lga})</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Blood Group & Genotype</span>
+                        <span className="font-bold text-gray-800">{registeredStudentSlip.bloodGroup} · {registeredStudentSlip.genotype}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">National / State ID</span>
+                        <span className="font-semibold text-gray-700">{registeredStudentSlip.ninOrLasrra || 'Verified On File'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quadrant 2: Academic Placement & Program */}
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-2.5">
+                    <div className="flex items-center gap-2 text-[#06452C] font-black text-[11px] uppercase tracking-wider pb-1 border-b border-gray-100">
+                      <Award className="w-3.5 h-3.5" />
+                      <span>2. Academic Stream & Placement</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Admitted Entry Class</span>
+                        <span className="font-extrabold text-[#06452C] text-xs">{registeredStudentSlip.class}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Prior Class Passed</span>
+                        <span className="font-bold text-gray-800">{registeredStudentSlip.priorClass || 'Primary 6'}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Internal Screening Score</span>
+                        <span className="font-black text-green-primary">{registeredStudentSlip.entranceExamScore || '84% (Merit Pass)'}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Exam Candidate Reg No.</span>
+                        <span className="font-mono text-gray-700">{registeredStudentSlip.entranceExamRegNo || 'NSHS/EXAM/2026/084'}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Allocated House</span>
+                        <span className="font-bold text-gray-800">{registeredStudentSlip.house}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Boarding Status</span>
+                        <span className="font-semibold text-gray-800">{registeredStudentSlip.boardingStatus}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quadrant 3: Parent & Guardian Details */}
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-2.5">
+                    <div className="flex items-center gap-2 text-[#06452C] font-black text-[11px] uppercase tracking-wider pb-1 border-b border-gray-100">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>3. Primary Guardian & Emergency Records</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Primary Guardian Name</span>
+                        <span className="font-black text-[#1B2521] text-xs">{registeredStudentSlip.guardian}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Guardian Phone (WhatsApp)</span>
+                        <span className="font-bold text-gray-800">{registeredStudentSlip.guardianPhone}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">WhatsApp SMS Alerts</span>
+                        <span className="font-bold text-emerald-700">✓ Active Dispatch</span>
+                      </div>
+
+                      <div className="col-span-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Residential Address</span>
+                        <span className="font-medium text-gray-700">{registeredStudentSlip.guardianAddress}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quadrant 4: Tuition & Bursar Clearance */}
+                  <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-2.5">
+                    <div className="flex items-center gap-2 text-[#06452C] font-black text-[11px] uppercase tracking-wider pb-1 border-b border-gray-100">
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>4. Tuition Assessment & Bursary Setup</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Prescribed Term Tuition</span>
+                        <span className="font-black text-[#06452C] text-xs">{registeredStudentSlip.feeAmount}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Initial Payment Status</span>
+                        <span className={`font-black inline-block px-2 py-0.5 rounded text-[10px] ${
+                          registeredStudentSlip.feeStatus === 'Approved' ? 'bg-green-100 text-green-800' :
+                          registeredStudentSlip.feeStatus === 'Pending' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {registeredStudentSlip.feeStatus}
+                        </span>
+                      </div>
+
+                      <div className="col-span-2 text-[10px] text-gray-500 pt-1 leading-tight">
+                        Bank transfers to be made to official Zenith Bank / First Bank school accounts with candidate's Admission ID as payment reference.
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-3 pt-2">
-                  <button
-                    onClick={() => window.print()}
-                    className="px-6 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs transition-all flex items-center gap-2 shadow-sm"
-                  >
-                    <Printer className="w-4 h-4" />
-                    <span>Print Admission Slip</span>
-                  </button>
+                {/* 4. Secure Student Portal & CBT Credentials Voucher */}
+                <div className="mt-4 p-4 rounded-2xl bg-gradient-to-r from-emerald-900 to-[#06452C] text-white border-2 border-emerald-600/40 relative z-10 shadow-md">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5 text-emerald-300 font-black text-[10px] uppercase tracking-wider">
+                        <KeyRound className="w-3.5 h-3.5" />
+                        <span>Confidential Student Portal & CBT Access Voucher</span>
+                      </div>
+                      <p className="text-xs text-emerald-100">
+                        Use these credentials to log in for terminal report cards, lesson notes, and CBT assessments.
+                      </p>
+                      <div className="text-[10px] text-emerald-200 font-mono">
+                        Portal URL: <span className="underline">https://newstatehighschool.web.app/portal</span>
+                      </div>
+                    </div>
 
-                  <button
-                    onClick={resetForm}
-                    className="px-5 py-2.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-50 text-[#1B2521] font-bold text-xs transition-all"
-                  >
-                    + Register Another Student
-                  </button>
+                    <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/20">
+                      <div>
+                        <span className="text-[9px] font-bold text-emerald-200 uppercase tracking-widest block">Portal PIN</span>
+                        <span className="font-mono font-black text-xl text-white tracking-widest">
+                          {registeredStudentSlip.password}
+                        </span>
+                      </div>
 
-                  <button
-                    onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
-                    className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-all"
-                  >
-                    View in Central Registry →
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPin(registeredStudentSlip.password)}
+                        className="print:hidden px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-[11px] transition-all flex items-center gap-1 shadow-sm"
+                      >
+                        {copiedPin ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedPin ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Institutional Endorsement, Signatures & Stamp */}
+                <div className="mt-6 pt-4 border-t-2 border-dashed border-gray-300 grid grid-cols-3 gap-4 text-center items-end relative z-10">
+                  {/* Registrar Signature */}
+                  <div className="space-y-1 text-left">
+                    <div className="font-serif italic font-black text-gray-800 text-sm border-b border-gray-400 pb-1 w-36">
+                      S. O. Balogun
+                    </div>
+                    <div className="text-[10px] font-black text-[#06452C] uppercase">Registrar / Admissions</div>
+                    <div className="text-[9px] text-gray-500">New State High School</div>
+                  </div>
+
+                  {/* Official Institutional Stamp */}
+                  <div className="flex justify-center">
+                    <div className="w-24 h-24 rounded-full border-2 border-dashed border-emerald-800 flex flex-col items-center justify-center text-center p-1 transform -rotate-6 text-[#06452C] bg-emerald-50/40">
+                      <ShieldCheck className="w-4 h-4 text-[#06452C]" />
+                      <span className="text-[8px] font-black tracking-tighter uppercase leading-none mt-0.5">NEW STATE HIGH SCHOOL</span>
+                      <span className="text-[7px] font-bold text-red-700 tracking-widest my-0.5 font-mono">★ APPROVED ★</span>
+                      <span className="text-[7px] font-extrabold uppercase leading-none">ADMISSIONS OFFICE</span>
+                    </div>
+                  </div>
+
+                  {/* Principal Endorsement */}
+                  <div className="space-y-1 text-right">
+                    <div className="font-serif italic font-black text-gray-800 text-sm border-b border-gray-400 pb-1 w-36 ml-auto">
+                      Dr. A. O. Adeleke
+                    </div>
+                    <div className="text-[10px] font-black text-[#06452C] uppercase">Principal / Director</div>
+                    <div className="text-[9px] text-gray-500">Stamp & Official Signature</div>
+                  </div>
                 </div>
               </div>
             </div>
