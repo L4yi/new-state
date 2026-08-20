@@ -484,34 +484,44 @@ export default function AdminDashboard({
   return (
     <div className="space-y-6">
       {/* Top Admin Summary Bar & Tab Navigation */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 print:hidden">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl sm:text-2xl font-black text-[#1B2521] tracking-tight">Principal & Registrar Control Center</h2>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-green-primary text-[11px] font-extrabold border border-emerald-200">
-              Admin Level 1
-            </span>
+      <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-5 print:hidden">
+        {/* Top Header Row */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-gray-100">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-black text-[#1B2521] tracking-tight">Principal & Registrar Control Center</h2>
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-green-primary text-xs font-extrabold border border-emerald-200 shadow-xs">
+                Admin Level 1
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Manage incoming online applications, central student registry, teacher allocations, and broadcast notices.
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Manage incoming online applications, student registry, teacher class assignments, and circulars.
-          </p>
+
+          <div className="flex items-center gap-2 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200/80 text-xs font-bold text-gray-600 flex-shrink-0">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span>2026/2027 Academic Session · Term 1</span>
+          </div>
         </div>
 
-        {/* Tab Buttons */}
-        <div className="flex flex-wrap gap-2 w-full xl:w-auto">
-          {/* Online Applications Tab */}
+        {/* Full-Width Tab Grid Navigation */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+          {/* 1. Online Applications */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 relative ${
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
               activeAdminTab === 'applications'
-                ? 'bg-green-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <Inbox className="w-4 h-4" />
-            <span>Online Applications</span>
+            <div className="flex items-center gap-2 truncate">
+              <Inbox className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Applications</span>
+            </div>
             {pendingAppsCount > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black leading-none ${
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
                 activeAdminTab === 'applications' ? 'bg-amber-400 text-emerald-950' : 'bg-red-500 text-white'
               }`}>
                 {pendingAppsCount}
@@ -519,53 +529,70 @@ export default function AdminDashboard({
             )}
           </button>
 
+          {/* 2. Student Registry */}
           <button
             onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
               activeAdminTab === 'database'
-                ? 'bg-green-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <Database className="w-4 h-4" />
-            <span>Student Registry ({studentsList.length})</span>
+            <div className="flex items-center gap-2 truncate">
+              <Database className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Student Registry</span>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
+              activeAdminTab === 'database' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'
+            }`}>
+              {studentsList.length}
+            </span>
           </button>
 
+          {/* 3. Admissions & Enrollment */}
           <button
             onClick={() => { setActiveAdminTab('register'); setSelectedApplicationForReview(null); }}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
               activeAdminTab === 'register'
-                ? 'bg-green-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Admissions & Enrollment</span>
+            <UserPlus className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">Admissions & Form</span>
           </button>
 
-          {/* Teachers & Staff Tab */}
+          {/* 4. Teachers & Staff */}
           <button
             onClick={() => { setActiveAdminTab('staff'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
               activeAdminTab === 'staff'
-                ? 'bg-green-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <Briefcase className="w-4 h-4" />
-            <span>Teachers & Staff ({staffList.length})</span>
+            <div className="flex items-center gap-2 truncate">
+              <Briefcase className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Teachers & Staff</span>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
+              activeAdminTab === 'staff' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'
+            }`}>
+              {staffList.length}
+            </span>
           </button>
 
+          {/* 5. Broadcast Notices */}
           <button
             onClick={() => { setActiveAdminTab('announcements'); setRegisteredStudentSlip(null); }}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
               activeAdminTab === 'announcements'
-                ? 'bg-green-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <Megaphone className="w-4 h-4" />
-            <span>Broadcast Notices</span>
+            <Megaphone className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">Broadcast Circulars</span>
           </button>
         </div>
       </div>
