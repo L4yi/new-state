@@ -454,4 +454,75 @@ router.patch('/applications/:id', async (req, res) => {
   }
 });
 
+// 10. Staff Directory & Teacher Class Allocation (Admin)
+router.get('/staff', async (req, res) => {
+  try {
+    const staff = await Staff.find({}).sort({ name: 1 });
+    res.json(staff);
+  } catch (error) {
+    console.error('Error fetching staff directory:', error);
+    res.status(500).json({ error: 'Failed to fetch staff records', details: error.message });
+  }
+});
+
+router.post('/staff', async (req, res) => {
+  try {
+    const payload = {
+      staffId: req.body.staffId || `STF/2026/${Math.floor(100 + Math.random() * 900)}`,
+      name: req.body.name,
+      role: req.body.role || 'Teacher',
+      department: req.body.department || 'Academics',
+      email: req.body.email,
+      phone: req.body.phone || '08134000644',
+      password: req.body.password || '1234',
+      isClassTeacher: Boolean(req.body.classAssigned),
+      classAssigned: req.body.classAssigned || null,
+      subjectsTaught: req.body.subjectsTaught || []
+    };
+
+    const savedStaff = await Staff.findOneAndUpdate(
+      { email: req.body.email },
+      { $set: payload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json(savedStaff);
+  } catch (error) {
+    console.error('Error creating staff record:', error);
+    res.status(500).json({ error: 'Failed to create staff record', details: error.message });
+  }
+});
+
+router.patch('/staff/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { classAssigned, subjectsTaught, role, department } = req.body;
+
+    const updateFields = {};
+    if (classAssigned !== undefined) {
+      updateFields.classAssigned = classAssigned || null;
+      updateFields.isClassTeacher = Boolean(classAssigned);
+    }
+    if (subjectsTaught !== undefined) updateFields.subjectsTaught = subjectsTaught;
+    if (role !== undefined) updateFields.role = role;
+    if (department !== undefined) updateFields.department = department;
+
+    const staffMember = await Staff.findOneAndUpdate(
+      { $or: [{ staffId: id }, { email: id.toLowerCase() }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }] },
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!staffMember) {
+      return res.status(404).json({ error: 'Staff record not found' });
+    }
+
+    res.json(staffMember);
+  } catch (error) {
+    console.error('Error updating staff record:', error);
+    res.status(500).json({ error: 'Failed to update staff record', details: error.message });
+  }
+});
+
 export default router;
+

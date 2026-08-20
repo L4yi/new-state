@@ -3,7 +3,8 @@ import {
   Search, Megaphone, UserPlus, Shield, CheckCircle2, Database, Send, Users, User,
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
-  KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock
+  KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock,
+  Briefcase, Plus
 } from 'lucide-react';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
@@ -16,14 +17,34 @@ const generateRandomPin = () => {
   return pin;
 };
 
-export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, onUpdateApplication }) {
+export default function AdminDashboard({
+  data,
+  onAddAnnouncement,
+  onAddStudent,
+  onUpdateApplication,
+  onUpdateStaff,
+  onAddStaff
+}) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'announcements'
+  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'staff', 'announcements'
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [noticeMsg, setNoticeMsg] = useState('');
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
   const [copiedPin, setCopiedPin] = useState(false);
   const [selectedApplicationForReview, setSelectedApplicationForReview] = useState(null);
+  const [staffUpdateFeedback, setStaffUpdateFeedback] = useState('');
+
+  // Add new teacher form state
+  const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+  const [newStaffForm, setNewStaffForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    department: 'Sciences & Technology',
+    role: 'Teacher',
+    subject: 'Physics',
+    classAssigned: 'None',
+  });
 
   // Intricate Student Registration Form State with Internal Entrance Criteria
   const [studentForm, setStudentForm] = useState({
@@ -145,6 +166,77 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
       app.guardianName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Default teachers list with standard Arm naming
+  const defaultStaff = [
+    {
+      staffId: 'STF/2026/001',
+      name: 'Mr. Babatunde Ogunlesi',
+      email: 'b.ogunlesi@newstateschools.org',
+      role: 'Senior Teacher / Subject Master',
+      department: 'Sciences & Technology',
+      phone: '0813 400 0644',
+      isClassTeacher: true,
+      classAssigned: 'SSS 3 - Arm A',
+      subjectsTaught: [
+        { subjectName: 'Physics', className: 'SSS 3 - Arm A' },
+        { subjectName: 'Physics', className: 'SSS 2 - Arm A' },
+        { subjectName: 'Further Mathematics', className: 'SSS 3 - Arm A' }
+      ]
+    },
+    {
+      staffId: 'STF/2026/002',
+      name: 'Mrs. Folashade Adeleke',
+      email: 'f.adeleke@newstateschools.org',
+      role: 'Teacher / Subject Master',
+      department: 'Languages & Arts',
+      phone: '0802 345 6789',
+      isClassTeacher: true,
+      classAssigned: 'JSS 1 - Arm A',
+      subjectsTaught: [
+        { subjectName: 'English Language', className: 'JSS 1 - Arm A' },
+        { subjectName: 'Literature in English', className: 'SSS 1 - Arm A' }
+      ]
+    },
+    {
+      staffId: 'STF/2026/003',
+      name: 'Mr. Emeka Okafor',
+      email: 'e.okafor@newstateschools.org',
+      role: 'Subject Teacher',
+      department: 'Commercial Studies',
+      phone: '0803 876 5432',
+      isClassTeacher: false,
+      classAssigned: null,
+      subjectsTaught: [
+        { subjectName: 'Mathematics', className: 'SSS 1 - Arm A' },
+        { subjectName: 'Economics', className: 'SSS 2 - Arm A' }
+      ]
+    },
+    {
+      staffId: 'STF/2026/004',
+      name: 'Dr. S. O. Balogun',
+      email: 's.balogun@newstateschools.org',
+      role: 'Subject Teacher & ICT Director',
+      department: 'ICT & AI Coding',
+      phone: '0814 123 9876',
+      isClassTeacher: false,
+      classAssigned: null,
+      subjectsTaught: [
+        { subjectName: 'Computer Studies (AI & Coding)', className: 'JSS 1 - Arm A' },
+        { subjectName: 'Computer Studies (AI & Coding)', className: 'SSS 3 - Arm A' }
+      ]
+    }
+  ];
+
+  const staffList = (data?.staff && data.staff.length > 0) ? data.staff : defaultStaff;
+
+  const filteredStaff = staffList.filter(
+    (st) =>
+      st.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      st.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (st.department && st.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (st.classAssigned && st.classAssigned.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   const nigerianStates = [
     'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
     'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT Abuja', 'Gombe',
@@ -152,6 +244,76 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
     'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
     'Taraba', 'Yobe', 'Zamfara'
   ];
+
+  const availableClassArms = [
+    'None (Subject Teacher Only)',
+    'JSS 1 - Arm A',
+    'JSS 1 - Arm B',
+    'JSS 2 - Arm A',
+    'JSS 2 - Arm B',
+    'JSS 3 - Arm A',
+    'JSS 3 - Arm B',
+    'SSS 1 - Arm A',
+    'SSS 1 - Arm B',
+    'SSS 2 - Arm A',
+    'SSS 2 - Arm B',
+    'SSS 3 - Arm A',
+    'SSS 3 - Arm B'
+  ];
+
+  const handleClassAssignmentChange = (teacher, selectedClass) => {
+    const classVal = selectedClass === 'None (Subject Teacher Only)' || selectedClass === 'None' ? null : selectedClass;
+    if (onUpdateStaff) {
+      onUpdateStaff(teacher.email || teacher.staffId || teacher.id, {
+        classAssigned: classVal,
+        isClassTeacher: Boolean(classVal)
+      });
+    }
+    setStaffUpdateFeedback(
+      classVal
+        ? `${teacher.name} is now designated as the Class Teacher for ${classVal}.`
+        : `${teacher.name} is now designated as a Subject Teacher only.`
+    );
+    setTimeout(() => setStaffUpdateFeedback(''), 4500);
+  };
+
+  const handleCreateStaffSubmit = (e) => {
+    e.preventDefault();
+    const classVal = newStaffForm.classAssigned === 'None' || newStaffForm.classAssigned === 'None (Subject Teacher Only)'
+      ? null
+      : newStaffForm.classAssigned;
+
+    const newStaffObj = {
+      staffId: `STF/2026/00${staffList.length + 1}`,
+      name: newStaffForm.name,
+      email: newStaffForm.email,
+      phone: newStaffForm.phone || '08134000644',
+      role: newStaffForm.role,
+      department: newStaffForm.department,
+      password: '1234',
+      isClassTeacher: Boolean(classVal),
+      classAssigned: classVal,
+      subjectsTaught: [
+        { subjectName: newStaffForm.subject, className: classVal || 'JSS 1 - Arm A' }
+      ]
+    };
+
+    if (onAddStaff) {
+      onAddStaff(newStaffObj);
+    }
+    setShowAddStaffModal(false);
+    setNewStaffForm({
+      name: '',
+      email: '',
+      phone: '',
+      department: 'Sciences & Technology',
+      role: 'Teacher',
+      subject: 'Physics',
+      classAssigned: 'None',
+    });
+    setStaffUpdateFeedback(`Staff member ${newStaffObj.name} successfully onboarded!`);
+    setTimeout(() => setStaffUpdateFeedback(''), 4500);
+  };
 
   const handleNoticeSubmit = (e) => {
     e.preventDefault();
@@ -335,13 +497,13 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage incoming online applications, student registry, admissions enrollment, and circulars.
+            Manage incoming online applications, student registry, teacher class assignments, and circulars.
           </p>
         </div>
 
         {/* Tab Buttons */}
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          {/* New Online Applications Tab */}
+          {/* Online Applications Tab */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 relative ${
@@ -383,6 +545,19 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Admissions & Enrollment</span>
+          </button>
+
+          {/* New Teachers & Staff Tab */}
+          <button
+            onClick={() => { setActiveAdminTab('staff'); setRegisteredStudentSlip(null); }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+              activeAdminTab === 'staff'
+                ? 'bg-green-primary text-white shadow-sm'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            <span>Teachers & Staff ({staffList.length})</span>
           </button>
 
           <button
@@ -538,7 +713,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
                 <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
                   <th className="p-3">Admission ID</th>
                   <th className="p-3">Student Name</th>
-                  <th className="p-3">Class & Stream</th>
+                  <th className="p-3">Class & Arm</th>
                   <th className="p-3">House Allocation</th>
                   <th className="p-3">Primary Guardian Contact</th>
                   <th className="p-3">Tuition Status</th>
@@ -1446,7 +1621,238 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
         </div>
       )}
 
-      {/* ================= 4. BROADCAST ANNOUNCEMENTS ================= */}
+      {/* ================= 4. TEACHERS & STAFF DIRECTORY & CLASS TEACHER ALLOCATION ================= */}
+      {activeAdminTab === 'staff' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-lg text-[#1B2521]">Academic Staff & Teacher Allocations</h3>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-xs font-black border border-green-primary/20">
+                  {staffList.length} Teachers
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Designate Subject Teachers and assign Form Masters (Class Teachers) to respective class arms.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search teacher, email, subject..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
+                />
+              </div>
+
+              <button
+                onClick={() => setShowAddStaffModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Teacher</span>
+              </button>
+            </div>
+          </div>
+
+          {staffUpdateFeedback && (
+            <div className="p-3.5 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-primary" />
+              <span>{staffUpdateFeedback}</span>
+            </div>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px]">
+                  <th className="p-3">Staff ID</th>
+                  <th className="p-3">Teacher Full Name</th>
+                  <th className="p-3">Department</th>
+                  <th className="p-3">Subjects Taught</th>
+                  <th className="p-3">Class Teacher Assignment (Form Master)</th>
+                  <th className="p-3 text-right">Access Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredStaff.map((teacher) => (
+                  <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="p-3 font-mono font-bold text-green-primary">{teacher.staffId || 'STF/2026/001'}</td>
+                    <td className="p-3">
+                      <div className="font-extrabold text-[#1B2521] text-xs">{teacher.name}</div>
+                      <div className="text-[10px] text-gray-400 font-medium">{teacher.email} · {teacher.phone}</div>
+                    </td>
+                    <td className="p-3 font-semibold text-gray-700">{teacher.department || 'Academics'}</td>
+                    <td className="p-3">
+                      {teacher.subjectsTaught && teacher.subjectsTaught.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {teacher.subjectsTaught.map((st, i) => (
+                            <span key={i} className="px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-[10px] font-medium">
+                              {st.subjectName} ({st.className})
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 italic">General Subject Teacher</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={teacher.classAssigned || 'None (Subject Teacher Only)'}
+                        onChange={(e) => handleClassAssignmentChange(teacher, e.target.value)}
+                        className={`p-2 rounded-xl text-xs font-black border transition-all focus:outline-none ${
+                          teacher.classAssigned
+                            ? 'bg-emerald-50 text-[#06452C] border-emerald-300'
+                            : 'bg-[#FAFCFA] text-gray-600 border-gray-200'
+                        }`}
+                      >
+                        {availableClassArms.map((cls) => (
+                          <option key={cls} value={cls}>
+                            {cls}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-3 text-right">
+                      <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-black">
+                        Active Teacher
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Add Staff Modal */}
+          {showAddStaffModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-200 space-y-4">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                  <div>
+                    <h3 className="font-black text-lg text-[#1B2521]">Add New Academic Teacher</h3>
+                    <p className="text-xs text-gray-500">Create login credentials and assign subjects</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddStaffModal(false)}
+                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateStaffSubmit} className="space-y-3.5 text-xs">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Teacher Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Mr. Emmanuel Balogun"
+                      value={newStaffForm.name}
+                      onChange={(e) => setNewStaffForm({ ...newStaffForm, name: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Email Address (Login Username) *</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. e.balogun@newstateschools.org"
+                      value={newStaffForm.email}
+                      onChange={(e) => setNewStaffForm({ ...newStaffForm, email: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Primary Phone Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 0803 123 4567"
+                      value={newStaffForm.phone}
+                      onChange={(e) => setNewStaffForm({ ...newStaffForm, phone: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">Department</label>
+                      <select
+                        value={newStaffForm.department}
+                        onChange={(e) => setNewStaffForm({ ...newStaffForm, department: e.target.value })}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      >
+                        <option value="Sciences & Technology">Sciences & Technology</option>
+                        <option value="Languages & Arts">Languages & Arts</option>
+                        <option value="Commercial Studies">Commercial Studies</option>
+                        <option value="ICT & AI Coding">ICT & AI Coding</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1">Primary Subject</label>
+                      <select
+                        value={newStaffForm.subject}
+                        onChange={(e) => setNewStaffForm({ ...newStaffForm, subject: e.target.value })}
+                        className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      >
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="English Language">English Language</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Computer Studies (AI & Coding)">Computer Studies</option>
+                        <option value="Economics">Economics</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Assign as Class Teacher (Form Master)?</label>
+                    <select
+                      value={newStaffForm.classAssigned}
+                      onChange={(e) => setNewStaffForm({ ...newStaffForm, classAssigned: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
+                    >
+                      {availableClassArms.map((cls) => (
+                        <option key={cls} value={cls}>
+                          {cls}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="pt-2 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddStaffModal(false)}
+                      className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black shadow-md"
+                    >
+                      Add Teacher →
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= 5. BROADCAST ANNOUNCEMENTS ================= */}
       {activeAdminTab === 'announcements' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-6 max-w-2xl mx-auto">
           <div className="border-b border-gray-200 pb-4">

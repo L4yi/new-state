@@ -327,6 +327,61 @@ export default function Portal({ onNavigate }) {
     });
   };
 
+  const handleUpdateStaff = async (staffIdOrEmail, updates) => {
+    // 1. Optimistic local update
+    setPortalData((prev) => {
+      const existingStaff = prev.staff || [];
+      const updatedStaff = existingStaff.map((s) => {
+        if (s.email?.toLowerCase() === staffIdOrEmail?.toLowerCase() || s.staffId === staffIdOrEmail || s._id === staffIdOrEmail) {
+          return { ...s, ...updates, isClassTeacher: Boolean(updates.classAssigned) };
+        }
+        return s;
+      });
+      const nextState = { ...prev, staff: updatedStaff };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_URL}/staff/${encodeURIComponent(staffIdOrEmail)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to update staff allocation:', err);
+    }
+  };
+
+  const handleAddStaff = async (newStaffMember) => {
+    // 1. Optimistic local update
+    setPortalData((prev) => {
+      const existing = prev.staff || [];
+      const updated = [...existing.filter(s => s.email !== newStaffMember.email), newStaffMember];
+      const nextState = { ...prev, staff: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_URL}/staff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStaffMember),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.error('Failed to add staff record:', err);
+    }
+  };
+
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -594,6 +649,8 @@ export default function Portal({ onNavigate }) {
                 onAddAnnouncement={handleAddAnnouncement}
                 onAddStudent={handleAddStudent}
                 onUpdateApplication={handleUpdateApplication}
+                onUpdateStaff={handleUpdateStaff}
+                onAddStaff={handleAddStaff}
               />
             )}
           </div>

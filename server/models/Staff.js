@@ -1,17 +1,22 @@
 import mongoose from 'mongoose';
 
 const staffSchema = new mongoose.Schema({
+  staffId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   name: {
     type: String,
     required: true
   },
   role: {
     type: String,
-    required: true
+    default: 'Teacher'
   },
   department: {
     type: String,
-    required: true
+    default: 'Sciences & Technology'
   },
   email: {
     type: String,
@@ -19,9 +24,17 @@ const staffSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  phone: {
+    type: String,
+    default: '08134000644'
+  },
   password: {
     type: String,
     default: '1234'
+  },
+  isClassTeacher: {
+    type: Boolean,
+    default: false
   },
   classAssigned: {
     type: String,
@@ -33,6 +46,6 @@ const staffSchema = new mongoose.Schema({
       className: { type: String, required: true }
     }
   ]
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 export default mongoose.model('Staff', staffSchema);
