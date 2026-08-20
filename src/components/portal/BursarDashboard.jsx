@@ -99,71 +99,71 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-xl border border-gray-200/80">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
-                <th className="p-3">Receipt ID</th>
-                <th className="p-3">Student Name</th>
-                <th className="p-3">Amount</th>
-                <th className="p-3">Bank Transfer Info</th>
-                <th className="p-3">Date</th>
-                <th className="p-3">Status</th>
-                <th className="p-3 text-right">Actions</th>
+              <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                <th className="py-3.5 px-4 whitespace-nowrap">Receipt ID</th>
+                <th className="py-3.5 px-4">Student Name</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Amount</th>
+                <th className="py-3.5 px-4">Bank Transfer Info</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Date</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-4 text-center text-gray-400 italic">
+                  <td colSpan="7" className="p-8 text-center text-gray-400 italic">
                     No payment receipts match current filter.
                   </td>
                 </tr>
               ) : (
                 filteredPayments.map((p) => (
-                  <tr key={p.id || p.paymentId || p.reference} className="hover:bg-gray-50/50">
-                    <td className="p-3 font-bold text-gray-700 font-mono">{p.id || p.paymentId}</td>
-                    <td className="p-3 font-bold text-[#1B2521]">
-                      {p.studentName}
-                      <span className="block text-[10px] text-gray-400 font-normal">{p.studentId}</span>
+                  <tr key={p.id || p.paymentId || p.reference} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-4 px-4 font-mono font-bold text-gray-700 whitespace-nowrap">{p.id || p.paymentId}</td>
+                    <td className="py-4 px-4">
+                      <div className="font-extrabold text-[#1B2521] text-xs">{p.studentName}</div>
+                      <div className="text-[11px] text-gray-400 font-mono mt-0.5">{p.studentId}</div>
                     </td>
-                    <td className="p-3 font-extrabold text-green-primary">{p.amount}</td>
-                    <td className="p-3">
-                      <div className="font-semibold text-gray-800">{p.bankName}</div>
-                      <div className="text-[11px] text-gray-400">Ref: {p.reference}</div>
+                    <td className="py-4 px-4 font-black text-green-primary text-sm whitespace-nowrap">{p.amount}</td>
+                    <td className="py-4 px-4">
+                      <div className="font-bold text-gray-800 text-xs leading-snug">{p.bankName}</div>
+                      <div className="text-[11px] text-gray-400 font-mono leading-snug mt-0.5">Ref: {p.reference}</div>
                     </td>
-                    <td className="p-3 text-gray-500">{p.dateSubmitted}</td>
-                    <td className="p-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    <td className="py-4 px-4 text-gray-500 font-mono text-xs whitespace-nowrap">{p.dateSubmitted}</td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-black tracking-wide ${
                         p.status === 'Approved'
                           ? 'bg-green-100 text-green-800'
                           : p.status === 'Declined'
                           ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
+                          : 'bg-amber-100 text-amber-900 border border-amber-200'
                       }`}>
                         {p.status}
                       </span>
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="py-4 px-4 text-right whitespace-nowrap">
                       {p.status === 'Pending' ? (
-                        <div className="flex justify-end gap-1.5">
+                        <div className="flex justify-end gap-2 items-center">
                           <button
                             onClick={() => handleApprove(p)}
-                            className="px-3 py-1.5 bg-green-primary text-white font-bold rounded-lg hover:bg-green-dark transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                            className="px-3.5 py-1.5 bg-green-primary text-white text-xs font-black rounded-xl hover:bg-green-dark transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>Accept</span>
                           </button>
                           <button
                             onClick={() => handleReject(p)}
-                            className="px-2.5 py-1.5 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition-all flex items-center gap-1 active:scale-95"
+                            className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-xl hover:bg-red-200 transition-all flex items-center gap-1 active:scale-95"
                           >
                             <X className="w-3.5 h-3.5" />
                             <span>Decline</span>
                           </button>
                         </div>
                       ) : (
-                        <span className="text-gray-400 font-medium italic">Completed</span>
+                        <span className="text-gray-400 text-xs font-medium italic">Completed</span>
                       )}
                     </td>
                   </tr>
