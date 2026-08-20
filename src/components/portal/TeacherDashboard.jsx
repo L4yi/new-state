@@ -1,35 +1,86 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calculator, FilePlus, Upload, Users, CheckCircle2,
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
-  Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare
+  Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
+  Layers, Filter
 } from 'lucide-react';
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
   const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass'
 
   const isClassTeacher = Boolean(currentUser?.classAssigned);
-  const assignedClass = currentUser?.classAssigned || 'SSS 3 - Arm A';
 
-  // 1. Filter students this teacher has access to see/grade
-  const allowedStudents = data?.students?.filter(student => {
-    if (!currentUser) return true; // Offline/fallback
-    const isTeacherOfClass = currentUser.classAssigned === student.class;
-    const teachesInClass = currentUser.subjectsTaught?.some(s => s.className === student.class);
-    return isTeacherOfClass || teachesInClass;
-  }) || [];
+  // 1. Extract all classes and subjects taught by this teacher from their profile
+  const teacherSubjectsTaught = useMemo(() => {
+    return currentUser?.subjectsTaught || [
+      { subjectName: 'Mathematics', className: 'SSS 3 - Arm A' },
+      { subjectName: 'Physics', className: 'SSS 3 - Arm A' },
+      { subjectName: 'Mathematics', className: 'JSS 2 - Arm A' }
+    ];
+  }, [currentUser]);
+
+  // Distinct classes this teacher teaches
+  const distinctClasses = useMemo(() => {
+    const classes = teacherSubjectsTaught.map(s => s.className).filter(Boolean);
+    if (currentUser?.classAssigned && !classes.includes(currentUser.classAssigned)) {
+      classes.unshift(currentUser.classAssigned);
+    }
+    return Array.from(new Set(classes));
+  }, [teacherSubjectsTaught, currentUser]);
+
+  // Active Class Filter for multi-class teachers
+  const [selectedClassFilter, setSelectedClassFilter] = useState('All');
+
+  // 2. Filter students this teacher has access to see/grade
+  const allowedStudents = useMemo(() => {
+    const allStudents = data?.students || [];
+    if (!currentUser) return allStudents;
+
+    return allStudents.filter(student => {
+      // Check if teacher teaches any subject in this student's class, or is their form master
+      const isFormMaster = currentUser.classAssigned && (
+        student.class === currentUser.classAssigned ||
+        student.class?.includes(currentUser.classAssigned) ||
+        currentUser.classAssigned?.includes(student.class)
+      );
+      const teachesInClass = teacherSubjectsTaught.some(s =>
+        student.class === s.className ||
+        student.class?.includes(s.className) ||
+        s.className?.includes(student.class)
+      );
+      return isFormMaster || teachesInClass;
+    });
+  }, [data?.students, currentUser, teacherSubjectsTaught]);
+
+  // Students filtered by the active Class Toggle
+  const classFilteredStudents = useMemo(() => {
+    if (selectedClassFilter === 'All') return allowedStudents;
+    return allowedStudents.filter(s =>
+      s.class === selectedClassFilter ||
+      s.class?.includes(selectedClassFilter) ||
+      selectedClassFilter.includes(s.class)
+    );
+  }, [allowedStudents, selectedClassFilter]);
 
   // Form Class specific students
-  const formClassStudents = data?.students?.filter(s => s.class === currentUser?.classAssigned) || allowedStudents;
+  const formClassStudents = useMemo(() => {
+    if (!currentUser?.classAssigned) return [];
+    return (data?.students || []).filter(s =>
+      s.class === currentUser.classAssigned ||
+      s.class?.includes(currentUser.classAssigned) ||
+      currentUser.classAssigned.includes(s.class)
+    );
+  }, [data?.students, currentUser]);
 
-  const [selectedStudent, setSelectedStudent] = useState(allowedStudents[0]?.id || '');
-  const [selectedSubject, setSelectedSubject] = useState('Mathematics');
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [scores, setScores] = useState({ ca1: '', ca2: '', exam: '' });
   const [attendance, setAttendance] = useState({});
   const [savedMsg, setSavedMsg] = useState('');
 
   // Form Master remarks & ratings state
-  const [selectedFormStudent, setSelectedFormStudent] = useState(formClassStudents[0]?.id || '');
+  const [selectedFormStudent, setSelectedFormStudent] = useState('');
   const [formTeacherRemark, setFormTeacherRemark] = useState('Outstanding academic performance; keep up the diligence.');
   const [affectiveScores, setAffectiveScores] = useState({
     punctuality: 5,
@@ -42,36 +93,84 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   });
   const [formSavedMsg, setFormSavedMsg] = useState('');
 
-  // 2. Determine subjects available for the selected student
-  const studentObj = data?.students?.find(s => s.id === selectedStudent);
-  const isClassTeacherForSelected = currentUser && studentObj && currentUser.classAssigned === studentObj.class;
-
-  const availableSubjects = (() => {
-    if (!currentUser || !studentObj) {
-      return ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Computer Studies (AI & Coding)'];
-    }
-    if (isClassTeacherForSelected) {
-      return ['Mathematics', 'English Language', 'Physics', 'Chemistry', 'Biology', 'Computer Studies (AI & Coding)'];
-    }
-    return currentUser.subjectsTaught
-      ?.filter(s => s.className === studentObj.class)
-      ?.map(s => s.subjectName) || ['Mathematics'];
-  })();
-
-  // Reset selected subject if it's no longer available for the chosen student
+  // Sync selectedStudent when classFilteredStudents changes
   useEffect(() => {
-    if (availableSubjects.length > 0 && !availableSubjects.includes(selectedSubject)) {
-      setSelectedSubject(availableSubjects[0]);
+    if (classFilteredStudents.length > 0) {
+      if (!classFilteredStudents.some(s => s.id === selectedStudent)) {
+        setSelectedStudent(classFilteredStudents[0].id);
+      }
+    } else {
+      setSelectedStudent('');
     }
-  }, [selectedStudent, availableSubjects]);
+  }, [classFilteredStudents, selectedStudent]);
 
-  const teacherSubjects = currentUser?.subjectsTaught
-    ?.map((s) => s.subjectName)
-    ?.filter((value, index, self) => self.indexOf(value) === index) || ['Mathematics'];
+  // Sync selectedFormStudent
+  useEffect(() => {
+    if (formClassStudents.length > 0 && !selectedFormStudent) {
+      setSelectedFormStudent(formClassStudents[0].id);
+    }
+  }, [formClassStudents, selectedFormStudent]);
+
+  // 3. STRICT SUBJECT LOCK: Determine subjects STRICTLY connected to this teacher's ID
+  const studentObj = (data?.students || []).find(s => s.id === selectedStudent);
+
+  const availableSubjects = useMemo(() => {
+    if (!currentUser) return ['Mathematics'];
+
+    // If a student is selected, find the exact subjects this teacher teaches in THIS student's class
+    if (studentObj) {
+      const matchSubjects = teacherSubjectsTaught
+        .filter(s =>
+          studentObj.class === s.className ||
+          studentObj.class?.includes(s.className) ||
+          s.className?.includes(studentObj.class)
+        )
+        .map(s => s.subjectName);
+
+      if (matchSubjects.length > 0) {
+        return Array.from(new Set(matchSubjects));
+      }
+    }
+
+    // If a class filter is active, return subjects taught in that class
+    if (selectedClassFilter !== 'All') {
+      const matchedByClass = teacherSubjectsTaught
+        .filter(s =>
+          selectedClassFilter === s.className ||
+          selectedClassFilter.includes(s.className) ||
+          s.className?.includes(selectedClassFilter)
+        )
+        .map(s => s.subjectName);
+
+      if (matchedByClass.length > 0) {
+        return Array.from(new Set(matchedByClass));
+      }
+    }
+
+    // Otherwise return all distinct subjects assigned to this teacher across all their classes
+    const allSubjects = teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean);
+    return allSubjects.length > 0 ? Array.from(new Set(allSubjects)) : ['Mathematics'];
+  }, [currentUser, studentObj, selectedClassFilter, teacherSubjectsTaught]);
+
+  // Sync selectedSubject whenever availableSubjects changes
+  useEffect(() => {
+    if (availableSubjects.length > 0) {
+      if (!availableSubjects.includes(selectedSubject)) {
+        setSelectedSubject(availableSubjects[0]);
+      }
+    } else {
+      setSelectedSubject('');
+    }
+  }, [availableSubjects, selectedSubject]);
+
+  const teacherDistinctSubjects = useMemo(() => {
+    return Array.from(new Set(teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean)));
+  }, [teacherSubjectsTaught]);
 
   // New Assignment Form State
   const [newAsn, setNewAsn] = useState({
-    subject: teacherSubjects[0] || 'Mathematics',
+    subject: teacherDistinctSubjects[0] || 'Mathematics',
+    targetClass: distinctClasses[0] || 'All',
     title: '',
     dueDate: '',
     desc: '',
@@ -81,7 +180,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   // New Study Material Form State
   const [newMat, setNewMat] = useState({
     title: '',
-    subject: teacherSubjects[0] || 'Physics',
+    subject: teacherDistinctSubjects[0] || 'Mathematics',
     format: 'PDF',
   });
   const [matMsg, setMatMsg] = useState('');
@@ -116,8 +215,8 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       remark: total >= 70 ? 'Excellent' : total >= 50 ? 'Good' : 'Needs Improvement',
     });
 
-    setSavedMsg(`Score saved for ${data?.students?.find((s) => s.id === selectedStudent)?.name}! Total: ${total}/100 (${grade})`);
-    setTimeout(() => setSavedMsg(''), 4000);
+    setSavedMsg(`Score saved for ${(data?.students || []).find((s) => s.id === selectedStudent)?.name}! ${selectedSubject}: Total ${total}/100 (${grade})`);
+    setTimeout(() => setSavedMsg(''), 4500);
   };
 
   const handleAssignmentSubmit = (e) => {
@@ -130,7 +229,13 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       desc: newAsn.desc,
       status: 'Pending Submission',
     });
-    setNewAsn({ subject: teacherSubjects[0] || 'Mathematics', title: '', dueDate: '', desc: '' });
+    setNewAsn({
+      subject: teacherDistinctSubjects[0] || 'Mathematics',
+      targetClass: distinctClasses[0] || 'All',
+      title: '',
+      dueDate: '',
+      desc: ''
+    });
     setAsnMsg('Assignment created & published to students!');
     setTimeout(() => setAsnMsg(''), 4000);
   };
@@ -144,7 +249,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       size: '2.8 MB',
       dateAdded: new Date().toISOString().split('T')[0],
     });
-    setNewMat({ title: '', subject: teacherSubjects[0] || 'Physics', format: 'PDF' });
+    setNewMat({ title: '', subject: teacherDistinctSubjects[0] || 'Physics', format: 'PDF' });
     setMatMsg('Learning material uploaded to central repository!');
     setTimeout(() => setMatMsg(''), 4000);
   };
@@ -153,7 +258,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     e.preventDefault();
     const student = formClassStudents.find(s => s.id === selectedFormStudent);
     setFormSavedMsg(`Form Master evaluation and terminal remark saved for ${student?.name || selectedFormStudent}!`);
-    setTimeout(() => setFormSavedMsg(''), 4000);
+    setTimeout(() => setFormSavedMsg(''), 4500);
   };
 
   const quickRemarks = [
@@ -171,13 +276,13 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-black text-[#1B2521]">{currentUser?.name || 'Mr. Babatunde Ogunlesi'}</h2>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[11px] font-bold border border-green-primary/20">
-              {currentUser?.department || 'Faculty Staff'}
+              {currentUser?.department || 'Sciences & Technology'}
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
             {isClassTeacher ? (
-              <span className="px-3 py-1 rounded-lg bg-green-primary text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
+              <span className="px-3 py-1 rounded-lg bg-[#06452C] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
                 <Users className="w-3.5 h-3.5" />
                 <span>Class Teacher: {currentUser.classAssigned}</span>
               </span>
@@ -188,10 +293,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               </span>
             )}
 
-            {currentUser?.subjectsTaught?.length > 0 && (
+            {teacherSubjectsTaught.length > 0 && (
               <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-bold border border-emerald-200/60 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Subjects: {currentUser.subjectsTaught.map(s => `${s.subjectName} (${s.className})`).join(' · ')}</span>
+                <span>Assigned: {teacherSubjectsTaught.map(s => `${s.subjectName} (${s.className})`).join(' · ')}</span>
               </span>
             )}
           </div>
@@ -241,137 +346,208 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
       {/* ================= TAB 1: SUBJECT SCORE ENTRY ================= */}
       {activeTab === 'scores' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <div className="border-b border-gray-100 pb-3">
-              <h3 className="font-extrabold text-lg text-[#1B2521]">Continuous Assessment & Exam Score Entry</h3>
-              <p className="text-xs text-gray-500">
-                Enter CA1 (20), CA2 (20), and Terminal Exam (60) for your assigned subjects
-              </p>
+        <div className="space-y-4">
+          
+          {/* ================= INTERACTIVE CLASS TOGGLE / WORKSPACE SWITCHER ================= */}
+          {distinctClasses.length > 0 && (
+            <div className="p-4 rounded-2xl bg-emerald-950 text-white border border-emerald-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block">
+                    Class Workspace Toggle
+                  </span>
+                  <p className="text-xs text-emerald-100">
+                    Switch between your classes to filter students and lock score entry:
+                  </p>
+                </div>
+              </div>
+
+              {/* Class Toggle Buttons */}
+              <div className="flex flex-wrap gap-1.5 p-1 bg-emerald-900/90 rounded-xl border border-emerald-700/50 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedClassFilter('All')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                    selectedClassFilter === 'All'
+                      ? 'bg-emerald-400 text-emerald-950 shadow-md'
+                      : 'text-emerald-200 hover:text-white hover:bg-emerald-800/50'
+                  }`}
+                >
+                  All Classes ({allowedStudents.length})
+                </button>
+
+                {distinctClasses.map((cls) => {
+                  const countInClass = allowedStudents.filter(s =>
+                    s.class === cls || s.class?.includes(cls) || cls.includes(s.class)
+                  ).length;
+                  return (
+                    <button
+                      key={cls}
+                      type="button"
+                      onClick={() => setSelectedClassFilter(cls)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                        selectedClassFilter === cls
+                          ? 'bg-emerald-400 text-emerald-950 shadow-md'
+                          : 'text-emerald-200 hover:text-white hover:bg-emerald-800/50'
+                      }`}
+                    >
+                      <BookOpen className="w-3 h-3" />
+                      <span>{cls}</span>
+                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        selectedClassFilter === cls ? 'bg-emerald-900/40 text-emerald-950 font-black' : 'bg-emerald-800 text-emerald-300'
+                      }`}>
+                        {countInClass}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="font-extrabold text-lg text-[#1B2521]">Continuous Assessment & Exam Score Entry</h3>
+                <p className="text-xs text-gray-500">
+                  Subject dropdown is strictly locked to subjects linked to your Teacher ID.
+                </p>
+              </div>
+
+              {savedMsg && (
+                <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-primary" />
+                  <span>{savedMsg}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="font-bold text-gray-700">Select Student</label>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      Showing {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
+                    </span>
+                  </div>
+                  <select
+                    value={selectedStudent}
+                    onChange={(e) => setSelectedStudent(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                  >
+                    {classFilteredStudents.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.class} · {s.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* STRICT SUBJECT DROPDOWN (ONLY TEACHER'S ASSIGNED SUBJECTS) */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="font-bold text-gray-700">Select Subject (Locked to Your Assigned Subjects)</label>
+                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      ✓ ID Connected Only
+                    </span>
+                  </div>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="w-full p-3 rounded-xl border-2 border-emerald-300 text-sm focus:outline-none focus:border-green-primary bg-emerald-50/40 font-bold text-[#06452C]"
+                  >
+                    {availableSubjects.map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">CA 1 (Max 20)</label>
+                    <input
+                      type="number"
+                      max="20"
+                      min="0"
+                      required
+                      value={scores.ca1}
+                      onChange={(e) => setScores({ ...scores, ca1: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">CA 2 (Max 20)</label>
+                    <input
+                      type="number"
+                      max="20"
+                      min="0"
+                      required
+                      value={scores.ca2}
+                      onChange={(e) => setScores({ ...scores, ca2: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Exam (Max 60)</label>
+                    <input
+                      type="number"
+                      max="60"
+                      min="0"
+                      required
+                      value={scores.exam}
+                      onChange={(e) => setScores({ ...scores, exam: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-green-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center text-xs">
+                  <span className="font-bold text-gray-700">Calculated Total Score:</span>
+                  <span className="font-black text-sm text-[#06452C]">
+                    {(parseInt(scores.ca1) || 0) + (parseInt(scores.ca2) || 0) + (parseInt(scores.exam) || 0)} / 100
+                    {' '}({calculateGrade((parseInt(scores.ca1) || 0) + (parseInt(scores.ca2) || 0) + (parseInt(scores.exam) || 0))})
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save {selectedSubject} Score for {studentObj?.name || 'Student'} →</span>
+                </button>
+              </form>
             </div>
 
-            {savedMsg && (
-              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-primary" />
-                <span>{savedMsg}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Select Student</label>
-                <select
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
-                >
-                  {allowedStudents.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.class} · {s.id})
-                    </option>
-                  ))}
-                </select>
+            <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+              <div className="border-b border-gray-100 pb-3">
+                <h3 className="font-extrabold text-lg text-[#1B2521]">Teacher ID Subject Allocation</h3>
+                <p className="text-xs text-gray-500">Subjects registered to your teacher account</p>
               </div>
 
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Select Subject</label>
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
-                >
-                  {availableSubjects.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-2.5 text-xs">
+                {teacherSubjectsTaught.map((st, i) => (
+                  <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-[#FAFCFA] border border-gray-200">
+                    <div>
+                      <span className="font-bold text-[#1B2521] block">{st.subjectName}</span>
+                      <span className="text-[10px] text-gray-400">{st.className}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-[#06452C] font-mono text-[10px] font-black border border-emerald-200">
+                      Authorised
+                    </span>
+                  </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">CA 1 (Max 20)</label>
-                  <input
-                    type="number"
-                    max="20"
-                    min="0"
-                    required
-                    value={scores.ca1}
-                    onChange={(e) => setScores({ ...scores, ca1: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">CA 2 (Max 20)</label>
-                  <input
-                    type="number"
-                    max="20"
-                    min="0"
-                    required
-                    value={scores.ca2}
-                    onChange={(e) => setScores({ ...scores, ca2: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Exam (Max 60)</label>
-                  <input
-                    type="number"
-                    max="60"
-                    min="0"
-                    required
-                    value={scores.exam}
-                    onChange={(e) => setScores({ ...scores, exam: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-green-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center text-xs">
-                <span className="font-bold text-gray-700">Calculated Total Score:</span>
-                <span className="font-black text-sm text-[#06452C]">
-                  {(parseInt(scores.ca1) || 0) + (parseInt(scores.ca2) || 0) + (parseInt(scores.exam) || 0)} / 100
-                  {' '}({calculateGrade((parseInt(scores.ca1) || 0) + (parseInt(scores.ca2) || 0) + (parseInt(scores.exam) || 0))})
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md"
-              >
-                Save Subject Score to Student Record →
-              </button>
-            </form>
-          </div>
-
-          <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <div className="border-b border-gray-100 pb-3">
-              <h3 className="font-extrabold text-lg text-[#1B2521]">WAEC / NECO Grading Standards</h3>
-              <p className="text-xs text-gray-500">Official Nigerian secondary school grade scales</p>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center p-2 rounded-lg bg-green-50 border border-green-200">
-                <span className="font-bold text-green-900">75% - 100%</span>
-                <span className="font-black text-green-800">A1 (Distinction)</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-lg bg-blue-50 border border-blue-200">
-                <span className="font-bold text-blue-900">70% - 74%</span>
-                <span className="font-black text-blue-800">B2 (Very Good)</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-lg bg-blue-50 border border-blue-200">
-                <span className="font-bold text-blue-900">65% - 69%</span>
-                <span className="font-black text-blue-800">B3 (Good)</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-lg bg-amber-50 border border-amber-200">
-                <span className="font-bold text-amber-900">50% - 64%</span>
-                <span className="font-black text-amber-800">C4 - C6 (Credit)</span>
-              </div>
-              <div className="flex justify-between items-center p-2 rounded-lg bg-red-50 border border-red-200">
-                <span className="font-bold text-red-900">0% - 49%</span>
-                <span className="font-black text-red-800">D7 - F9 (Pass / Fail)</span>
+              <div className="pt-2 border-t border-gray-100 space-y-1.5 text-[11px] text-gray-500">
+                <div className="font-bold text-gray-700">Security & Integrity Rule:</div>
+                <p>
+                  To prevent unauthorized score tampering, teachers can only input grades for the exact subjects linked to their ID. Other subject scores are managed by their respective teachers.
+                </p>
               </div>
             </div>
           </div>
@@ -401,9 +577,9 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   <select
                     value={newAsn.subject}
                     onChange={(e) => setNewAsn({ ...newAsn, subject: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                   >
-                    {teacherSubjects.map((sub) => (
+                    {teacherDistinctSubjects.map((sub) => (
                       <option key={sub} value={sub}>
                         {sub}
                       </option>
@@ -488,9 +664,9 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   <select
                     value={newMat.subject}
                     onChange={(e) => setNewMat({ ...newMat, subject: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                   >
-                    {teacherSubjects.map((sub) => (
+                    {teacherDistinctSubjects.map((sub) => (
                       <option key={sub} value={sub}>
                         {sub}
                       </option>
