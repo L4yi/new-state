@@ -138,6 +138,31 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleApprovePayment = async (paymentId) => {
+    // 1. Optimistic state update for instant zero-latency UI response
+    setPortalData((prev) => {
+      const existingPayments = prev.feePayments || [];
+      const updatedPayments = existingPayments.map((p) => {
+        if (p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId) {
+          return { ...p, status: 'Approved' };
+        }
+        return p;
+      });
+      const targetPayment = existingPayments.find(p => p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId);
+      let updatedStudents = prev.students || [];
+      if (targetPayment && targetPayment.studentId) {
+        updatedStudents = updatedStudents.map(s => {
+          if (s.id === targetPayment.studentId) {
+            return { ...s, feeStatus: 'Approved', paidAmount: targetPayment.amount };
+          }
+          return s;
+        });
+      }
+      const nextState = { ...prev, feePayments: updatedPayments, students: updatedStudents };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to MongoDB API
     try {
       const res = await fetch(`${API_URL}/payments/${paymentId}`, {
         method: 'PUT',
@@ -153,6 +178,21 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleRejectPayment = async (paymentId) => {
+    // 1. Optimistic state update
+    setPortalData((prev) => {
+      const existingPayments = prev.feePayments || [];
+      const updatedPayments = existingPayments.map((p) => {
+        if (p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId) {
+          return { ...p, status: 'Declined' };
+        }
+        return p;
+      });
+      const nextState = { ...prev, feePayments: updatedPayments };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to MongoDB API
     try {
       const res = await fetch(`${API_URL}/payments/${paymentId}`, {
         method: 'PUT',

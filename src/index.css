@@ -22,15 +22,16 @@ body {
 }
 
 /* =========================================================
-   GLOBAL PRINT ISOLATION ENGINE
+   BULLETPROOF GLOBAL PRINT ISOLATION ENGINE
    Ensures ONLY the active Report Sheet or Admission Slip
-   is printed, with zero background web page chrome or navbars.
+   is printed, with zero background web page chrome or navbars,
+   working flawlessly from modals (Student Portal) and pages (Admin).
    ========================================================= */
 @media print {
   /* Page layout: Standard A4 portrait with clean margins */
   @page {
     size: A4 portrait;
-    margin: 8mm 8mm;
+    margin: 6mm 6mm;
   }
 
   /* Force browsers to print exact colors, background banners & borders */
@@ -42,31 +43,20 @@ body {
     color-adjust: exact !important;
   }
 
-  /* Hide everything on the page by default */
-  html, body {
-    background: #FFFFFF !important;
-    color: #000000 !important;
+  html, body, #root {
     width: 100% !important;
+    min-height: 100% !important;
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #000000 !important;
     overflow: visible !important;
   }
 
+  /* Hide everything on the page by default */
   body * {
     visibility: hidden;
-  }
-
-  /* Explicitly hide all navbars, footers, sidebars, buttons, and modals backdrops */
-  nav,
-  footer,
-  header,
-  aside,
-  button,
-  .print\:hidden,
-  .no-print {
-    display: none !important;
-    visibility: hidden !important;
   }
 
   /* Reveal ONLY the active printable document container and its contents */
@@ -75,6 +65,25 @@ body {
   #printable-report-sheet,
   #printable-report-sheet * {
     visibility: visible !important;
+  }
+
+  /* Remove all modal wrappers, overlays, fixed backdrops during print */
+  .fixed,
+  .overflow-y-auto,
+  .backdrop-blur-sm,
+  .bg-black\/70,
+  .bg-black\/60,
+  .bg-black\/50 {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   /* Pin the printable container to the exact top-left corner of the page */
@@ -95,12 +104,15 @@ body {
     page-break-inside: avoid !important;
   }
 
-  /* Remove any modal overlays, scrollbars or black backgrounds */
-  .fixed,
-  .overflow-y-auto {
-    position: static !important;
-    overflow: visible !important;
-    background: transparent !important;
-    padding: 0 !important;
+  /* Explicitly hide all navbars, footers, sidebars, buttons, and modals backdrops */
+  nav,
+  footer,
+  header,
+  aside,
+  button,
+  .print\:hidden,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
   }
 }

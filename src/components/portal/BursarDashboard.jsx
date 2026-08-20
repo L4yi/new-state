@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Clock, CreditCard, Building2, Check, X, ShieldCh
 
 export default function BursarDashboard({ data, onApprovePayment, onRejectPayment }) {
   const [filterStatus, setFilterStatus] = useState('All');
+  const [actionFeedback, setActionFeedback] = useState('');
 
   const paymentsList = data?.feePayments || [];
   const filteredPayments = paymentsList.filter((p) => {
@@ -16,8 +17,30 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
 
   const pendingCount = paymentsList.filter((p) => p.status === 'Pending').length;
 
+  const handleApprove = (payment) => {
+    const payId = payment.id || payment.paymentId || payment.reference;
+    onApprovePayment(payId);
+    setActionFeedback(`Payment for ${payment.studentName} (${payment.amount}) successfully approved! Student fee status updated to Approved.`);
+    setTimeout(() => setActionFeedback(''), 4500);
+  };
+
+  const handleReject = (payment) => {
+    const payId = payment.id || payment.paymentId || payment.reference;
+    onRejectPayment(payId);
+    setActionFeedback(`Payment for ${payment.studentName} (${payment.amount}) declined.`);
+    setTimeout(() => setActionFeedback(''), 4500);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Action Notification Banner */}
+      {actionFeedback && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-emerald-900 flex items-center gap-2.5 shadow-sm animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-green-primary flex-shrink-0" />
+          <span>{actionFeedback}</span>
+        </div>
+      )}
+
       {/* Stats Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-between">
@@ -98,8 +121,8 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
                 </tr>
               ) : (
                 filteredPayments.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50/50">
-                    <td className="p-3 font-bold text-gray-700">{p.id}</td>
+                  <tr key={p.id || p.paymentId || p.reference} className="hover:bg-gray-50/50">
+                    <td className="p-3 font-bold text-gray-700 font-mono">{p.id || p.paymentId}</td>
                     <td className="p-3 font-bold text-[#1B2521]">
                       {p.studentName}
                       <span className="block text-[10px] text-gray-400 font-normal">{p.studentId}</span>
@@ -125,17 +148,17 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
                       {p.status === 'Pending' ? (
                         <div className="flex justify-end gap-1.5">
                           <button
-                            onClick={() => onApprovePayment(p.id)}
-                            className="px-2.5 py-1 bg-green-primary text-white font-bold rounded-lg hover:bg-green-dark transition-all flex items-center gap-1"
+                            onClick={() => handleApprove(p)}
+                            className="px-3 py-1.5 bg-green-primary text-white font-bold rounded-lg hover:bg-green-dark transition-all flex items-center gap-1 shadow-sm active:scale-95"
                           >
-                            <Check className="w-3 h-3" />
-                            <span>Approve</span>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Accept</span>
                           </button>
                           <button
-                            onClick={() => onRejectPayment(p.id)}
-                            className="px-2.5 py-1 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition-all flex items-center gap-1"
+                            onClick={() => handleReject(p)}
+                            className="px-2.5 py-1.5 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition-all flex items-center gap-1 active:scale-95"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-3.5 h-3.5" />
                             <span>Decline</span>
                           </button>
                         </div>

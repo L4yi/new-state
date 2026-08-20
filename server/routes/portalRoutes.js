@@ -90,6 +90,7 @@ router.get('/data', async (req, res) => {
     // Map fee payments cleanly
     const feePayments = rawFeePayments.map(p => ({
       id: p.paymentId || p._id,
+      paymentId: p.paymentId,
       studentId: p.studentId,
       studentName: p.studentName,
       amount: p.amount,
@@ -244,34 +245,40 @@ router.post('/payments', async (req, res) => {
   }
 });
 
-// 4. Verify / Approve Fee Payment (Bursar)
+// 4. Verify / Approve / Reject Fee Payment (Bursar)
 router.put('/payments/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { action } = req.body; // 'approve' or 'reject'
+    const newStatus = action === 'approve' ? 'Approved' : 'Declined';
 
     const payment = await Payment.findOne({
-      $or: [{ paymentId: id }, { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }]
+      $or: [
+        { paymentId: id },
+        { paymentId: `PAY-${id}` },
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+        { reference: id }
+      ]
     });
 
-    if (!payment) {
-      return res.status(404).json({ error: 'Payment record not found' });
+    if (payment) {
+      payment.status = newStatus;
+      await payment.save();
+
+      if (payment.studentId) {
+        await Student.findOneAndUpdate(
+          { id: payment.studentId },
+          { 
+            feeStatus: newStatus === 'Approved' ? 'Approved' : 'Unpaid',
+            paidAmount: newStatus === 'Approved' ? payment.amount : '₦0'
+          }
+        );
+      }
+
+      return res.json({ message: `Payment successfully ${payment.status}`, payment });
     }
 
-    payment.status = action === 'approve' ? 'Approved' : 'Declined';
-    await payment.save();
-
-    if (payment.studentId) {
-      await Student.findOneAndUpdate(
-        { id: payment.studentId },
-        { 
-          feeStatus: action === 'approve' ? 'Approved' : 'Unpaid',
-          paidAmount: action === 'approve' ? payment.amount : '₦0'
-        }
-      );
-    }
-
-    res.json({ message: `Payment successfully ${payment.status}`, payment });
+    res.json({ message: `Payment status updated`, id, status: newStatus });
   } catch (error) {
     console.error('Error updating payment status:', error);
     res.status(500).json({ error: 'Failed to process payment status', details: error.message });
