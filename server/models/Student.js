@@ -20,6 +20,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  ninOrLasrra: {
+    type: String,
+    default: ''
+  },
   stateOfOrigin: {
     type: String,
     default: 'Lagos'
@@ -40,13 +44,25 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: 'AA'
   },
+  religion: {
+    type: String,
+    default: 'Christianity'
+  },
   class: {
     type: String,
     required: true
   },
+  classArm: {
+    type: String,
+    default: 'Arm A (Diamond)'
+  },
   academicTrack: {
     type: String,
     default: 'Science & Technology'
+  },
+  admissionType: {
+    type: String,
+    default: 'Fresh Candidate'
   },
   house: {
     type: String,
@@ -81,9 +97,29 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fatherOccupation: {
+    type: String,
+    default: ''
+  },
+  motherName: {
+    type: String,
+    default: ''
+  },
+  motherOccupation: {
+    type: String,
+    default: ''
+  },
+  motherPhone: {
+    type: String,
+    default: ''
+  },
   emergencyContact: {
     type: String,
     default: ''
+  },
+  whatsappAlertsEnabled: {
+    type: Boolean,
+    default: true
   },
   feeStatus: {
     type: String,
