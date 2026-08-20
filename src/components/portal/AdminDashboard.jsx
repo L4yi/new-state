@@ -62,7 +62,6 @@ export default function AdminDashboard({
     religion: 'Christianity',
     admissionCriteria: 'Internal Entrance Examination',
     entranceExamScore: '84%',
-    entranceExamRegNo: 'NSHS/EXAM/2026/084',
     priorClass: 'Primary 6',
     entryClass: 'JSS 1',
     classArm: 'Arm A',
@@ -352,14 +351,13 @@ export default function AdminDashboard({
       religion: studentForm.religion,
       admissionCriteria: 'Internal Entrance Examination',
       entranceExamScore: studentForm.entranceExamScore,
-      entranceExamRegNo: studentForm.entranceExamRegNo,
       priorClass: studentForm.priorClass,
       class: `${studentForm.entryClass} - ${studentForm.classArm}`,
       entryClass: studentForm.entryClass,
       classArm: studentForm.classArm,
       academicTrack: studentForm.academicTrack,
       house: studentForm.house,
-      boardingStatus: studentForm.boardingStatus,
+      boardingStatus: 'Day Student',
       previousSchool: studentForm.previousSchool,
       medicalConditions: studentForm.medicalConditions,
       guardian: `${studentForm.guardianName} (${studentForm.guardianRelationship})`,
@@ -418,7 +416,6 @@ export default function AdminDashboard({
       guardianAddress: app.address || 'Mushin / Lagos, Nigeria',
       previousSchool: app.previousSchool || '',
       medicalConditions: app.medicalConditions || 'None',
-      entranceExamRegNo: `NSHS/EXAM/2026/${Math.floor(100 + Math.random() * 900)}`,
       entranceExamScore: '85%',
       portalPin: generateRandomPin(),
     }));
@@ -458,7 +455,6 @@ export default function AdminDashboard({
       religion: 'Christianity',
       admissionCriteria: 'Internal Entrance Examination',
       entranceExamScore: '84%',
-      entranceExamRegNo: 'NSHS/EXAM/2026/084',
       priorClass: 'Primary 6',
       entryClass: 'JSS 1',
       classArm: 'Arm A',
@@ -938,8 +934,8 @@ export default function AdminDashboard({
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Exam Candidate Reg No.</span>
-                        <span className="font-mono text-gray-700">{registeredStudentSlip.entranceExamRegNo || 'NSHS/EXAM/2026/084'}</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Academic Track</span>
+                        <span className="font-semibold text-gray-800">{registeredStudentSlip.academicTrack || 'General Foundation'}</span>
                       </div>
 
                       <div>
@@ -948,8 +944,8 @@ export default function AdminDashboard({
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Boarding Status</span>
-                        <span className="font-semibold text-gray-800">{registeredStudentSlip.boardingStatus}</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">School Attendance Mode</span>
+                        <span className="font-black text-[#06452C]">Day Student Only</span>
                       </div>
                     </div>
                   </div>
@@ -1287,13 +1283,13 @@ export default function AdminDashboard({
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Internal Exam / Candidate Reg Number</label>
+                    <label className="block font-bold text-gray-700 mb-1">Previous School Attended</label>
                     <input
                       type="text"
-                      placeholder="e.g. NSHS/EXAM/2026/084"
-                      value={studentForm.entranceExamRegNo}
-                      onChange={(e) => setStudentForm({ ...studentForm, entranceExamRegNo: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-mono"
+                      placeholder="e.g. Crown Model Primary School, Palm Avenue"
+                      value={studentForm.previousSchool}
+                      onChange={(e) => setStudentForm({ ...studentForm, previousSchool: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                     />
                   </div>
                 </div>
@@ -1371,7 +1367,7 @@ export default function AdminDashboard({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
                     <label className="block font-bold text-gray-700 mb-1">Academic Track Stream</label>
                     <input
@@ -1383,25 +1379,12 @@ export default function AdminDashboard({
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Boarding / Day Status</label>
-                    <select
-                      value={studentForm.boardingStatus}
-                      onChange={(e) => setStudentForm({ ...studentForm, boardingStatus: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
-                    >
-                      <option value="Day Student">Day Student</option>
-                      <option value="Boarding">Boarding Student</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Previous School Attended</label>
+                    <label className="block font-bold text-gray-700 mb-1">School Attendance Mode</label>
                     <input
                       type="text"
-                      placeholder="e.g. Crown Model Primary School, Palm Avenue"
-                      value={studentForm.previousSchool}
-                      onChange={(e) => setStudentForm({ ...studentForm, previousSchool: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      readOnly
+                      value="Day Student Only (Comprehensive)"
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm bg-emerald-50 text-[#06452C] font-bold"
                     />
                   </div>
                 </div>

@@ -71,10 +71,6 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: '84%'
   },
-  entranceExamRegNo: {
-    type: String,
-    default: ''
-  },
   priorClass: {
     type: String,
     default: 'Primary 6'
