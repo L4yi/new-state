@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
@@ -16,14 +16,85 @@ const AlumniTestimonials = lazy(() => import('./pages/AlumniTestimonials'));
 const Portal = lazy(() => import('./pages/Portal'));
 const GenericPage = lazy(() => import('./pages/GenericPage'));
 
-const pageMeta = {
-  facilities: { title: 'School Facilities', description: 'Explore our state-of-the-art laboratories, ICT centers, and sports arenas.' },
-  news: { title: 'News & Events', description: 'Stay updated with school announcements, upcoming events, and achievements.' },
-  gallery: { title: 'Photo & Video Gallery', description: 'Visual highlights of school events, campus life, and student activities.' },
+const pageSEO = {
+  home: {
+    title: 'New State High School Mushin, Lagos — Premier Secondary School | WAEC & BECE Excellence',
+    description: 'Welcome to New State High School, Mushin, Lagos. Superior academics, science & tech laboratories, AI coding academy, and 100% examination pass rate.'
+  },
+  about: {
+    title: 'About Us — History, Mission & Values | New State High School Lagos',
+    description: 'Learn about New State High School, established in 1980 in Palm Avenue, Mushin, Lagos. Dedicated to developing future leaders through quality education.'
+  },
+  academics: {
+    title: 'Academic Curriculum (JSS & SSS) — Science, Commercial & Arts | New State High School',
+    description: 'Comprehensive Nigerian & International academic curriculum for Junior and Senior Secondary students at New State High School, Mushin, Lagos.'
+  },
+  admission: {
+    title: 'Online Admissions 2026/2027 Session — Apply Now | New State High School Lagos',
+    description: 'Enroll your child at New State High School. Admissions open for JSS 1 to SSS 2. Convenient online application form and entrance examination.'
+  },
+  'exam-success': {
+    title: 'Exam Success & 100% WAEC/BECE Results Record | New State High School',
+    description: 'Explore our outstanding academic records with 100% distinction pass rate in WAEC, NECO, and BECE examinations in Lagos State.'
+  },
+  'ai-coding': {
+    title: 'AI & Coding Academy — Digital Skills For Future Tech Leaders | New State High School',
+    description: 'Empowering students with hands-on AI, Python programming, robotics, and web development skills at New State High School ICT Academy.'
+  },
+  alumni: {
+    title: 'Alumni Testimonials & Hall of Fame | New State High School Lagos',
+    description: 'Hear from our accomplished alumni making global impact in medicine, engineering, technology, law, and entrepreneurship.'
+  },
+  'teachers-apply': {
+    title: 'Academic Careers & Teacher Recruitment | New State High School Mushin',
+    description: 'Join our team of dedicated educators at New State High School. Apply for teaching and administrative vacancies in Lagos.'
+  },
+  contact: {
+    title: 'Contact Us — 36 Palm Avenue, Mushin, Lagos State | New State High School',
+    description: 'Get in touch with New State High School administration. Visit our campus in Mushin, Lagos, call +234 813 400 0644, or send an email.'
+  },
+  portal: {
+    title: 'School Management Portal — Student, Teacher & Admin Access | New State High School',
+    description: 'Official New State High School portal for student grade reports, fee payment receipts, teacher broadsheets, and administrator records.'
+  },
+  'candidate-login': {
+    title: 'Candidate Admission Portal — Check Application Status | New State High School',
+    description: 'Check prospective student entrance examination screening status and print official admission letters.'
+  },
+  'buy-plan': {
+    title: 'School Prospectus & Application Portal | New State High School',
+    description: 'Purchase school application prospectus and register for entrance screening.'
+  },
+  facilities: {
+    title: 'Modern Science & ICT Campus Facilities | New State High School Lagos',
+    description: 'Explore our modern chemistry, physics, biology, and computer laboratories at New State High School, Mushin.'
+  },
+  news: {
+    title: 'School News & Campus Events | New State High School',
+    description: 'Latest news, inter-house sports updates, valedictory service announcements, and academic calendars.'
+  },
+  gallery: {
+    title: 'Campus Life Photo & Video Gallery | New State High School',
+    description: 'Photographic highlights of cultural days, science exhibitions, sports competitions, and student milestones.'
+  }
 };
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
+
+  // Dynamic SEO Page Title and Description Updates
+  useEffect(() => {
+    const seo = pageSEO[currentPage] || pageSEO.home;
+    document.title = seo.title;
+
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', seo.description);
+    }
+
+    // Scroll to top smoothly on page transition
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   const renderContent = () => {
     if (currentPage === 'home') return <Home onNavigate={setCurrentPage} />;
@@ -39,7 +110,7 @@ export default function App() {
     if (currentPage === 'teachers-apply') return <TeachersApply onNavigate={setCurrentPage} />;
     if (currentPage === 'alumni') return <AlumniTestimonials onNavigate={setCurrentPage} />;
 
-    const meta = pageMeta[currentPage] || { title: currentPage, description: '' };
+    const meta = pageSEO[currentPage] || { title: currentPage, description: '' };
     return <GenericPage title={meta.title} description={meta.description} />;
   };
 

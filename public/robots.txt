@@ -1,0 +1,9 @@
+# robots.txt for New State High School (NSHS)
+# Domain: https://newstatehighschool.web.app
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Official Sitemap location
+Sitemap: https://newstatehighschool.web.app/sitemap.xml
