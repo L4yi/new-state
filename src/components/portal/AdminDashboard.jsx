@@ -44,7 +44,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
     entranceExamRegNo: 'NSHS/EXAM/2026/084',
     priorClass: 'Primary 6',
     entryClass: 'JSS 1',
-    classArm: 'Arm A (Diamond)',
+    classArm: 'Arm A',
     academicTrack: 'Junior Secondary Foundation',
     house: 'Red House (Tiger)',
     boardingStatus: 'Day Student',
@@ -299,7 +299,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
       entranceExamRegNo: 'NSHS/EXAM/2026/084',
       priorClass: 'Primary 6',
       entryClass: 'JSS 1',
-      classArm: 'Arm A (Diamond)',
+      classArm: 'Arm A',
       academicTrack: 'Junior Secondary Foundation',
       house: 'Red House (Tiger)',
       boardingStatus: 'Day Student',
@@ -1164,13 +1164,12 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent, 
                     <select
                       value={studentForm.classArm}
                       onChange={(e) => setStudentForm({ ...studentForm, classArm: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
                     >
-                      <option value="Arm A (Diamond)">Arm A (Diamond)</option>
-                      <option value="Arm B (Gold)">Arm B (Gold)</option>
-                      <option value="Arm C (Silver)">Arm C (Silver)</option>
-                      <option value="Track A (Pre-Engineering)">Track A (Pre-Engineering)</option>
-                      <option value="Track B (Medical & Bio-Sciences)">Track B (Medical & Bio-Sciences)</option>
+                      <option value="Arm A">Arm A</option>
+                      <option value="Arm B">Arm B</option>
+                      <option value="Arm C">Arm C</option>
+                      <option value="Arm D">Arm D</option>
                     </select>
                   </div>
 

@@ -57,7 +57,7 @@ const studentSchema = new mongoose.Schema({
   },
   classArm: {
     type: String,
-    default: 'Arm A (Diamond)'
+    default: 'Arm A'
   },
   academicTrack: {
     type: String,
