@@ -24,7 +24,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
   const [copiedPin, setCopiedPin] = useState(false);
 
-  // Intricate Student Registration Form State with Nigerian Admission Criteria
+  // Intricate Student Registration Form State with Internal Entrance Criteria
   const [studentForm, setStudentForm] = useState({
     surname: '',
     firstName: '',
@@ -38,10 +38,10 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
     bloodGroup: 'O+',
     genotype: 'AA',
     religion: 'Christianity',
-    admissionCriteria: 'National Common Entrance Examination (NCEE) Merit',
-    entranceExamScore: '84% (Passed Screening)',
-    entranceExamRegNo: 'NCEE/2026/04812',
-    priorCertificate: 'Primary School Leaving Certificate (PSLC)',
+    admissionCriteria: 'Internal Entrance Examination',
+    entranceExamScore: '84%',
+    entranceExamRegNo: 'NSHS/EXAM/2026/084',
+    priorClass: 'Primary 6',
     entryClass: 'JSS 1',
     classArm: 'Arm A (Diamond)',
     academicTrack: 'Junior Secondary Foundation',
@@ -118,10 +118,10 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       bloodGroup: studentForm.bloodGroup,
       genotype: studentForm.genotype,
       religion: studentForm.religion,
-      admissionCriteria: studentForm.admissionCriteria,
+      admissionCriteria: 'Internal Entrance Examination',
       entranceExamScore: studentForm.entranceExamScore,
       entranceExamRegNo: studentForm.entranceExamRegNo,
-      priorCertificate: studentForm.priorCertificate,
+      priorClass: studentForm.priorClass,
       class: `${studentForm.entryClass} - ${studentForm.classArm}`,
       academicTrack: studentForm.academicTrack,
       house: studentForm.house,
@@ -170,10 +170,10 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
       bloodGroup: 'O+',
       genotype: 'AA',
       religion: 'Christianity',
-      admissionCriteria: 'National Common Entrance Examination (NCEE) Merit',
-      entranceExamScore: '84% (Passed Screening)',
-      entranceExamRegNo: 'NCEE/2026/04812',
-      priorCertificate: 'Primary School Leaving Certificate (PSLC)',
+      admissionCriteria: 'Internal Entrance Examination',
+      entranceExamScore: '84%',
+      entranceExamRegNo: 'NSHS/EXAM/2026/084',
+      priorClass: 'Primary 6',
       entryClass: 'JSS 1',
       classArm: 'Arm A (Diamond)',
       academicTrack: 'Junior Secondary Foundation',
@@ -211,7 +211,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage central student registry, Nigerian entrance admissions, circulars, and institutional records.
+            Manage central student registry, entrance admissions, circulars, and institutional records.
           </p>
         </div>
 
@@ -349,7 +349,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                   </span>
                   <h3 className="text-2xl font-black text-[#06452C] mt-2">Student Enrolled Successfully!</h3>
                   <p className="text-xs text-gray-600">
-                    Official admission dossier created in the central school database according to Nigerian Ministry of Education criteria.
+                    Official admission dossier created in the central school database via Internal Entrance Examination.
                   </p>
                 </div>
 
@@ -366,18 +366,18 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Class & Arm</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Entry Class & Arm</span>
                     <span className="font-extrabold text-[#1B2521]">{registeredStudentSlip.class}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Admission Route (Criteria)</span>
-                    <span className="font-bold text-[#06452C]">{registeredStudentSlip.admissionCriteria}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Prior Class Passed</span>
+                    <span className="font-bold text-[#1B2521]">{registeredStudentSlip.priorClass || 'Primary 6'}</span>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Screening / Exam Score</span>
-                    <span className="font-extrabold text-green-primary">{registeredStudentSlip.entranceExamScore || 'Verified (84%)'}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Internal Screening Score</span>
+                    <span className="font-extrabold text-green-primary">{registeredStudentSlip.entranceExamScore || '84% (Passed)'}</span>
                   </div>
 
                   <div>
@@ -440,11 +440,11 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
               <div className="border-b border-gray-200 pb-4">
                 <div className="flex items-center gap-2 text-green-primary font-black text-xs uppercase tracking-widest">
                   <UserPlus className="w-4 h-4" />
-                  <span>Student Admissions Dossier & Registry Form (Nigerian Educational Standard)</span>
+                  <span>Student Admissions Dossier & Registry Form (Internal Entrance Standard)</span>
                 </div>
                 <h3 className="text-2xl font-black text-[#1B2521] mt-1">Intricate Student Enrollment</h3>
                 <p className="text-xs text-gray-500">
-                  Complete student personal bio-data, Nigerian entrance criteria, academic stream, parental records, and medical profile.
+                  Complete student personal bio-data, internal entrance exam scores, prior class, entry class, parental records, and medical profile.
                 </p>
               </div>
 
@@ -617,64 +617,53 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                 </div>
               </div>
 
-              {/* SECTION 2: NIGERIAN ADMISSION CRITERIA & CLASS ALLOCATION */}
+              {/* SECTION 2: INTERNAL ENTRANCE EXAM & ACADEMIC ALLOCATION */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 font-black text-xs text-[#06452C] uppercase tracking-wider pb-1 border-b border-gray-100">
                   <Award className="w-4 h-4" />
-                  <span>Section 2: Nigerian Admission Criteria & Class Placement</span>
+                  <span>Section 2: Internal Entrance Examination & Academic Class Allocation</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Admission Entry Criteria (Nigerian Standard) *</label>
-                    <select
-                      value={studentForm.admissionCriteria}
-                      onChange={(e) => setStudentForm({ ...studentForm, admissionCriteria: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
-                    >
-                      <option value="National Common Entrance Examination (NCEE) Merit">National Common Entrance Exam (NCEE) Merit</option>
-                      <option value="Lagos State Model Placement Examination">Lagos State Placement Examination (CAS)</option>
-                      <option value="BECE / Junior WAEC Clearance (6+ Credits)">BECE / Junior WAEC Clearance (6+ Credits)</option>
-                      <option value="Internal Entrance Screening & Oral Interview">Internal Entrance Screening & Oral Interview</option>
-                      <option value="Academic Merit Scholarship Scheme">Academic Merit Scholarship Award</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1">Entrance Screening Score / Grade</label>
+                    <label className="block font-bold text-gray-700 mb-1">Internal Entrance Screening Score (%) *</label>
                     <input
                       type="text"
-                      placeholder="e.g. 84% / 100 or 168 / 200"
+                      placeholder="e.g. 84% / 100"
                       value={studentForm.entranceExamScore}
                       onChange={(e) => setStudentForm({ ...studentForm, entranceExamScore: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-green-primary"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Exam / Placement Reg Number</label>
+                    <label className="block font-bold text-gray-700 mb-1">Internal Exam / Candidate Reg Number</label>
                     <input
                       type="text"
-                      placeholder="e.g. NCEE/2026/04812"
+                      placeholder="e.g. NSHS/EXAM/2026/084"
                       value={studentForm.entranceExamRegNo}
                       onChange={(e) => setStudentForm({ ...studentForm, entranceExamRegNo: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-mono"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Prior Certificate Verified</label>
+                    <label className="block font-bold text-gray-700 mb-1">Prior Class Passed *</label>
                     <select
-                      value={studentForm.priorCertificate}
-                      onChange={(e) => setStudentForm({ ...studentForm, priorCertificate: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                      value={studentForm.priorClass}
+                      onChange={(e) => setStudentForm({ ...studentForm, priorClass: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
                     >
-                      <option value="Primary School Leaving Certificate (PSLC)">Primary School Leaving Cert (PSLC)</option>
-                      <option value="BECE / Junior WAEC Certificate">BECE / Junior WAEC Statement</option>
-                      <option value="Continuous Assessment Dossier (CAS)">Cumulative Assessment Dossier</option>
-                      <option value="Headteacher Letter of Attestation">Letter of Attestation / Testimonial</option>
+                      <option value="Primary 6">Primary 6</option>
+                      <option value="Primary 5">Primary 5</option>
+                      <option value="Primary 4">Primary 4</option>
+                      <option value="JSS 1">JSS 1</option>
+                      <option value="JSS 2">JSS 2</option>
+                      <option value="JSS 3">JSS 3</option>
+                      <option value="SSS 1">SSS 1</option>
+                      <option value="SSS 2">SSS 2</option>
                     </select>
                   </div>
 
@@ -760,7 +749,7 @@ export default function AdminDashboard({ data, onAddAnnouncement, onAddStudent }
                     <label className="block font-bold text-gray-700 mb-1">Previous School Attended</label>
                     <input
                       type="text"
-                      placeholder="e.g. St. Jude Model Primary School, Lagos"
+                      placeholder="e.g. Crown Model Primary School, Palm Avenue"
                       value={studentForm.previousSchool}
                       onChange={(e) => setStudentForm({ ...studentForm, previousSchool: e.target.value })}
                       className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"

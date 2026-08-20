@@ -62,7 +62,7 @@ const studentSchema = new mongoose.Schema({
   },
   admissionCriteria: {
     type: String,
-    default: 'National Common Entrance Examination (NCEE) Merit'
+    default: 'Internal Entrance Examination'
   },
   entranceExamScore: {
     type: String,
@@ -71,6 +71,10 @@ const studentSchema = new mongoose.Schema({
   entranceExamRegNo: {
     type: String,
     default: ''
+  },
+  priorClass: {
+    type: String,
+    default: 'Primary 6'
   },
   priorCertificate: {
     type: String,
