@@ -13,7 +13,6 @@ const studentSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ['Male', 'Female'],
     default: 'Male'
   },
   dob: {
@@ -52,13 +51,17 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  entryClass: {
+    type: String,
+    default: 'JSS 1'
+  },
   classArm: {
     type: String,
     default: 'Arm A (Diamond)'
   },
   academicTrack: {
     type: String,
-    default: 'Science & Technology'
+    default: 'Junior Secondary Foundation'
   },
   admissionCriteria: {
     type: String,
@@ -66,7 +69,7 @@ const studentSchema = new mongoose.Schema({
   },
   entranceExamScore: {
     type: String,
-    default: ''
+    default: '84%'
   },
   entranceExamRegNo: {
     type: String,
@@ -82,11 +85,10 @@ const studentSchema = new mongoose.Schema({
   },
   house: {
     type: String,
-    required: true
+    default: 'Red House (Tiger)'
   },
   boardingStatus: {
     type: String,
-    enum: ['Day Student', 'Boarding'],
     default: 'Day Student'
   },
   previousSchool: {
@@ -100,6 +102,14 @@ const studentSchema = new mongoose.Schema({
   guardian: {
     type: String,
     required: true
+  },
+  guardianName: {
+    type: String,
+    default: ''
+  },
+  guardianRelationship: {
+    type: String,
+    default: 'Father'
   },
   guardianPhone: {
     type: String,
@@ -133,18 +143,21 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  emergencyPhone: {
+    type: String,
+    default: ''
+  },
   whatsappAlertsEnabled: {
     type: Boolean,
     default: true
   },
   feeStatus: {
     type: String,
-    enum: ['Approved', 'Pending', 'Unpaid'],
     default: 'Unpaid'
   },
   feeAmount: {
     type: String,
-    required: true
+    default: '₦95,000'
   },
   paidAmount: {
     type: String,
@@ -153,7 +166,11 @@ const studentSchema = new mongoose.Schema({
   password: {
     type: String,
     default: '1234'
+  },
+  admissionDate: {
+    type: String,
+    default: () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   }
-}, { timestamps: true });
+}, { timestamps: true, strict: false });
 
 export default mongoose.model('Student', studentSchema);

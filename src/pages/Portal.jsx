@@ -246,6 +246,16 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleAddAnnouncement = async (anc) => {
+    // 1. Optimistic instant local update
+    setPortalData((prev) => {
+      const existing = prev.announcements || [];
+      const updated = [anc, ...existing.filter(a => (a.id || a.announcementId) !== (anc.id || anc.announcementId))];
+      const nextState = { ...prev, announcements: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to MongoDB API
     try {
       const res = await fetch(`${API_URL}/announcements`, {
         method: 'POST',
@@ -261,6 +271,16 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleAddStudent = async (std) => {
+    // 1. Optimistic instant local update
+    setPortalData((prev) => {
+      const existing = prev.students || [];
+      const updated = [std, ...existing.filter(s => s.id !== std.id)];
+      const nextState = { ...prev, students: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist directly to MongoDB Atlas
     try {
       const res = await fetch(`${API_URL}/students`, {
         method: 'POST',
@@ -268,10 +288,18 @@ export default function Portal({ onNavigate }) {
         body: JSON.stringify(std),
       });
       if (res.ok) {
+        const savedStudent = await res.json();
+        setPortalData((prev) => {
+          const existing = prev.students || [];
+          const updated = existing.map(s => s.id === std.id ? savedStudent : s);
+          const nextState = { ...prev, students: updated };
+          localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+          return nextState;
+        });
         fetchPortalData();
       }
     } catch (err) {
-      console.error('Failed to register student:', err);
+      console.error('Failed to register student on backend:', err);
     }
   };
 

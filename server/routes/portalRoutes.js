@@ -371,19 +371,31 @@ router.post('/announcements', async (req, res) => {
 // 8. Register Student (Admin)
 router.post('/students', async (req, res) => {
   try {
-    const nextNum = (await Student.countDocuments()) + 1;
-    const defaultId = `NSHS/2026/00${nextNum}`;
+    let studentId = req.body.id;
+    if (!studentId) {
+      const nextNum = (await Student.countDocuments()) + 1;
+      studentId = `NSHS/2026/${String(nextNum).padStart(3, '0')}`;
+    }
+
     const payload = {
       ...req.body,
-      id: req.body.id || defaultId,
+      id: studentId,
+      feeAmount: req.body.feeAmount || (req.body.class?.startsWith('JSS') || req.body.entryClass?.startsWith('JSS') ? '₦95,000' : '₦125,000'),
+      house: req.body.house || 'Red House (Tiger)',
+      guardian: req.body.guardian || req.body.guardianName || 'Parent / Guardian',
+      guardianPhone: req.body.guardianPhone || '08000000000',
       password: req.body.password || '1234'
     };
 
-    const newStudent = new Student(payload);
-    await newStudent.save();
-    res.status(201).json(newStudent);
+    const savedStudent = await Student.findOneAndUpdate(
+      { id: studentId },
+      { $set: payload },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json(savedStudent);
   } catch (error) {
-    console.error('Error registering student:', error);
+    console.error('Error registering student in MongoDB:', error);
     res.status(500).json({ error: 'Failed to register student record', details: error.message });
   }
 });
