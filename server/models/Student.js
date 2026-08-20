@@ -60,9 +60,21 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: 'Science & Technology'
   },
-  admissionType: {
+  admissionCriteria: {
     type: String,
-    default: 'Fresh Candidate'
+    default: 'National Common Entrance Examination (NCEE) Merit'
+  },
+  entranceExamScore: {
+    type: String,
+    default: ''
+  },
+  entranceExamRegNo: {
+    type: String,
+    default: ''
+  },
+  priorCertificate: {
+    type: String,
+    default: 'Primary School Leaving Certificate (PSLC)'
   },
   house: {
     type: String,
