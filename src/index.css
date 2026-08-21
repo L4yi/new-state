@@ -27,19 +27,14 @@ body {
 }
 
 /* =========================================================
-   BULLETPROOF GLOBAL PRINT ISOLATION ENGINE
-   Ensures ONLY the active Report Sheet or Admission Slip
-   is printed, with zero background web page chrome or navbars,
-   working flawlessly from modals (Student Portal) and pages (Admin).
+   BULLETPROOF GLOBAL PRINT STYLING
    ========================================================= */
 @media print {
-  /* Page layout: Standard A4 portrait with clean margins */
   @page {
     size: A4 portrait;
-    margin: 6mm 6mm;
+    margin: 8mm 8mm;
   }
 
-  /* Force browsers to print exact colors, background banners & borders */
   *,
   *::before,
   *::after {
@@ -58,23 +53,21 @@ body {
     background: #FFFFFF !important;
     color: #000000 !important;
     overflow: visible !important;
-    position: static !important;
   }
 
-  /* Hide everything on the page by default */
-  body * {
-    visibility: hidden;
+  /* Hide navigation, footers, headers, buttons during print */
+  nav,
+  footer,
+  header,
+  aside,
+  button,
+  .print\:hidden,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Reveal ONLY the active printable document container and its contents */
-  #printable-admission-slip,
-  #printable-admission-slip *,
-  #printable-report-sheet,
-  #printable-report-sheet * {
-    visibility: visible !important;
-  }
-
-  /* Remove all modal wrappers, overlays, fixed backdrops during print */
+  /* Remove modal backdrops and flex constraints during print */
   .fixed,
   .overflow-y-auto,
   .backdrop-blur-sm,
@@ -93,12 +86,8 @@ body {
     max-width: 100% !important;
   }
 
-  /* Pin the printable container to the exact top-left corner of the page */
   #printable-admission-slip,
   #printable-report-sheet {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
@@ -109,17 +98,5 @@ body {
     display: block !important;
     page-break-after: avoid !important;
     page-break-inside: avoid !important;
-  }
-
-  /* Explicitly hide all navbars, footers, sidebars, buttons, and modals backdrops */
-  nav,
-  footer,
-  header,
-  aside,
-  button,
-  .print\:hidden,
-  .no-print {
-    display: none !important;
-    visibility: hidden !important;
   }
 }

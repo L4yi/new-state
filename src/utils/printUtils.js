@@ -1,25 +1,30 @@
 /**
- * Bulletproof Multi-Device Print Engine
- * Works seamlessly across Desktop, iOS Safari, Android Chrome, Tablets, and WebViews.
+ * Universal Multi-Device Print Engine
+ * Works flawlessly on Desktop (Chrome, Edge, Safari, Firefox) and Mobile (iOS Safari, Android Chrome).
  */
 
 export function printDocument(elementId, documentTitle = 'Official Document') {
   const element = document.getElementById(elementId);
   if (!element) {
-    console.warn(`Print element with ID #${elementId} not found. Falling back to native print.`);
+    console.warn(`Print target #${elementId} not found, falling back to window.print()`);
     window.print();
     return;
   }
 
-  // Detect iOS / Android Mobile Browsers
+  // Detect Mobile Devices (iOS, Android)
   const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 
-  // Collect all styles from the current document
-  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-    .map((style) => style.outerHTML)
+  // Collect all stylesheets and style tags
+  const styleTags = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    .map((el) => el.outerHTML)
     .join('\n');
 
-  const printHtml = `
+  // Convert relative image URLs to absolute URLs
+  let contentHtml = element.outerHTML;
+  const origin = window.location.origin;
+  contentHtml = contentHtml.replace(/src="\/([^"]+)"/g, `src="${origin}/$1"`);
+
+  const printDocumentHtml = `
     <!DOCTYPE html>
     <html lang="en">
       <head>
@@ -29,7 +34,7 @@ export function printDocument(elementId, documentTitle = 'Official Document') {
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-        ${styles}
+        ${styleTags}
         <style>
           @page {
             size: A4 portrait;
@@ -42,118 +47,157 @@ export function printDocument(elementId, documentTitle = 'Official Document') {
             box-sizing: border-box !important;
           }
           html, body {
-            font-family: 'Poppins', sans-serif !important;
-            background: #FFFFFF !important;
-            color: #000000 !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
             width: 100% !important;
             height: auto !important;
             overflow: visible !important;
           }
-          .mobile-print-header {
+          .mobile-action-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #06452C;
             color: #FFFFFF;
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            border-radius: 12px;
+            padding: 12px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 99999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-family: 'Poppins', sans-serif;
           }
-          .mobile-print-btn {
+          .mobile-action-btn {
             background: #10B981;
             color: #06452C;
             font-weight: 800;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
+            padding: 10px 18px;
+            border-radius: 10px;
             font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
           }
-          .print-wrapper {
+          .mobile-close-btn {
+            background: rgba(255,255,255,0.2);
+            color: #FFFFFF;
+            font-weight: 600;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+          }
+          .document-wrapper {
+            width: 100% !important;
+            max-width: 900px !important;
+            margin: 0 auto !important;
+            padding: 12px !important;
+            background: #FFFFFF !important;
+          }
+          #printable-report-sheet,
+          #printable-admission-slip {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 auto !important;
-            padding: 10px !important;
             background: #FFFFFF !important;
+            display: block !important;
           }
           @media print {
-            .mobile-print-header {
+            .mobile-action-bar {
               display: none !important;
             }
-            .print-wrapper {
+            .document-wrapper {
               padding: 0 !important;
               margin: 0 !important;
+              max-width: 100% !important;
             }
           }
         </style>
       </head>
       <body>
-        <div class="mobile-print-header no-print">
+        <div class="mobile-action-bar">
           <div>
-            <div style="font-weight: 800; font-size: 14px;">${documentTitle}</div>
-            <div style="font-size: 11px; opacity: 0.85;">Tap "Print / Save PDF" below to print or save to your phone</div>
+            <div style="font-weight: 800; font-size: 14px; letter-spacing: 0.3px;">${documentTitle}</div>
+            <div style="font-size: 11px; opacity: 0.85;">Tap "Print / Save PDF" to download or print</div>
           </div>
-          <button class="mobile-print-btn" onclick="window.print()">Print / Save PDF</button>
+          <div style="display: flex; align-items: center;">
+            <button class="mobile-action-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+            <button class="mobile-close-btn" onclick="window.close()">✕ Close</button>
+          </div>
         </div>
-        <div class="print-wrapper">
-          ${element.innerHTML}
+        <div class="document-wrapper">
+          ${contentHtml}
         </div>
+        <script>
+          // Automatically trigger native print dialog when rendered
+          window.addEventListener('load', function() {
+            setTimeout(function() {
+              try {
+                window.focus();
+                window.print();
+              } catch (e) {
+                console.log('Print trigger waiting for user interaction', e);
+              }
+            }, 400);
+          });
+        </script>
       </body>
     </html>
   `;
 
-  // On iOS / Android Mobile: Open clean print document window for 100% reliable rendering
+  // 1. Mobile Browsers: Open clean dedicated print document window/tab
   if (isMobile) {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.open();
-      printWindow.document.write(printHtml);
+      printWindow.document.write(printDocumentHtml);
       printWindow.document.close();
-      
-      // Auto-trigger print on mobile after load
-      setTimeout(() => {
-        try {
-          printWindow.focus();
-          printWindow.print();
-        } catch (e) {
-          console.log('Mobile print auto-trigger waiting for user tap');
-        }
-      }, 500);
       return;
     }
   }
 
-  // On Desktop: Use silent, non-intrusive isolated iframe printing
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.setAttribute('title', documentTitle);
-  document.body.appendChild(iframe);
+  // 2. Desktop Browsers: Use clean hidden iframe or dedicated window
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.setAttribute('title', documentTitle);
+    document.body.appendChild(iframe);
 
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(printHtml);
-  doc.close();
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(printDocumentHtml);
+    doc.close();
 
-  setTimeout(() => {
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch (e) {
-      console.warn('Iframe print failed, falling back to window.print()', e);
-      window.print();
-    }
     setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {
+        console.warn('Iframe print failed, opening dedicated print window', e);
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.open();
+          win.document.write(printDocumentHtml);
+          win.document.close();
+        }
       }
-    }, 2000);
-  }, 400);
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 3000);
+    }, 450);
+  } catch (err) {
+    console.error('Print execution error:', err);
+    window.print();
+  }
 }
