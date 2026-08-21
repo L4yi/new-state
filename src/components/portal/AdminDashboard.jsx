@@ -6,6 +6,7 @@ import {
   KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock,
   Briefcase, Plus
 } from 'lucide-react';
+import { printDocument } from '../../utils/printUtils';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
 const generateRandomPin = () => {
@@ -814,8 +815,8 @@ export default function AdminDashboard({
 
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs transition-all flex items-center gap-2 shadow-sm"
+                    onClick={() => printDocument('printable-admission-slip', `${registeredStudentSlip?.name || 'Student'} - Official Admission Letter`)}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-black text-xs transition-all flex items-center gap-2 shadow-sm active:scale-95"
                   >
                     <Printer className="w-4 h-4" />
                     <span>Print Official Letter (PDF)</span>

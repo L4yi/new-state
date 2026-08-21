@@ -3,6 +3,7 @@ import {
   Printer, X, Award, CheckCircle2, ShieldCheck, Download,
   Star, Calendar, User, BookOpen, GraduationCap, MapPin, Phone, Mail, FileText
 } from 'lucide-react';
+import { printDocument } from '../../utils/printUtils';
 
 export default function OfficialReportCardModal({ student, results, sessionInfo, onClose }) {
   const totalScore = results.reduce((acc, r) => acc + (Number(r.total) || 0), 0);
@@ -43,7 +44,7 @@ export default function OfficialReportCardModal({ student, results, sessionInfo,
   ];
 
   const handlePrint = () => {
-    window.print();
+    printDocument('printable-report-sheet', `${student?.name || 'Student'} - Official Terminal Report Card`);
   };
 
   return (
