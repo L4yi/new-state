@@ -96,8 +96,39 @@ const pageSEO = {
   }
 };
 
+const validPages = [
+  'home', 'about', 'academics', 'admission', 'contact', 'portal',
+  'exam-success', 'candidate-login', 'buy-plan', 'ai-coding',
+  'teachers-apply', 'alumni', 'privacy', 'terms', 'facilities', 'news', 'gallery', '404'
+];
+
+const getPageFromUrl = () => {
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  if (!path || path === '') return 'home';
+  if (validPages.includes(path)) return path;
+  return '404';
+};
+
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState(getPageFromUrl);
+
+  // Sync with browser back/forward button history
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPage(getPageFromUrl());
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Navigation handler with browser URL bar update
+  const navigateTo = (page) => {
+    setCurrentPage(page);
+    const targetUrl = page === 'home' ? '/' : `/${page}`;
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({}, '', targetUrl);
+    }
+  };
 
   // Dynamic SEO Page Title and Description Updates
   useEffect(() => {
@@ -114,35 +145,35 @@ export default function App() {
   }, [currentPage]);
 
   const renderContent = () => {
-    if (currentPage === 'home') return <Home onNavigate={setCurrentPage} />;
-    if (currentPage === 'about') return <About onNavigate={setCurrentPage} />;
-    if (currentPage === 'academics') return <Academics onNavigate={setCurrentPage} />;
-    if (currentPage === 'admission') return <Admission onNavigate={setCurrentPage} />;
-    if (currentPage === 'contact') return <Contact onNavigate={setCurrentPage} />;
-    if (currentPage === 'portal') return <Portal onNavigate={setCurrentPage} />;
-    if (currentPage === 'exam-success') return <ExamSuccess onNavigate={setCurrentPage} />;
-    if (currentPage === 'candidate-login') return <CandidateLogin onNavigate={setCurrentPage} />;
-    if (currentPage === 'buy-plan') return <BuyPlan onNavigate={setCurrentPage} />;
-    if (currentPage === 'ai-coding') return <AiCoding onNavigate={setCurrentPage} />;
-    if (currentPage === 'teachers-apply') return <TeachersApply onNavigate={setCurrentPage} />;
-    if (currentPage === 'alumni') return <AlumniTestimonials onNavigate={setCurrentPage} />;
-    if (currentPage === 'privacy') return <PrivacyPolicy onNavigate={setCurrentPage} />;
-    if (currentPage === 'terms') return <TermsOfAdmission onNavigate={setCurrentPage} />;
-    if (currentPage === '404') return <NotFound onNavigate={setCurrentPage} />;
+    if (currentPage === 'home') return <Home onNavigate={navigateTo} />;
+    if (currentPage === 'about') return <About onNavigate={navigateTo} />;
+    if (currentPage === 'academics') return <Academics onNavigate={navigateTo} />;
+    if (currentPage === 'admission') return <Admission onNavigate={navigateTo} />;
+    if (currentPage === 'contact') return <Contact onNavigate={navigateTo} />;
+    if (currentPage === 'portal') return <Portal onNavigate={navigateTo} />;
+    if (currentPage === 'exam-success') return <ExamSuccess onNavigate={navigateTo} />;
+    if (currentPage === 'candidate-login') return <CandidateLogin onNavigate={navigateTo} />;
+    if (currentPage === 'buy-plan') return <BuyPlan onNavigate={navigateTo} />;
+    if (currentPage === 'ai-coding') return <AiCoding onNavigate={navigateTo} />;
+    if (currentPage === 'teachers-apply') return <TeachersApply onNavigate={navigateTo} />;
+    if (currentPage === 'alumni') return <AlumniTestimonials onNavigate={navigateTo} />;
+    if (currentPage === 'privacy') return <PrivacyPolicy onNavigate={navigateTo} />;
+    if (currentPage === 'terms') return <TermsOfAdmission onNavigate={navigateTo} />;
+    if (currentPage === '404') return <NotFound onNavigate={navigateTo} />;
 
     if (pageSEO[currentPage]) {
       const meta = pageSEO[currentPage];
       return <GenericPage title={meta.title} description={meta.description} />;
     }
 
-    return <NotFound onNavigate={setCurrentPage} />;
+    return <NotFound onNavigate={navigateTo} />;
   };
 
   const isPortal = currentPage === 'portal';
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative pb-16 md:pb-0">
-      {!isPortal && <Header currentPage={currentPage} onNavigate={setCurrentPage} />}
+      {!isPortal && <Header currentPage={currentPage} onNavigate={navigateTo} />}
       
       <main className="flex-grow">
         <Suspense fallback={
@@ -154,13 +185,13 @@ export default function App() {
         </Suspense>
       </main>
 
-      {!isPortal && <Footer onNavigate={setCurrentPage} />}
+      {!isPortal && <Footer onNavigate={navigateTo} />}
       
       {/* Sticky Mobile Fast-Action Bar (Touch-optimized >= 44px) */}
-      <MobileQuickBar onNavigate={setCurrentPage} currentPage={currentPage} />
+      <MobileQuickBar onNavigate={navigateTo} currentPage={currentPage} />
 
       {/* Lightweight Session & NDPR Privacy Banner */}
-      <PrivacyBanner onNavigate={setCurrentPage} />
+      <PrivacyBanner onNavigate={navigateTo} />
     </div>
   );
 }
