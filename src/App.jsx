@@ -1,6 +1,8 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import MobileQuickBar from './components/MobileQuickBar';
+import PrivacyBanner from './components/PrivacyBanner';
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
@@ -13,6 +15,9 @@ const BuyPlan = lazy(() => import('./pages/BuyPlan'));
 const AiCoding = lazy(() => import('./pages/AiCoding'));
 const TeachersApply = lazy(() => import('./pages/TeachersApply'));
 const AlumniTestimonials = lazy(() => import('./pages/AlumniTestimonials'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfAdmission = lazy(() => import('./pages/TermsOfAdmission'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 const Portal = lazy(() => import('./pages/Portal'));
 const GenericPage = lazy(() => import('./pages/GenericPage'));
 
@@ -57,6 +62,18 @@ const pageSEO = {
     title: 'School Management Portal — Student, Teacher & Admin Access | New State High School',
     description: 'Official New State High School portal for student grade reports, fee payment receipts, teacher broadsheets, and administrator records.'
   },
+  privacy: {
+    title: 'Privacy Policy & Student Data Protection (NDPR) | New State High School Lagos',
+    description: 'Official student data privacy policy of New State High School in compliance with NDPR data protection laws in Nigeria.'
+  },
+  terms: {
+    title: 'Terms of Admission & Student Code of Conduct | New State High School',
+    description: 'Academic rules, tuition fee policies, and code of conduct for students and guardians at New State High School, Mushin.'
+  },
+  '404': {
+    title: 'Page Not Found · Error 404 | New State High School Lagos',
+    description: 'The requested campus page could not be found. Return to New State High School home or explore online admissions.'
+  },
   'candidate-login': {
     title: 'Candidate Admission Portal — Check Application Status | New State High School',
     description: 'Check prospective student entrance examination screening status and print official admission letters.'
@@ -84,7 +101,7 @@ export default function App() {
 
   // Dynamic SEO Page Title and Description Updates
   useEffect(() => {
-    const seo = pageSEO[currentPage] || pageSEO.home;
+    const seo = pageSEO[currentPage] || pageSEO['404'] || pageSEO.home;
     document.title = seo.title;
 
     let metaDesc = document.querySelector('meta[name="description"]');
@@ -109,16 +126,24 @@ export default function App() {
     if (currentPage === 'ai-coding') return <AiCoding onNavigate={setCurrentPage} />;
     if (currentPage === 'teachers-apply') return <TeachersApply onNavigate={setCurrentPage} />;
     if (currentPage === 'alumni') return <AlumniTestimonials onNavigate={setCurrentPage} />;
+    if (currentPage === 'privacy') return <PrivacyPolicy onNavigate={setCurrentPage} />;
+    if (currentPage === 'terms') return <TermsOfAdmission onNavigate={setCurrentPage} />;
+    if (currentPage === '404') return <NotFound onNavigate={setCurrentPage} />;
 
-    const meta = pageSEO[currentPage] || { title: currentPage, description: '' };
-    return <GenericPage title={meta.title} description={meta.description} />;
+    if (pageSEO[currentPage]) {
+      const meta = pageSEO[currentPage];
+      return <GenericPage title={meta.title} description={meta.description} />;
+    }
+
+    return <NotFound onNavigate={setCurrentPage} />;
   };
 
   const isPortal = currentPage === 'portal';
 
   return (
-    <div className="min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans relative pb-16 md:pb-0">
       {!isPortal && <Header currentPage={currentPage} onNavigate={setCurrentPage} />}
+      
       <main className="flex-grow">
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-[50vh]">
@@ -128,7 +153,14 @@ export default function App() {
           {renderContent()}
         </Suspense>
       </main>
+
       {!isPortal && <Footer onNavigate={setCurrentPage} />}
+      
+      {/* Sticky Mobile Fast-Action Bar (Touch-optimized >= 44px) */}
+      <MobileQuickBar onNavigate={setCurrentPage} currentPage={currentPage} />
+
+      {/* Lightweight Session & NDPR Privacy Banner */}
+      <PrivacyBanner onNavigate={setCurrentPage} />
     </div>
   );
 }

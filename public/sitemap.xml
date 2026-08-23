@@ -79,9 +79,25 @@
   <!-- School Management Portal -->
   <url>
     <loc>https://newstatehighschool.web.app/portal</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.70</priority>
+  </url>
+
+  <!-- Privacy Policy (NDPR) -->
+  <url>
+    <loc>https://newstatehighschool.web.app/privacy</loc>
+    <lastmod>2026-08-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
+  </url>
+
+  <!-- Terms of Admission & Code of Conduct -->
+  <url>
+    <loc>https://newstatehighschool.web.app/terms</loc>
+    <lastmod>2026-08-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.60</priority>
   </url>
 
 </urlset>

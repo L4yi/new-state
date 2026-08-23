@@ -45,12 +45,14 @@ export default function Footer({ onNavigate }) {
 
           {/* Information */}
           <div>
-            <h4 className="font-semibold text-[16px] mb-4 text-green-light">Information</h4>
+            <h4 className="font-semibold text-[16px] mb-4 text-green-light">Information & Legal</h4>
             <ul className="space-y-2 text-[14px] opacity-80">
               <li><button onClick={() => handleNavClick('news')} className="hover:text-green-light transition-colors">News & Events</button></li>
               <li><button onClick={() => handleNavClick('contact')} className="hover:text-green-light transition-colors">Contact & Directions</button></li>
               <li><button onClick={() => handleNavClick('portal')} className="hover:text-green-light transition-colors">Student & Parent Portal</button></li>
               <li><button onClick={() => handleNavClick('exam-success')} className="hover:text-green-light transition-colors">WAEC & JAMB Success</button></li>
+              <li><button onClick={() => handleNavClick('privacy')} className="hover:text-green-light transition-colors">Privacy & Data Policy</button></li>
+              <li><button onClick={() => handleNavClick('terms')} className="hover:text-green-light transition-colors">Terms of Admission</button></li>
             </ul>
           </div>
 
@@ -75,8 +77,14 @@ export default function Footer({ onNavigate }) {
         </div>
 
         <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row justify-between items-center text-[13px] opacity-60 gap-4">
-          <p>© {new Date().getFullYear()} New State Schools. All rights reserved.</p>
-          <p>Domine Dirige Nos · Founded January 1969</p>
+          <p>© {new Date().getFullYear()} New State High School. All rights reserved.</p>
+          <div className="flex items-center gap-4 text-xs">
+            <button onClick={() => handleNavClick('privacy')} className="hover:underline">Privacy Policy</button>
+            <span>•</span>
+            <button onClick={() => handleNavClick('terms')} className="hover:underline">Terms of Admission</button>
+            <span>•</span>
+            <span>Domine Dirige Nos</span>
+          </div>
         </div>
       </div>
     </footer>
