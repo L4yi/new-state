@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
-  Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2
+  Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2,
+  Loader2, ArrowRight
 } from 'lucide-react';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
@@ -19,6 +20,7 @@ export default function Portal({ onNavigate }) {
   });
   const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [portalData, setPortalData] = useState(() => {
     const saved = localStorage.getItem('nshs_portal_data');
     return saved ? JSON.parse(saved) : initialPortalData;
@@ -70,6 +72,9 @@ export default function Portal({ onNavigate }) {
       setLoginError('Please enter your ID, Phone Number or Username.');
       return;
     }
+
+    setIsLoggingIn(true);
+    setLoginError('');
 
     try {
       const res = await fetch(`${API_URL}/login`, {
@@ -126,6 +131,8 @@ export default function Portal({ onNavigate }) {
 
       setLoginError('');
       setIsLoggedIn(true);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -600,9 +607,20 @@ export default function Portal({ onNavigate }) {
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-md mt-2"
+                disabled={isLoggingIn}
+                className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-md mt-2 flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
               >
-                Sign In to Dashboard →
+                {isLoggingIn ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Signing In Securely...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Dashboard</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
 
