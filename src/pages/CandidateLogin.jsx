@@ -1,31 +1,43 @@
 import React, { useState } from 'react';
-import { Sparkles, KeyRound, Phone, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Sparkles, KeyRound, Phone, ShieldCheck, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function CandidateLogin({ onNavigate }) {
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState(1);
   const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSendCode = (e) => {
+  const handleSendCode = async (e) => {
     e.preventDefault();
     if (!phone || phone.length < 10) {
       setMessage('Please enter a valid phone number (e.g. 08012345678).');
       return;
     }
     setMessage('');
-    setStep(2);
+    setIsSending(true);
+
+    // Simulate SMS dispatch latency for smooth realistic UX
+    setTimeout(() => {
+      setIsSending(false);
+      setStep(2);
+    }, 800);
   };
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
-    if (code === '123456' || code.length === 6) {
-      setMessage('');
-      alert('Verification successful! Entering CBT Exam Portal...');
-      onNavigate('exam-success');
-    } else {
-      setMessage('Invalid verification code. Enter 123456 for demo test mode.');
-    }
+    setIsVerifying(true);
+    setMessage('');
+
+    setTimeout(() => {
+      setIsVerifying(false);
+      if (code === '123456' || code.length === 6) {
+        onNavigate('exam-success');
+      } else {
+        setMessage('Invalid verification code. Enter 123456 for demo test mode.');
+      }
+    }, 900);
   };
 
   return (
@@ -67,9 +79,20 @@ export default function CandidateLogin({ onNavigate }) {
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-md"
+                disabled={isSending}
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
               >
-                Send Access Code →
+                {isSending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Dispatching SMS Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Access Code</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
 
               <div className="pt-2">
@@ -97,9 +120,20 @@ export default function CandidateLogin({ onNavigate }) {
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-green-600 hover:bg-green-700 transition-all shadow-md"
+                disabled={isVerifying}
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-green-600 hover:bg-green-700 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
               >
-                Verify & Enter CBT Portal →
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Verifying Access Code...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Verify & Enter CBT Portal</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
 
               <div className="pt-2">

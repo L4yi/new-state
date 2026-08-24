@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { CheckCircle2, Sparkles, ArrowRight, ArrowLeft, Briefcase } from 'lucide-react';
+import { CheckCircle2, Sparkles, ArrowRight, ArrowLeft, Briefcase, Loader2 } from 'lucide-react';
 
 export default function TeachersApply({ onNavigate }) {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -49,7 +50,11 @@ export default function TeachersApply({ onNavigate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }, 850);
   };
 
   return (
@@ -268,9 +273,20 @@ export default function TeachersApply({ onNavigate }) {
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-md mt-4"
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-md mt-4 flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
               >
-                Send Application →
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Submitting Educator Application...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Application</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           )}

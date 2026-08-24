@@ -463,9 +463,20 @@ export default function Admission({ onNavigate }) {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-lg hover:shadow-xl"
+                    disabled={isSubmitting}
+                    className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
                   >
-                    Submit Student Application →
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Submitting Application to Registry...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Submit Student Application</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
