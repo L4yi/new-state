@@ -32,9 +32,20 @@ export default function Portal({ onNavigate }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('nshs_auth_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  };
+
   const fetchPortalData = async () => {
     try {
-      const res = await fetch(`${API_URL}/data`);
+      const res = await fetch(`${API_URL}/data`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         setPortalData(data);
@@ -49,7 +60,7 @@ export default function Portal({ onNavigate }) {
 
   useEffect(() => {
     fetchPortalData();
-  }, []);
+  }, [isLoggedIn, activeRole]);
 
   // Handle Login
   const handleLoginSubmit = async (e) => {
@@ -84,6 +95,9 @@ export default function Portal({ onNavigate }) {
           setCurrentStudentId(data.user.id);
           localStorage.setItem('nshs_current_student_id', data.user.id);
         }
+        
+        // Re-fetch role-authorized data with the new token
+        setTimeout(() => fetchPortalData(), 100);
         return;
       } else {
         setLoginError(data.error || 'Authentication failed');
@@ -130,7 +144,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/payments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newPayment),
       });
       if (res.ok) {
@@ -170,7 +184,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/payments/${paymentId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ action: 'approve' }),
       });
       if (res.ok) {
@@ -200,7 +214,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/payments/${paymentId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ action: 'reject' }),
       });
       if (res.ok) {
@@ -215,7 +229,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/results`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ studentId, result: newScore, teacherId: currentUser?._id }),
       });
       if (res.ok) {
@@ -230,7 +244,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/assignments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(asn),
       });
       if (res.ok) {
@@ -263,7 +277,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/announcements`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(anc),
       });
       if (res.ok) {
@@ -288,7 +302,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/students`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(std),
       });
       if (res.ok) {
@@ -311,7 +325,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/applications/${applicationId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status }),
       });
       if (res.ok) {
@@ -350,7 +364,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/staff/${encodeURIComponent(staffIdOrEmail)}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(updates),
       });
       if (res.ok) {
@@ -375,7 +389,7 @@ export default function Portal({ onNavigate }) {
     try {
       const res = await fetch(`${API_URL}/staff`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify(newStaffMember),
       });
       if (res.ok) {
