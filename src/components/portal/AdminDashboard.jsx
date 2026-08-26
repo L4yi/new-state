@@ -147,10 +147,10 @@ export default function AdminDashboard({
   const studentsList = data?.students || [];
   const filteredStudents = studentsList.filter(
     (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.guardian && s.guardian.toLowerCase().includes(searchTerm.toLowerCase()))
+      s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.guardian && s.guardian?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Fallback sample applications if none submitted yet
@@ -287,10 +287,10 @@ export default function AdminDashboard({
 
   const filteredStaff = staffList.filter(
     (st) =>
-      st.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      st.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (st.department && st.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (st.classAssigned && st.classAssigned.toLowerCase().includes(searchTerm.toLowerCase()))
+      st.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      st.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (st.department && st.department?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (st.classAssigned && st.classAssigned?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const nigerianStates = [

@@ -1,25 +1,89 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, Component } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileQuickBar from './components/MobileQuickBar';
 import PrivacyBanner from './components/PrivacyBanner';
 
-const Home = lazy(() => import('./pages/Home'));
-const About = lazy(() => import('./pages/About'));
-const Academics = lazy(() => import('./pages/Academics'));
-const Admission = lazy(() => import('./pages/Admission'));
-const Contact = lazy(() => import('./pages/Contact'));
-const ExamSuccess = lazy(() => import('./pages/ExamSuccess'));
-const CandidateLogin = lazy(() => import('./pages/CandidateLogin'));
-const BuyPlan = lazy(() => import('./pages/BuyPlan'));
-const AiCoding = lazy(() => import('./pages/AiCoding'));
-const TeachersApply = lazy(() => import('./pages/TeachersApply'));
-const AlumniTestimonials = lazy(() => import('./pages/AlumniTestimonials'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfAdmission = lazy(() => import('./pages/TermsOfAdmission'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const Portal = lazy(() => import('./pages/Portal'));
-const GenericPage = lazy(() => import('./pages/GenericPage'));
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.warn('Chunk load error, auto-refreshing...', error);
+      const isRetried = window.sessionStorage.getItem('chunk_retry_attempted');
+      if (!isRetried) {
+        window.sessionStorage.setItem('chunk_retry_attempted', 'true');
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('UI Exception caught by boundary:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    localStorage.removeItem('nshs_is_logged_in');
+    localStorage.removeItem('nshs_active_role');
+    localStorage.removeItem('nshs_current_user');
+    localStorage.removeItem('nshs_portal_data');
+    localStorage.removeItem('nshs_auth_token');
+    window.location.href = '/portal';
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#06452C] flex flex-col items-center justify-center p-6 text-white text-center">
+          <div className="bg-white text-[#1B2521] p-8 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+            <div className="w-12 h-12 bg-amber-50 text-[#06452C] border border-amber-200 rounded-2xl flex items-center justify-center mx-auto font-black text-xl">
+              ✦
+            </div>
+            <h2 className="text-xl font-black">Portal Session Refresh</h2>
+            <p className="text-xs text-gray-500">
+              A fresh portal update is available. Click below to load your active session and continue.
+            </p>
+            <button
+              onClick={this.handleReset}
+              className="w-full py-3.5 rounded-xl bg-[#06452C] text-white font-extrabold text-xs shadow-md hover:bg-[#0B5D3B] transition-all cursor-pointer"
+            >
+              Load Portal Dashboard →
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const Home = lazyWithRetry(() => import('./pages/Home'));
+const About = lazyWithRetry(() => import('./pages/About'));
+const Academics = lazyWithRetry(() => import('./pages/Academics'));
+const Admission = lazyWithRetry(() => import('./pages/Admission'));
+const Contact = lazyWithRetry(() => import('./pages/Contact'));
+const ExamSuccess = lazyWithRetry(() => import('./pages/ExamSuccess'));
+const CandidateLogin = lazyWithRetry(() => import('./pages/CandidateLogin'));
+const BuyPlan = lazyWithRetry(() => import('./pages/BuyPlan'));
+const AiCoding = lazyWithRetry(() => import('./pages/AiCoding'));
+const TeachersApply = lazyWithRetry(() => import('./pages/TeachersApply'));
+const AlumniTestimonials = lazyWithRetry(() => import('./pages/AlumniTestimonials'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfAdmission = lazyWithRetry(() => import('./pages/TermsOfAdmission'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+const Portal = lazyWithRetry(() => import('./pages/Portal'));
+const GenericPage = lazyWithRetry(() => import('./pages/GenericPage'));
 
 const pageSEO = {
   home: {
@@ -176,13 +240,15 @@ export default function App() {
       {!isPortal && <Header currentPage={currentPage} onNavigate={navigateTo} />}
       
       <main className="flex-grow">
-        <Suspense fallback={
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0B5D3B]"></div>
-          </div>
-        }>
-          {renderContent()}
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0B5D3B]"></div>
+            </div>
+          }>
+            {renderContent()}
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       {!isPortal && <Footer onNavigate={navigateTo} />}

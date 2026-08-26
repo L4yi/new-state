@@ -153,17 +153,17 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3 sm:gap-4 w-full">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-green-primary text-white text-lg sm:text-xl font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm">
-            {student.name.split(' ').map((n) => n[0]).join('')}
+            {(student?.name || 'Student').split(' ').map((n) => n[0] || '').join('')}
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-black text-[#1B2521] truncate">{student.name}</h2>
+              <h2 className="text-lg sm:text-xl font-black text-[#1B2521] truncate">{student?.name || 'Student'}</h2>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] font-extrabold border border-green-primary/20">
-                {student.class}
+                {student?.class || 'SSS 3'}
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-gray-500 font-medium leading-normal mt-0.5">
-              Admission ID: <span className="text-green-primary font-bold">{student.id}</span> · House: <span className="font-bold text-[#1B2521]">{student.house}</span>
+              Admission ID: <span className="text-green-primary font-bold">{student?.id || currentStudentId}</span> · House: <span className="font-bold text-[#1B2521]">{student?.house || 'Red House'}</span>
             </p>
           </div>
         </div>
