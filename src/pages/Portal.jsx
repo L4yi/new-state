@@ -546,26 +546,26 @@ export default function Portal({ onNavigate }) {
               <button
                 type="button"
                 onClick={() => handleSelectMainTab('student')}
-                className={`py-3 px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                className={`py-3 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
                   mainLoginTab === 'student'
-                    ? 'bg-[#00529B] text-white shadow-md'
-                    : 'text-[#55635C] hover:bg-white/60'
+                    ? 'bg-[#06452C] text-white shadow-md border-b-2 border-emerald-400'
+                    : 'text-[#55635C] hover:bg-emerald-50/60'
                 }`}
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 text-emerald-300" />
                 <span>Student Login</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSelectMainTab('staff')}
-                className={`py-3 px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                className={`py-3 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 ${
                   mainLoginTab === 'staff'
-                    ? 'bg-[#00529B] text-white shadow-md'
-                    : 'text-[#55635C] hover:bg-white/60'
+                    ? 'bg-[#06452C] text-white shadow-md border-b-2 border-emerald-400'
+                    : 'text-[#55635C] hover:bg-emerald-50/60'
                 }`}
               >
-                <Briefcase className="w-4 h-4" />
+                <Briefcase className="w-4 h-4 text-emerald-300" />
                 <span>Staff Login</span>
               </button>
             </div>
@@ -574,7 +574,7 @@ export default function Portal({ onNavigate }) {
             {mainLoginTab === 'staff' && (
               <div className="space-y-3 mb-5">
                 <div className="bg-[#FAFCFA] p-3.5 rounded-2xl border border-gray-200/80 space-y-2">
-                  <div className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-[#06452C]">
                     SELECT STAFF ROLE
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -589,8 +589,8 @@ export default function Portal({ onNavigate }) {
                         onClick={() => handleSelectStaffRole(r.id)}
                         className={`py-2 px-2 rounded-xl text-xs font-bold transition-all text-center ${
                           staffRole === r.id
-                            ? 'bg-[#6A0E2B] text-white shadow-sm font-black'
-                            : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
+                            ? 'bg-[#06452C] text-white shadow-sm font-black ring-2 ring-emerald-500/30'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
                         }`}
                       >
                         {r.label}
@@ -611,7 +611,7 @@ export default function Portal({ onNavigate }) {
                         onClick={() => handleSelectTeacherAssignment('class_teacher')}
                         className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center ${
                           teacherAssignment === 'class_teacher'
-                            ? 'bg-[#00529B] text-white shadow-sm font-black'
+                            ? 'bg-[#06452C] text-white shadow-sm font-black ring-2 ring-emerald-500/30'
                             : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
                         }`}
                       >
@@ -622,7 +622,7 @@ export default function Portal({ onNavigate }) {
                         onClick={() => handleSelectTeacherAssignment('subject_teacher')}
                         className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center ${
                           teacherAssignment === 'subject_teacher'
-                            ? 'bg-[#00529B] text-white shadow-sm font-black'
+                            ? 'bg-[#06452C] text-white shadow-sm font-black ring-2 ring-emerald-500/30'
                             : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
                         }`}
                       >
@@ -653,8 +653,8 @@ export default function Portal({ onNavigate }) {
                     : 'Principal Staff ID'}
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                    <UserCheck className="w-4 h-4 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <UserCheck className="w-4 h-4 text-emerald-700" />
                   </div>
                   <input
                     type="text"
@@ -665,12 +665,12 @@ export default function Portal({ onNavigate }) {
                         : staffRole === 'teacher'
                         ? 'e.g. TCH/PHYS/042 or Email'
                         : staffRole === 'bursar'
-                        ? 'bursar'
-                        : 'admin'
+                        ? 'BURSAR-01'
+                        : 'ADMIN-01'
                     }
                     value={loginCreds.identifier}
                     onChange={(e) => setLoginCreds({ ...loginCreds, identifier: e.target.value })}
-                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all"
                   />
                 </div>
               </div>
@@ -680,8 +680,8 @@ export default function Portal({ onNavigate }) {
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                    <Lock className="w-4 h-4 text-gray-400" />
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="w-4 h-4 text-emerald-700" />
                   </div>
                   <input
                     type="password"
@@ -689,7 +689,7 @@ export default function Portal({ onNavigate }) {
                     placeholder="••••••••"
                     value={loginCreds.password}
                     onChange={(e) => setLoginCreds({ ...loginCreds, password: e.target.value })}
-                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all"
                   />
                 </div>
               </div>

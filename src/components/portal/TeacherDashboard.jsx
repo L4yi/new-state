@@ -295,30 +295,47 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             <div className="flex flex-wrap items-center gap-2 pt-1">
               {isClassTeacher ? (
                 <span className="px-3 py-1 rounded-lg bg-[#06452C] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
-                  <Users className="w-3.5 h-3.5" />
+                  <Users className="w-3.5 h-3.5 text-emerald-300" />
                   <span>Class Teacher (Form Master): {currentUser.classAssigned}</span>
                 </span>
               ) : (
-                <span className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-bold flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-gray-500" />
-                  <span>Subject Teacher Only</span>
+                <span className="px-3 py-1 rounded-lg bg-emerald-50 text-[#06452C] border border-emerald-300 text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
+                  <BookOpen className="w-3.5 h-3.5 text-[#06452C]" />
+                  <span>Subject Specialist Teacher (Non-Form Master)</span>
                 </span>
               )}
 
               {teacherSubjectsTaught.length > 0 && (
                 <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-bold border border-emerald-200/60 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Assigned: {teacherSubjectsTaught.map(s => `${s.subjectName} (${s.className})`).join(' · ')}</span>
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200/80 text-xs font-bold text-gray-600 flex-shrink-0">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span>Teacher Portal · Term 1</span>
+          <div className="flex items-center gap-2 bg-emerald-50/80 px-3.5 py-2 rounded-xl border border-emerald-200 text-xs font-bold text-[#06452C] flex-shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span>{isClassTeacher ? `Form Class: ${currentUser.classAssigned}` : 'Subject Teacher Workspace'}</span>
           </div>
         </div>
+
+        {/* Role-Specific Workspace Notice */}
+        {isClassTeacher ? (
+          <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-xs text-[#06452C] flex items-center gap-2 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+            <span>
+              <strong>Form Master Clearance:</strong> You have full administrative rights for <strong>{currentUser.classAssigned}</strong> character evaluation, termly remarks, and promotional broadsheets.
+            </span>
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 flex items-center gap-2 font-medium">
+            <BookOpen className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+            <span>
+              <strong>Subject Specialist Mode:</strong> Your grading workspace is strictly focused on Continuous Assessment & Exam collation for your assigned subjects (<strong>{teacherDistinctSubjects.join(', ')}</strong>).
+            </span>
+          </div>
+        )}
 
         {/* Tab Switcher Grid */}
         <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClassTeacher ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-2.5`}>
@@ -331,7 +348,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             }`}
           >
             <Calculator className="w-4 h-4 flex-shrink-0" />
-            <span>Continuous Assessment & Score Entry</span>
+            <span>{isClassTeacher ? '3rd Term Scores & Collation' : 'Subject Scores Entry'}</span>
           </button>
 
           <button
@@ -343,7 +360,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             }`}
           >
             <FilePlus className="w-4 h-4 flex-shrink-0" />
-            <span>Assignments & Study Materials</span>
+            <span>Assignments & Lecture Notes</span>
           </button>
 
           {isClassTeacher && (
@@ -356,7 +373,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               }`}
             >
               <Users className="w-4 h-4 flex-shrink-0" />
-              <span>Form Master Tools ({currentUser.classAssigned})</span>
+              <span>Form Master Evaluation ({currentUser.classAssigned})</span>
             </button>
           )}
         </div>
