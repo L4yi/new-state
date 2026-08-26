@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Commercial Proposal & Quotation — New State High School Digital Campus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #06452C;
+      --primary-dark: #032A1A;
+      --primary-light: #0B6B46;
+      --gold: #D97706;
+      --gold-dark: #B45309;
+      --gold-light: #FEF3C7;
+      --text-main: #1B2521;
+      --text-muted: #55635C;
+      --bg-light: #F8FAFA;
+      --border-color: #E2E8F0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-main);
+      background-color: #F1F5F3;
+      line-height: 1.6;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(6, 69, 44, 0.08);
+      overflow: hidden;
+      border: 1px solid #E2E8F0;
+    }
+
+    /* Top Action Bar (hidden in print) */
+    .action-bar {
+      background: var(--primary-dark);
+      color: #FFFFFF;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn {
+      background: var(--gold);
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+    }
+
+    .action-btn:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Document Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: #FFFFFF;
+      padding: 45px 40px 35px;
+      position: relative;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(217, 119, 6, 0.2);
+      color: #FDE68A;
+      border: 1px solid rgba(217, 119, 6, 0.4);
+      padding: 4px 14px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      color: #FFFFFF;
+    }
+
+    .header-sub {
+      font-size: 14px;
+      color: #A7F3D0;
+      font-weight: 500;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 12px;
+    }
+
+    .meta-item strong {
+      display: block;
+      color: #FDE68A;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
+
+    /* Content Layout */
+    .content {
+      padding: 40px;
+    }
+
+    .section {
+      margin-bottom: 35px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #E6F0EB;
+      padding-bottom: 8px;
+    }
+
+    .section-title span.number {
+      background: var(--primary);
+      color: #FFFFFF;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    p {
+      font-size: 13.5px;
+      color: #334155;
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    /* Feature Cards */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .feature-card {
+      background: #F8FAFA;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 16px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .feature-card h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .feature-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Pricing Tables */
+    .table-wrapper {
+      margin: 20px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #E2E8F0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    th {
+      background: #F1F5F3;
+      color: var(--primary);
+      font-weight: 800;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid #CBD5E1;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #F1F5F9;
+      color: #334155;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr.highlight-row {
+      background: #FEF3C7;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .amount-col {
+      text-align: right;
+      font-weight: 700;
+      color: var(--primary-dark);
+      white-space: nowrap;
+    }
+
+    /* Highlight Banner */
+    .roi-box {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      border: 1px solid #A7F3D0;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .roi-box h4 {
+      color: #065F46;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .roi-box ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .roi-box li {
+      font-size: 12px;
+      color: #047857;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    /* Milestone Steps */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .timeline-step {
+      background: #FAFCFB;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .step-badge {
+      display: inline-block;
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      margin-bottom: 6px;
+    }
+
+    .step-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Sign-off Section */
+    .signature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 1px dashed #CBD5E1;
+    }
+
+    .sign-box {
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 18px;
+      background: #FAFCFA;
+    }
+
+    .sign-box h5 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+
+    .sign-line {
+      border-bottom: 1px solid #64748B;
+      margin-bottom: 8px;
+    }
+
+    .sign-name {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .sign-title {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #FFFFFF;
+        padding: 0;
+      }
+
+      .container {
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+      }
+
+      .action-bar {
+        display: none !important;
+      }
+
+      .section {
+        page-break-inside: avoid;
+      }
+
+      @page {
+        margin: 1.5cm;
+        size: A4 portrait;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Action Bar (Hidden during PDF print) -->
+    <div class="action-bar">
+      <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #A7F3D0;">
+        Official Institutional Pitch Document
+      </div>
+      <button class="action-btn" onclick="window.print()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+        Save as Official PDF / Print Proposal
+      </button>
+    </div>
+
+    <!-- Header Section -->
+    <header class="header">
+      <div class="header-badge">Institutional Digital Transformation Proposal</div>
+      <h1>Enterprise Digital Campus, Admissions Engine & Academic Portal</h1>
+      <div class="header-sub">Modernizing Academic Records, Fee Reconciliation, and Parent Engagement</div>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <strong>Client / Institution</strong>
+          New State High School (Mushin, Lagos)
+        </div>
+        <div class="meta-item">
+          <strong>Prepared For</strong>
+          The Board of Governors & Principal
+        </div>
+        <div class="meta-item">
+          <strong>Document Ref #</strong>
+          PROP-NSHS-2026-V1
+        </div>
+        <div class="meta-item">
+          <strong>Proposal Date</strong>
+          August 2026
+        </div>
+      </div>
+    </header>
+
+    <!-- Document Content -->
+    <main class="content">
+
+      <!-- Section 1: Executive Summary -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">1</span> Executive Summary</h3>
+        <p>
+          In today’s competitive educational landscape, leading secondary schools require robust, modern digital infrastructure to manage admissions, streamline termly grade computation, reconcile tuition collections without manual leakages, and project institutional prestige to prospective parents.
+        </p>
+        <p>
+          This proposal presents the turnkey deployment of the <strong>New State High School Digital Campus System</strong>: a high-converting public presence, automated online admission engine, multi-role academic portal, Ministry-grade report card generator with QR verification, and financial ledger.
+        </p>
+      </section>
+
+      <!-- Section 2: Scope of Deliverables -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">2</span> Scope of Deliverables & Implemented Modules</h3>
+        
+        <div class="features-grid">
+          <div class="feature-card">
+            <h4>🌐 High-Converting Web Presence</h4>
+            <p>10+ branded, fast-loading SEO pages, mobile sticky action bar (Call, WhatsApp, Apply), and NDPR child privacy policy.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📝 Online Admissions & Screening</h4>
+            <p>Paperless prospective student registration, automated application reference generator, and CBT exam login portal.</p>
+          </div>
+          <div class="feature-card">
+            <h4>📊 Academic Broadsheet & Grading</h4>
+            <p>CA1 (20) + CA2 (20) + Exam (60) formula with instant WAEC/NECO automatic letter grade assignment (A1 to F9).</p>
+          </div>
+          <div class="feature-card">
+            <h4>🖨️ A4 Official Report Card Generator</h4>
+            <p>Lagos State Ministry-compliant continuous assessment report sheet with live QR verification and principal stamp seals.</p>
+          </div>
+          <div class="feature-card">
+            <h4>💳 Bursar Fee Reconciliation</h4>
+            <p>Student payment tracking, bank transfer slip verification, zero-leakage financial summaries, and ledger export.</p>
+          </div>
+          <div class="feature-card">
+            <h4>🛡️ Enterprise Security Layer</h4>
+            <p>Role-Based Access Control (RBAC), 100% IDOR defense, NoSQL/ReDoS input sanitization, and anti-brute-force rate limiting.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Cost Quotation & Investment Breakdown -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">3</span> Commercial Quotation & Investment Breakdown</h3>
+        <p>
+          Below is the complete itemized quotation for the software development, data migration, security hardening, and deployment:
+        </p>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Item #</th>
+                <th>Deliverable / Module Description</th>
+                <th>Timeline</th>
+                <th style="text-align: right;">Cost (NGN ₦)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>01</strong></td>
+                <td>
+                  <strong>Full-Stack Architecture & Custom UI Engineering</strong><br />
+                  <span style="font-size: 11px; color: var(--text-muted);">React 18 SPA, Vite 8.2 bundler, Tailwind styling, mobile quick bar, SEO sitemaps, NDPR legal compliance pages.</span>
+                </td>
+                <td>Week 1</td>
+                <td class="amount-col">₦350,000</td>
+              </tr>
+              <tr>
+                <td><strong>02</strong></td>
+                <td>
+                  <strong>Multi-Role Portal & Ministry Broadsheet Engine</strong><br />
+                  <span style="font-size: 11px; color: var(--text-muted);">Teacher score entries, automated WAEC A1–F9 grading, printable A4 official report cards with QR verification.</span>
+                </td>
+                <td>Week 2</td>
+                <td class="amount-col">₦400,000</td>
+              </tr>
+              <tr>
+                <td><strong>03</strong></td>
+                <td>
+                  <strong>Bursar Ledger, Online Admissions & CSV Export Engine</strong><br />
+                  <span style="font-size: 11px; color: var(--text-muted);">Fee tracking, bank transfer upload, candidate screening login, 1-click UTF-8 Master CSV export.</span>
+                </td>
+                <td>Week 3</td>
+                <td class="amount-col">₦250,000</td>
+              </tr>
+              <tr>
+                <td><strong>04</strong></td>
+                <td>
+                  <strong>Security Hardening, Database Setup & Cloud Deployment</strong><br />
+                  <span style="font-size: 11px; color: var(--text-muted);">MongoDB Atlas cluster, Express REST API, JWT RBAC, IDOR defense, Helmet headers, Firebase CDN deployment.</span>
+                </td>
+                <td>Week 4</td>
+                <td class="amount-col">₦200,000</td>
+              </tr>
+              <tr>
+                <td><strong>05</strong></td>
+                <td>
+                  <strong>Staff Onboarding, Master Handover & Admin Training</strong><br />
+                  <span style="font-size: 11px; color: var(--text-muted);">Staff user guides, comprehensive DEVELOPER_HANDOVER documentation, and admin handover session.</span>
+                </td>
+                <td>Launch</td>
+                <td class="amount-col">₦100,000</td>
+              </tr>
+              <tr class="highlight-row">
+                <td colspan="3" style="text-align: right; font-size: 13px;">TOTAL PROJECT INVESTMENT:</td>
+                <td class="amount-col" style="font-size: 15px; color: #06452C;">₦1,300,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 4: Optional Add-on Modules -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">4</span> Optional Value-Added Upgrades</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Description</th>
+                <th style="text-align: right;">Optional Investment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Direct Paystack / Card Gateway</strong></td>
+                <td>Enable direct debit card, USSD, and instant bank transfer checkout for tuition and prospectus fees.</td>
+                <td class="amount-col">₦150,000</td>
+              </tr>
+              <tr>
+                <td><strong>Automated SMS & WhatsApp Alerts</strong></td>
+                <td>Automated Termii SMS dispatch to parents for exam result release, emergency notices, and fee receipts.</td>
+                <td class="amount-col">₦120,000</td>
+              </tr>
+              <tr>
+                <td><strong>Printable PVC Student ID Generator</strong></td>
+                <td>1-click batch generation of high-resolution PVC student identity cards with barcodes and photo frames.</td>
+                <td class="amount-col">₦100,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Section 5: Projected Return on Investment (ROI) -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">5</span> Projected Institutional Benefits & ROI</h3>
+        <div class="roi-box">
+          <h4>🏆 Quantifiable Benefits for New State High School:</h4>
+          <ul>
+            <li>📉 <strong>₦600k+/Year Saved</strong> on paper, physical result booklets, and printing.</li>
+            <li>⏱️ <strong>80% Time Reduction</strong> in teacher compilation of terminal broadsheets.</li>
+            <li>💰 <strong>Zero Fee Leakage</strong> through verified bank receipts and ledger audit logs.</li>
+            <li>📈 <strong>25%+ Increase</strong> in online student admission inquiries from Lagos parents.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 6: Payment Terms & Milestones -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">6</span> Payment Schedule & Milestones</h3>
+        <div class="timeline">
+          <div class="timeline-step">
+            <div class="step-badge">Milestone 1 (50%)</div>
+            <div class="step-title">Initial Mobilization</div>
+            <div class="step-desc">₦650,000 upon contract signing & environment initialization.</div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-badge">Milestone 2 (30%)</div>
+            <div class="step-title">Portal Staging & Review</div>
+            <div class="step-desc">₦390,000 upon demo walkthrough of academic broadsheet and report cards.</div>
+          </div>
+          <div class="timeline-step">
+            <div class="step-badge">Milestone 3 (20%)</div>
+            <div class="step-title">Final Go-Live & Handover</div>
+            <div class="step-desc">₦260,000 upon final live deployment, staff training, and master handover.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7: Acceptance & Signatures -->
+      <section class="section">
+        <h3 class="section-title"><span class="number">7</span> Formal Acceptance & Authorization</h3>
+        <p>
+          By signing below, the parties agree to the scope of work, technical specifications, and commercial terms outlined in this proposal.
+        </p>
+
+        <div class="signature-grid">
+          <div class="sign-box">
+            <h5>For: Service Provider / Lead Engineer</h5>
+            <div class="sign-line"></div>
+            <div class="sign-name">Lead Technical Consultant / Developer</div>
+            <div class="sign-title">Full-Stack Digital Solutions Architect</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Date: ________________________</div>
+          </div>
+
+          <div class="sign-box">
+            <h5>For: New State High School (Management)</h5>
+            <div class="sign-line"></div>
+            <div class="sign-name">The Principal / Chairman, Board of Governors</div>
+            <div class="sign-title">New State High School, Mushin, Lagos</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Date: ________________________</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>
