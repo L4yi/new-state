@@ -631,12 +631,65 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            <div className="flex items-center gap-2 bg-emerald-50/80 px-3.5 py-2 rounded-xl border border-emerald-200 text-xs font-bold text-[#06452C] flex-shrink-0">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span>{sessionForm.currentSession} · {sessionForm.currentTerm}</span>
+            {/* Direct Interactive Session & Present Term Selector for Admin */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F0F7F4] p-1.5 rounded-2xl border border-emerald-300/80 shadow-xs">
+              <div className="flex items-center gap-1.5 px-2 text-[#06452C] font-black text-xs">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span>Active:</span>
+              </div>
+
+              {/* School Year Dropdown */}
+              <select
+                value={sessionForm.currentSession}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  const updated = { ...sessionForm, currentSession: val };
+                  setSessionForm(updated);
+                  if (onUpdateSessionInfo) {
+                    await onUpdateSessionInfo(updated);
+                  }
+                  setSessionFeedback(`Academic Session switched to ${val} school-wide!`);
+                  setTimeout(() => setSessionFeedback(''), 4000);
+                }}
+                className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
+                title="Select Academic School Year"
+              >
+                <option value="2026/2027">2026/2027 Session</option>
+                <option value="2025/2026">2025/2026 Session</option>
+                <option value="2024/2025">2024/2025 Session</option>
+                <option value="2023/2024">2023/2024 Session</option>
+              </select>
+
+              {/* Present Term Dropdown */}
+              <select
+                value={sessionForm.currentTerm}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  const updated = { ...sessionForm, currentTerm: val };
+                  setSessionForm(updated);
+                  if (onUpdateSessionInfo) {
+                    await onUpdateSessionInfo(updated);
+                  }
+                  setSessionFeedback(`Present Active Term set to ${val} school-wide!`);
+                  setTimeout(() => setSessionFeedback(''), 4000);
+                }}
+                className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
+                title="Select Present Active Term"
+              >
+                <option value="1st Term">1st Term</option>
+                <option value="2nd Term">2nd Term</option>
+                <option value="3rd Term">3rd Term</option>
+              </select>
             </div>
           </div>
         </div>
+
+        {sessionFeedback && (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-[#06452C] flex items-center gap-2 animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>{sessionFeedback}</span>
+          </div>
+        )}
 
         {/* Full-Width Tab Grid Navigation */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
