@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
   Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2,
-  Loader2, ArrowRight
+  Loader2, ArrowRight, Briefcase, UserCheck
 } from 'lucide-react';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
@@ -12,27 +12,56 @@ import { initialPortalData } from '../data/mockPortalData';
 import { API_URL } from '../config/api';
 
 export default function Portal({ onNavigate }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('nshs_is_logged_in') === 'true';
-  });
-  const [activeRole, setActiveRole] = useState(() => {
-    return localStorage.getItem('nshs_active_role') || 'student';
-  });
-  const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
-  const [loginError, setLoginError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [portalData, setPortalData] = useState(() => {
-    const saved = localStorage.getItem('nshs_portal_data');
-    return saved ? JSON.parse(saved) : initialPortalData;
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStudentId, setCurrentStudentId] = useState(() => {
-    return localStorage.getItem('nshs_current_student_id') || 'NSHS/2024/001';
-  });
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('nshs_current_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [mainLoginTab, setMainLoginTab] = useState('student'); // 'student' | 'staff'
+  const [staffRole, setStaffRole] = useState('teacher'); // 'teacher' | 'bursar' | 'admin'
+  const [teacherAssignment, setTeacherAssignment] = useState('class_teacher'); // 'class_teacher' | 'subject_teacher'
+
+  // Update activeRole whenever mainLoginTab or staffRole changes
+  const handleSelectMainTab = (tab) => {
+    setMainLoginTab(tab);
+    if (tab === 'student') {
+      setActiveRole('student');
+      setLoginCreds({ identifier: '', password: '' });
+    } else {
+      setActiveRole(staffRole);
+      if (staffRole === 'teacher') {
+        setLoginCreds({
+          identifier: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+          password: '1234'
+        });
+      } else if (staffRole === 'bursar') {
+        setLoginCreds({ identifier: 'bursar', password: '1234' });
+      } else {
+        setLoginCreds({ identifier: 'admin', password: '1234' });
+      }
+    }
+    setLoginError('');
+  };
+
+  const handleSelectStaffRole = (roleKey) => {
+    setStaffRole(roleKey);
+    setActiveRole(roleKey);
+    if (roleKey === 'teacher') {
+      setLoginCreds({
+        identifier: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+        password: '1234'
+      });
+    } else if (roleKey === 'bursar') {
+      setLoginCreds({ identifier: 'bursar', password: '1234' });
+    } else if (roleKey === 'admin') {
+      setLoginCreds({ identifier: 'admin', password: '1234' });
+    }
+    setLoginError('');
+  };
+
+  const handleSelectTeacherAssignment = (assignType) => {
+    setTeacherAssignment(assignType);
+    setLoginCreds({
+      identifier: assignType === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+      password: '1234'
+    });
+    setLoginError('');
+  };
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('nshs_auth_token');
@@ -490,84 +519,96 @@ export default function Portal({ onNavigate }) {
               </p>
             </div>
 
-            {/* Embedded Role Selector Buttons Inside Form Box */}
-            <div className="bg-[#F4F7F5] p-1.5 rounded-2xl grid grid-cols-2 sm:grid-cols-4 gap-1 mb-6 border border-gray-200/80">
-              {[
-                { id: 'student', label: 'Student', icon: GraduationCap },
-                { id: 'teacher', label: 'Teacher', icon: BookOpen },
-                { id: 'bursar', label: 'Bursar', icon: CreditCard },
-                { id: 'admin', label: 'Admin', icon: Shield },
-              ].map((role) => {
-                const RoleIcon = role.icon;
-                return (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveRole(role.id);
-                      setLoginError('');
-                    }}
-                    className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 ${
-                      activeRole === role.id
-                        ? 'bg-green-primary text-white shadow-sm'
-                        : 'text-[#55635C] hover:bg-white/60'
-                    }`}
-                  >
-                    <RoleIcon className="w-3.5 h-3.5" />
-                    <span>{role.label}</span>
-                  </button>
-                );
-              })}
+            {/* 1. Main Role Switcher: Student Login vs Staff Login */}
+            <div className="bg-[#F4F7F5] p-1.5 rounded-2xl grid grid-cols-2 gap-1.5 mb-5 border border-gray-200/80">
+              <button
+                type="button"
+                onClick={() => handleSelectMainTab('student')}
+                className={`py-3 px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                  mainLoginTab === 'student'
+                    ? 'bg-[#00529B] text-white shadow-md'
+                    : 'text-[#55635C] hover:bg-white/60'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                <span>Student Login</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectMainTab('staff')}
+                className={`py-3 px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                  mainLoginTab === 'staff'
+                    ? 'bg-[#00529B] text-white shadow-md'
+                    : 'text-[#55635C] hover:bg-white/60'
+                }`}
+              >
+                <Briefcase className="w-4 h-4" />
+                <span>Staff Login</span>
+              </button>
             </div>
 
-            {/* Quick Demo Teacher Profile Selectors */}
-            {activeRole === 'teacher' && (
-              <div className="bg-[#F0F7F4] p-3.5 rounded-2xl border border-emerald-200/80 mb-5 space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 font-black text-green-primary text-[11px] uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Choose Teacher Demo Persona:</span>
+            {/* 2. When Staff Login is Active: SELECT STAFF ROLE */}
+            {mainLoginTab === 'staff' && (
+              <div className="space-y-3 mb-5">
+                <div className="bg-[#FAFCFA] p-3.5 rounded-2xl border border-gray-200/80 space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-gray-500">
+                    SELECT STAFF ROLE
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'teacher', label: 'Teacher' },
+                      { id: 'bursar', label: 'Bursar' },
+                      { id: 'admin', label: 'Principal' }
+                    ].map((r) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleSelectStaffRole(r.id)}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition-all text-center ${
+                          staffRole === r.id
+                            ? 'bg-[#6A0E2B] text-white shadow-sm font-black'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        {r.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginCreds({ identifier: 'science@newstateschools.org', password: '1234' });
-                      setLoginError('');
-                    }}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      loginCreds.identifier === 'science@newstateschools.org'
-                        ? 'bg-green-primary text-white border-green-primary shadow-sm'
-                        : 'bg-white border-gray-200 hover:border-green-primary text-[#1B2521]'
-                    }`}
-                  >
-                    <div className="font-bold">Mr. Babatunde Ogunlesi</div>
-                    <div className={`text-[10px] font-semibold mt-0.5 ${
-                      loginCreds.identifier === 'science@newstateschools.org' ? 'text-emerald-100' : 'text-green-primary'
-                    }`}>
-                      Class Teacher (SSS 3) + Subject Teacher (Math & Physics)
-                    </div>
-                  </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginCreds({ identifier: 'subject.teacher@newstateschools.org', password: '1234' });
-                      setLoginError('');
-                    }}
-                    className={`p-2.5 rounded-xl border text-left transition-all ${
-                      loginCreds.identifier === 'subject.teacher@newstateschools.org'
-                        ? 'bg-green-primary text-white border-green-primary shadow-sm'
-                        : 'bg-white border-gray-200 hover:border-green-primary text-[#1B2521]'
-                    }`}
-                  >
-                    <div className="font-bold">Mrs. Ngozi Eze</div>
-                    <div className={`text-[10px] font-semibold mt-0.5 ${
-                      loginCreds.identifier === 'subject.teacher@newstateschools.org' ? 'text-emerald-100' : 'text-amber-700'
-                    }`}>
-                      Subject Teacher ONLY (Chemistry & Biology)
+                {/* 3. If Teacher selected: TEACHER ASSIGNMENT ROLE */}
+                {staffRole === 'teacher' && (
+                  <div className="bg-[#F0F7F4] p-3.5 rounded-2xl border border-emerald-200/80 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-green-primary">
+                      TEACHER ASSIGNMENT ROLE
                     </div>
-                  </button>
-                </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTeacherAssignment('class_teacher')}
+                        className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center ${
+                          teacherAssignment === 'class_teacher'
+                            ? 'bg-[#00529B] text-white shadow-sm font-black'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
+                        }`}
+                      >
+                        Class Teacher
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTeacherAssignment('subject_teacher')}
+                        className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all text-center ${
+                          teacherAssignment === 'subject_teacher'
+                            ? 'bg-[#00529B] text-white shadow-sm font-black'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-300'
+                        }`}
+                      >
+                        Subject Teacher
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -580,29 +621,55 @@ export default function Portal({ onNavigate }) {
 
             <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">
-                  Account ID / Username *
+                <label className="block font-bold text-gray-700 mb-1.5 text-xs">
+                  {mainLoginTab === 'student'
+                    ? 'Student Admission Number'
+                    : staffRole === 'teacher'
+                    ? 'Teacher Staff ID'
+                    : staffRole === 'bursar'
+                    ? 'Bursar Staff ID'
+                    : 'Principal Staff ID'}
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder={roleConfig[activeRole].placeholder}
-                  value={loginCreds.identifier}
-                  onChange={(e) => setLoginCreds({ ...loginCreds, identifier: e.target.value })}
-                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <UserCheck className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder={
+                      mainLoginTab === 'student'
+                        ? 'e.g. FFC202500510 or NSHS/2026/001'
+                        : staffRole === 'teacher'
+                        ? 'e.g. TCH/PHYS/042 or Email'
+                        : staffRole === 'bursar'
+                        ? 'bursar'
+                        : 'admin'
+                    }
+                    value={loginCreds.identifier}
+                    onChange={(e) => setLoginCreds({ ...loginCreds, identifier: e.target.value })}
+                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Password / PIN *</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={loginCreds.password}
-                  onChange={(e) => setLoginCreds({ ...loginCreds, password: e.target.value })}
-                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
-                />
+                <label className="block font-bold text-gray-700 mb-1.5 text-xs">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                    <Lock className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={loginCreds.password}
+                    onChange={(e) => setLoginCreds({ ...loginCreds, password: e.target.value })}
+                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                  />
+                </div>
               </div>
 
               <button
