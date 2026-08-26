@@ -912,44 +912,44 @@ export default function AdminDashboard({
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
-                    <tr key={app.applicationId || app.id} className="hover:bg-gray-50/60 transition-colors">
+                    <tr key={app?.applicationId || app?.id || Math.random()} className="hover:bg-gray-50/60 transition-colors">
                       <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">
-                        {app.applicationId || app.id}
+                        {app?.applicationId || app?.id || 'APP-2026'}
                       </td>
                       <td className="py-4 px-4">
                         <div className="font-extrabold text-[#1B2521] uppercase text-xs tracking-tight">
-                          {app.studentName}
+                          {app?.studentName || app?.name || 'Applicant'}
                         </div>
                         <div className="text-[11px] text-gray-400 font-medium mt-0.5">
-                          {app.gender || 'Male'} · DOB: {app.dob || 'N/A'}
+                          {app?.gender || 'Male'} · DOB: {app?.dob || 'N/A'}
                         </div>
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className="inline-block font-extrabold text-[#06452C] bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 text-xs">
-                          {app.classApplyingFor}
+                          {app?.classApplyingFor || app?.class || 'JSS 1'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-gray-700">
-                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app.currentClass || 'Primary 6'}</div>
-                        <div className="text-[11px] text-gray-400 truncate max-w-[160px] leading-snug mt-0.5">{app.previousSchool || 'Crown Primary'}</div>
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app?.currentClass || 'Primary 6'}</div>
+                        <div className="text-[11px] text-gray-400 truncate max-w-[160px] leading-snug mt-0.5">{app?.previousSchool || 'Crown Primary'}</div>
                       </td>
                       <td className="py-4 px-4 text-gray-600">
-                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app.guardianName || app.fatherName}</div>
-                        <div className="text-[11px] text-green-primary font-mono font-bold leading-snug mt-0.5">{app.primaryPhone}</div>
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{app?.guardianName || app?.fatherName || app?.guardian || 'Guardian'}</div>
+                        <div className="text-[11px] text-green-primary font-mono font-bold leading-snug mt-0.5">{app?.primaryPhone || app?.phone || 'N/A'}</div>
                       </td>
                       <td className="py-4 px-4 text-gray-500 font-mono text-xs whitespace-nowrap">
-                        {app.dateSubmitted || '2026-08-20'}
+                        {app?.dateSubmitted || '2026-08-20'}
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-black tracking-wide ${
-                          app.status === 'Accepted & Enrolled' ? 'bg-green-100 text-green-800' :
-                          app.status === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
+                          app?.status === 'Accepted & Enrolled' ? 'bg-green-100 text-green-800' :
+                          app?.status === 'Declined' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
                         }`}>
-                          {app.status || 'Pending Review'}
+                          {app?.status || 'Pending Review'}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right whitespace-nowrap space-x-2">
-                        {app.status === 'Accepted & Enrolled' ? (
+                        {app?.status === 'Accepted & Enrolled' ? (
                           <span className="text-xs font-bold text-green-primary inline-flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled
                           </span>
@@ -963,7 +963,7 @@ export default function AdminDashboard({
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => handleDeclineApplication(app.applicationId || app.id)}
+                              onClick={() => handleDeclineApplication(app?.applicationId || app?.id)}
                               className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all flex items-center justify-center"
                               title="Decline Application"
                             >
@@ -1024,29 +1024,29 @@ export default function AdminDashboard({
                   </tr>
                 ) : (
                   filteredStudents.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{s.id}</td>
-                      <td className="py-4 px-4 font-extrabold text-[#1B2521] text-xs">{s.name}</td>
+                    <tr key={s?.id || Math.random()} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{s?.id || 'NSHS/2026/001'}</td>
+                      <td className="py-4 px-4 font-extrabold text-[#1B2521] text-xs">{s?.name || 'Student'}</td>
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="font-bold text-gray-800 text-xs">{s.class}</span>
-                        {s.academicTrack && <span className="block text-[11px] text-gray-400 font-medium">{s.academicTrack}</span>}
+                        <span className="font-bold text-gray-800 text-xs">{s?.class || 'JSS 1'}</span>
+                        {s?.academicTrack && <span className="block text-[11px] text-gray-400 font-medium">{s.academicTrack}</span>}
                       </td>
-                      <td className="py-4 px-4 text-gray-700 font-medium whitespace-nowrap">{s.house}</td>
+                      <td className="py-4 px-4 text-gray-700 font-medium whitespace-nowrap">{s?.house || 'Red House'}</td>
                       <td className="py-4 px-4 text-gray-600">
-                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{s.guardian}</div>
-                        <div className="text-[11px] text-gray-400 font-mono leading-snug mt-0.5">{s.guardianPhone}</div>
+                        <div className="font-bold text-[#1B2521] text-xs leading-snug">{s?.guardian || 'Guardian'}</div>
+                        <div className="text-[11px] text-gray-400 font-mono leading-snug mt-0.5">{s?.guardianPhone || 'N/A'}</div>
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-black tracking-wide ${
-                          s.feeStatus === 'Approved' ? 'bg-green-100 text-green-800' :
-                          s.feeStatus === 'Pending' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
+                          s?.feeStatus === 'Approved' ? 'bg-green-100 text-green-800' :
+                          s?.feeStatus === 'Pending' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-900 border border-amber-200'
                         }`}>
-                          {s.feeStatus} ({s.feeAmount})
+                          {s?.feeStatus || 'Unpaid'} ({s?.feeAmount || '₦0'})
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right whitespace-nowrap">
                         <span className="font-mono font-bold text-xs bg-emerald-50 text-green-primary px-3 py-1.5 rounded-lg border border-emerald-200 shadow-sm inline-block">
-                          {s.password || '1234'}
+                          {s?.password || '1234'}
                         </span>
                       </td>
                     </tr>
@@ -1962,19 +1962,19 @@ export default function AdminDashboard({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredStaff.map((teacher) => (
-                  <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{teacher.staffId || 'STF/2026/001'}</td>
+                  <tr key={teacher?.staffId || teacher?.email || Math.random()} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{teacher?.staffId || 'STF/2026/001'}</td>
                     <td className="py-4 px-4">
-                      <div className="font-extrabold text-[#1B2521] text-xs">{teacher.name}</div>
-                      <div className="text-[11px] text-gray-400 font-medium mt-0.5">{teacher.email} · {teacher.phone}</div>
+                      <div className="font-extrabold text-[#1B2521] text-xs">{teacher?.name || 'Academic Staff'}</div>
+                      <div className="text-[11px] text-gray-400 font-medium mt-0.5">{teacher?.email || 'staff@newstateschools.org'} · {teacher?.phone || 'N/A'}</div>
                     </td>
-                    <td className="py-4 px-4 font-semibold text-gray-700 whitespace-nowrap">{teacher.department || 'Academics'}</td>
+                    <td className="py-4 px-4 font-semibold text-gray-700 whitespace-nowrap">{teacher?.department || 'Academics'}</td>
                     <td className="py-4 px-4">
-                      {teacher.subjectsTaught && teacher.subjectsTaught.length > 0 ? (
+                      {teacher?.subjectsTaught && Array.isArray(teacher.subjectsTaught) && teacher.subjectsTaught.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {teacher.subjectsTaught.map((st, i) => (
                             <span key={i} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 text-[11px] font-semibold border border-gray-200">
-                              {st.subjectName} ({st.className})
+                              {st?.subjectName || st} ({st?.className || 'Class'})
                             </span>
                           ))}
                         </div>
@@ -1984,10 +1984,10 @@ export default function AdminDashboard({
                     </td>
                     <td className="py-4 px-4 whitespace-nowrap">
                       <select
-                        value={teacher.classAssigned || 'None (Subject Teacher Only)'}
+                        value={teacher?.classAssigned || 'None (Subject Teacher Only)'}
                         onChange={(e) => handleClassAssignmentChange(teacher, e.target.value)}
                         className={`p-2.5 rounded-xl text-xs font-bold border transition-all focus:outline-none ${
-                          teacher.classAssigned
+                          teacher?.classAssigned
                             ? 'bg-emerald-50 text-[#06452C] border-emerald-300 shadow-sm'
                             : 'bg-[#FAFCFA] text-gray-700 border-gray-200'
                         }`}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import {
   GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
   Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2,
-  Loader2, ArrowRight, Briefcase, UserCheck
+  Loader2, ArrowRight, Briefcase, UserCheck, RefreshCw
 } from 'lucide-react';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
@@ -10,6 +10,59 @@ import BursarDashboard from '../components/portal/BursarDashboard';
 import AdminDashboard from '../components/portal/AdminDashboard';
 import { initialPortalData } from '../data/mockPortalData';
 import { API_URL } from '../config/api';
+
+class DashboardErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Portal Component Exception:', error, errorInfo);
+  }
+
+  handleRefresh = () => {
+    localStorage.removeItem('nshs_portal_data');
+    this.setState({ hasError: false, error: null });
+    window.location.reload();
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-white rounded-3xl p-8 border border-emerald-200 text-center space-y-4 shadow-xl max-w-xl mx-auto my-8">
+          <div className="w-14 h-14 bg-emerald-50 text-green-primary rounded-2xl flex items-center justify-center mx-auto text-2xl font-black border border-emerald-200">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <h3 className="text-xl font-black text-[#1B2521]">Dashboard Interface Ready</h3>
+          <p className="text-xs text-gray-500 max-w-md mx-auto">
+            A real-time data synchronization is complete. Click below to load your administrative control center.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+            <button
+              onClick={this.handleRefresh}
+              className="px-6 py-3 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Load Portal Dashboard →</span>
+            </button>
+            <button
+              onClick={this.props.onLogout}
+              className="px-6 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-all cursor-pointer"
+            >
+              Sign Out & Switch Role
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Portal({ onNavigate }) {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -880,45 +933,47 @@ export default function Portal({ onNavigate }) {
               </button>
             </div>
 
-            {(activeRole === 'student' || (!['teacher', 'class_teacher', 'subject_teacher', 'bursar', 'admin', 'principal'].includes(activeRole))) && (
-              <div className="space-y-4">
-                <StudentDashboard
+            <DashboardErrorBoundary onLogout={handleLogout}>
+              {(activeRole === 'student' || (!['teacher', 'class_teacher', 'subject_teacher', 'bursar', 'admin', 'principal'].includes(activeRole))) && (
+                <div className="space-y-4">
+                  <StudentDashboard
+                    data={portalData}
+                    onUploadReceipt={handleUploadReceipt}
+                    currentStudentId={currentStudentId}
+                  />
+                </div>
+              )}
+
+              {(activeRole === 'teacher' || activeRole === 'class_teacher' || activeRole === 'subject_teacher') && (
+                <TeacherDashboard
                   data={portalData}
-                  onUploadReceipt={handleUploadReceipt}
-                  currentStudentId={currentStudentId}
+                  currentUser={currentUser}
+                  onSaveScore={handleSaveScore}
+                  onAddAssignment={handleAddAssignment}
+                  onUploadMaterial={handleUploadMaterial}
                 />
-              </div>
-            )}
+              )}
 
-            {(activeRole === 'teacher' || activeRole === 'class_teacher' || activeRole === 'subject_teacher') && (
-              <TeacherDashboard
-                data={portalData}
-                currentUser={currentUser}
-                onSaveScore={handleSaveScore}
-                onAddAssignment={handleAddAssignment}
-                onUploadMaterial={handleUploadMaterial}
-              />
-            )}
+              {activeRole === 'bursar' && (
+                <BursarDashboard
+                  data={portalData}
+                  onApprovePayment={handleApprovePayment}
+                  onRejectPayment={handleRejectPayment}
+                />
+              )}
 
-            {activeRole === 'bursar' && (
-              <BursarDashboard
-                data={portalData}
-                onApprovePayment={handleApprovePayment}
-                onRejectPayment={handleRejectPayment}
-              />
-            )}
-
-            {(activeRole === 'admin' || activeRole === 'principal') && (
-              <AdminDashboard
-                data={portalData}
-                onAddAnnouncement={handleAddAnnouncement}
-                onAddStudent={handleAddStudent}
-                onUpdateApplication={handleUpdateApplication}
-                onUpdateStaff={handleUpdateStaff}
-                onAddStaff={handleAddStaff}
-                onUpdateSessionInfo={handleUpdateSessionInfo}
-              />
-            )}
+              {(activeRole === 'admin' || activeRole === 'principal') && (
+                <AdminDashboard
+                  data={portalData}
+                  onAddAnnouncement={handleAddAnnouncement}
+                  onAddStudent={handleAddStudent}
+                  onUpdateApplication={handleUpdateApplication}
+                  onUpdateStaff={handleUpdateStaff}
+                  onAddStaff={handleAddStaff}
+                  onUpdateSessionInfo={handleUpdateSessionInfo}
+                />
+              )}
+            </DashboardErrorBoundary>
           </div>
         )}
       </main>
