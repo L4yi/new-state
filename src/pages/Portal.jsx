@@ -558,6 +558,16 @@ export default function Portal({ onNavigate }) {
       placeholder: 'Teacher ID or Email address',
       badge: 'Teacher / Staff',
     },
+    class_teacher: {
+      title: 'Class Teacher (Form Master) Login',
+      placeholder: 'Teacher ID or Email address',
+      badge: 'Form Master',
+    },
+    subject_teacher: {
+      title: 'Subject Teacher Portal Login',
+      placeholder: 'Teacher ID or Email address',
+      badge: 'Subject Specialist',
+    },
     bursar: {
       title: 'Bursar & Finance Office Login',
       placeholder: 'Bursar Staff Username',
@@ -566,7 +576,12 @@ export default function Portal({ onNavigate }) {
     admin: {
       title: 'Administrator & Principal Login',
       placeholder: 'Admin Username',
-      badge: 'System Admin',
+      badge: 'Principal / Admin',
+    },
+    principal: {
+      title: 'Principal & Registrar Login',
+      placeholder: 'Principal Username',
+      badge: 'Principal & Registrar',
     },
   };
 
@@ -610,23 +625,16 @@ export default function Portal({ onNavigate }) {
       {/* Main Content Body */}
       <main className="relative z-10 max-w-[1280px] w-full mx-auto px-6 py-8 flex-grow flex items-center justify-center">
         {!isLoggedIn ? (
-          /* STANDALONE LOGIN CARD WITH EMBEDDED ROLE SELECTOR */
-          <div className="w-full max-w-lg bg-white rounded-3xl p-8 sm:p-10 text-[#1B2521] shadow-2xl border border-white/20 relative">
-            <div className="text-center space-y-2 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-green-50 mx-auto flex items-center justify-center p-2.5 border border-green-primary/10">
-                <img src="/school-logo.png" alt="School Crest Logo" className="w-full h-full object-contain" />
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 text-[#1B2521] shadow-2xl border border-gray-100 animate-scaleUp">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-emerald-50 text-[#06452C] rounded-2xl flex items-center justify-center mx-auto mb-3 border border-emerald-200/80 shadow-xs">
+                {mainLoginTab === 'student' ? <GraduationCap className="w-6 h-6 text-green-primary" /> : <Briefcase className="w-6 h-6 text-green-primary" />}
               </div>
-              
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-green-primary text-xs font-extrabold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-green-primary animate-pulse" />
-                NEW STATE HIGH SCHOOL PORTAL
-              </div>
-
-              <h2 className="text-2xl font-black tracking-tight text-[#1B2521] mt-1">
-                {roleConfig[activeRole].title}
+              <h2 className="text-xl font-extrabold tracking-tight text-[#1B2521]">
+                {mainLoginTab === 'student' ? 'Student & Parent Portal' : staffRole === 'admin' ? 'Principal & Admin Office' : staffRole === 'bursar' ? 'Bursar & Finance Office' : 'Teacher & Faculty Workspace'}
               </h2>
-              <p className="text-xs text-gray-500 font-medium">
-                {portalData?.sessionInfo?.currentSession || '2026/2027 Academic Session'} · {portalData?.sessionInfo?.currentTerm || 'First Term'}
+              <p className="text-xs text-gray-500 mt-1 font-medium">
+                {mainLoginTab === 'student' ? 'Access your termly report card, class schedule & fee status' : 'Enter your staff credentials to access your administrative tools'}
               </p>
             </div>
 
@@ -815,7 +823,7 @@ export default function Portal({ onNavigate }) {
                 <div className="min-w-0">
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block leading-none mb-1">Logged in User</span>
                   <div className="text-sm sm:text-base font-extrabold text-[#1B2521] truncate">
-                    {loginCreds.identifier} · <span className="text-green-primary font-bold text-xs sm:text-sm">{roleConfig[activeRole].badge}</span>
+                    {currentUser?.name || currentUser?.staffId || currentUser?.id || currentUser?.email || loginCreds?.identifier || 'Active User'} · <span className="text-green-primary font-bold text-xs sm:text-sm">{roleConfig[activeRole]?.badge || (activeRole === 'admin' ? 'Principal / Admin' : activeRole)}</span>
                   </div>
                 </div>
               </div>
@@ -829,7 +837,7 @@ export default function Portal({ onNavigate }) {
               </button>
             </div>
 
-            {activeRole === 'student' && (
+            {(activeRole === 'student' || (!['teacher', 'class_teacher', 'subject_teacher', 'bursar', 'admin', 'principal'].includes(activeRole))) && (
               <div className="space-y-4">
                 <StudentDashboard
                   data={portalData}
@@ -839,7 +847,7 @@ export default function Portal({ onNavigate }) {
               </div>
             )}
 
-            {activeRole === 'teacher' && (
+            {(activeRole === 'teacher' || activeRole === 'class_teacher' || activeRole === 'subject_teacher') && (
               <TeacherDashboard
                 data={portalData}
                 currentUser={currentUser}
@@ -857,7 +865,7 @@ export default function Portal({ onNavigate }) {
               />
             )}
 
-            {activeRole === 'admin' && (
+            {(activeRole === 'admin' || activeRole === 'principal') && (
               <AdminDashboard
                 data={portalData}
                 onAddAnnouncement={handleAddAnnouncement}
