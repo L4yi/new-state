@@ -27,6 +27,9 @@ export default function AdminDashboard({
   onAddStaff,
   onUpdateSessionInfo
 }) {
+  const [activeAdminTab, setActiveAdminTab] = useState('applications');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const defaultAvailableSessions = ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'];
   const [availableSessions, setAvailableSessions] = useState(() => {
     return Array.isArray(data?.sessionInfo?.availableSessions) ? data.sessionInfo.availableSessions : defaultAvailableSessions;
