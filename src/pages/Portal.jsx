@@ -12,6 +12,28 @@ import { initialPortalData } from '../data/mockPortalData';
 import { API_URL } from '../config/api';
 
 export default function Portal({ onNavigate }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('nshs_is_logged_in') === 'true';
+  });
+  const [activeRole, setActiveRole] = useState(() => {
+    return localStorage.getItem('nshs_active_role') || 'student';
+  });
+  const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [portalData, setPortalData] = useState(() => {
+    const saved = localStorage.getItem('nshs_portal_data');
+    return saved ? JSON.parse(saved) : initialPortalData;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentStudentId, setCurrentStudentId] = useState(() => {
+    return localStorage.getItem('nshs_current_student_id') || 'NSHS/2024/001';
+  });
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('nshs_current_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [mainLoginTab, setMainLoginTab] = useState('student'); // 'student' | 'staff'
   const [staffRole, setStaffRole] = useState('teacher'); // 'teacher' | 'bursar' | 'admin'
   const [teacherAssignment, setTeacherAssignment] = useState('class_teacher'); // 'class_teacher' | 'subject_teacher'
