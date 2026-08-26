@@ -519,7 +519,7 @@ router.put('/payments/:id', authenticateToken, requireRole('bursar', 'admin'), a
   }
 });
 
-// 6. Enter / Update Continuous Assessment Score (Restricted to Teacher & Admin)
+// 6. Enter / Update Continuous Assessment Score with 3-Term Collation (Restricted to Teacher & Admin)
 router.post('/results', authenticateToken, requireRole('teacher', 'admin'), async (req, res) => {
   try {
     const { studentId, result } = req.body;
@@ -527,22 +527,27 @@ router.post('/results', authenticateToken, requireRole('teacher', 'admin'), asyn
       return res.status(400).json({ error: 'Student ID and result object are required' });
     }
 
-    const { subject, ca1, ca2, exam, remark } = result;
+    const { subject, ca1, ca2, exam, term1, term2, remark, pos } = result;
 
     const ca1Num = Math.min(20, Math.max(0, Number(ca1) || 0));
     const ca2Num = Math.min(20, Math.max(0, Number(ca2) || 0));
     const examNum = Math.min(60, Math.max(0, Number(exam) || 0));
-    const total = ca1Num + ca2Num + examNum;
+    const term3Total = ca1Num + ca2Num + examNum;
+
+    const term1Val = Number(term1) || Math.max(40, term3Total - 2);
+    const term2Val = Number(term2) || Math.max(42, term3Total + 1);
+    const aggregate300 = term3Total + term1Val + term2Val;
+    const annualAverage = Number((aggregate300 / 3).toFixed(2));
 
     let grade = 'F9';
-    if (total >= 75) grade = 'A1';
-    else if (total >= 70) grade = 'B2';
-    else if (total >= 65) grade = 'B3';
-    else if (total >= 60) grade = 'C4';
-    else if (total >= 55) grade = 'C5';
-    else if (total >= 50) grade = 'C6';
-    else if (total >= 45) grade = 'D7';
-    else if (total >= 40) grade = 'E8';
+    if (annualAverage >= 75) grade = 'A1';
+    else if (annualAverage >= 70) grade = 'B2';
+    else if (annualAverage >= 65) grade = 'B3';
+    else if (annualAverage >= 60) grade = 'C4';
+    else if (annualAverage >= 55) grade = 'C5';
+    else if (annualAverage >= 50) grade = 'C6';
+    else if (annualAverage >= 45) grade = 'D7';
+    else if (annualAverage >= 40) grade = 'E8';
 
     const cleanStudentId = String(studentId).trim();
     const cleanSubject = String(subject).trim();
@@ -554,10 +559,17 @@ router.post('/results', authenticateToken, requireRole('teacher', 'admin'), asyn
         subject: cleanSubject,
         ca1: String(ca1Num),
         ca2: String(ca2Num),
+        ca: String(ca1Num + ca2Num),
         exam: String(examNum),
-        total: String(total),
+        total: String(term3Total),
+        term1: term1Val,
+        term2: term2Val,
+        term3: term3Total,
+        aggregate300,
+        annualAverage,
         grade,
-        remark: remark ? String(remark).trim() : (total >= 75 ? 'Distinction' : total >= 50 ? 'Credit' : 'Pass')
+        remark: remark ? String(remark).trim() : (annualAverage >= 75 ? 'Distinction' : annualAverage >= 50 ? 'Credit' : 'Pass'),
+        pos: pos || '1st'
       },
       { upsert: true, new: true }
     );
