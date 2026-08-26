@@ -823,6 +823,20 @@ router.patch('/staff/:id', authenticateToken, requireRole('admin'), async (req, 
     console.error('Error updating staff record:', error);
     res.status(500).json({ error: 'Failed to update staff record', details: error.message });
   }
+// 13. Update Academic School Year & Active Term (Restricted to Admin)
+router.post('/session-settings', authenticateToken, requireRole('admin'), async (req, res) => {
+  try {
+    const { currentSession, currentTerm, nextTermBegins, schoolDays } = req.body;
+    if (currentSession) sessionInfo.currentSession = String(currentSession).trim();
+    if (currentTerm) sessionInfo.currentTerm = String(currentTerm).trim();
+    if (nextTermBegins) sessionInfo.nextTermBegins = String(nextTermBegins).trim();
+    if (schoolDays) sessionInfo.schoolDays = String(schoolDays).trim();
+
+    res.json({ message: 'Academic session & active term successfully broadcasted', sessionInfo });
+  } catch (error) {
+    console.error('Error updating session settings:', error);
+    res.status(500).json({ error: 'Failed to update session settings', details: error.message });
+  }
 });
 
 export default router;

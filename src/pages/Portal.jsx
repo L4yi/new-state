@@ -458,6 +458,33 @@ export default function Portal({ onNavigate }) {
     }
   };
 
+  const handleUpdateSessionInfo = async (newSessionSettings) => {
+    // 1. Optimistic instant local update
+    setPortalData((prev) => {
+      const updatedSession = {
+        ...prev.sessionInfo,
+        ...newSessionSettings,
+      };
+      const nextState = { ...prev, sessionInfo: updatedSession };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_URL}/session-settings`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(newSessionSettings),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.warn('Backend offline, session updated locally:', err);
+    }
+  };
+
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -776,6 +803,7 @@ export default function Portal({ onNavigate }) {
                 onUpdateApplication={handleUpdateApplication}
                 onUpdateStaff={handleUpdateStaff}
                 onAddStaff={handleAddStaff}
+                onUpdateSessionInfo={handleUpdateSessionInfo}
               />
             )}
           </div>

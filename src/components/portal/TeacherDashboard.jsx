@@ -3,7 +3,7 @@ import {
   Calculator, FilePlus, Upload, Users, CheckCircle2,
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
-  Layers, Filter
+  Layers, Filter, Loader2
 } from 'lucide-react';
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
@@ -78,6 +78,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   const [scores, setScores] = useState({ ca1: '', ca2: '', exam: '' });
   const [attendance, setAttendance] = useState({});
   const [savedMsg, setSavedMsg] = useState('');
+  const [isSavingScore, setIsSavingScore] = useState(false);
 
   // Form Master remarks & ratings state
   const [selectedFormStudent, setSelectedFormStudent] = useState('');
@@ -114,6 +115,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   // 3. STRICT SUBJECT LOCK: Determine subjects STRICTLY connected to this teacher's ID
   const studentObj = (data?.students || []).find(s => s.id === selectedStudent);
 
+  const teacherDistinctSubjects = useMemo(() => {
+    return Array.from(new Set(teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean)));
+  }, [teacherSubjectsTaught]);
+
   const availableSubjects = useMemo(() => {
     if (!currentUser) return ['Mathematics'];
 
@@ -147,10 +152,8 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       }
     }
 
-    // Otherwise return all distinct subjects assigned to this teacher across all their classes
-    const allSubjects = teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean);
-    return allSubjects.length > 0 ? Array.from(new Set(allSubjects)) : ['Mathematics'];
-  }, [currentUser, studentObj, selectedClassFilter, teacherSubjectsTaught]);
+    return teacherDistinctSubjects;
+  }, [currentUser, studentObj, teacherSubjectsTaught, selectedClassFilter, teacherDistinctSubjects]);
 
   // Sync selectedSubject whenever availableSubjects changes
   useEffect(() => {
@@ -162,10 +165,6 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       setSelectedSubject('');
     }
   }, [availableSubjects, selectedSubject]);
-
-  const teacherDistinctSubjects = useMemo(() => {
-    return Array.from(new Set(teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean)));
-  }, [teacherSubjectsTaught]);
 
   // New Assignment Form State
   const [newAsn, setNewAsn] = useState({
@@ -198,8 +197,9 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     return 'F9';
   };
 
-  const handleScoreSubmit = (e) => {
+  const handleScoreSubmit = async (e) => {
     e.preventDefault();
+    setIsSavingScore(true);
     const ca1Num = parseInt(scores.ca1) || 0;
     const ca2Num = parseInt(scores.ca2) || 0;
     const examNum = parseInt(scores.exam) || 0;
@@ -211,23 +211,30 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     const grade = calculateGrade(annualAverage);
     const remark = annualAverage >= 75 ? 'Distinction' : annualAverage >= 60 ? 'Very Good' : annualAverage >= 50 ? 'Good' : annualAverage >= 40 ? 'Pass' : 'Fair';
 
-    onSaveScore(selectedStudent, {
-      subject: selectedSubject,
-      ca1: ca1Num,
-      ca2: ca2Num,
-      exam: examNum,
-      total: term3Total,
-      term1: term1Val,
-      term2: term2Val,
-      term3: term3Total,
-      aggregate300,
-      annualAverage,
-      grade,
-      remark,
-    });
-
-    setSavedMsg(`3rd Term score & Annual Collation saved for ${(data?.students || []).find((s) => s.id === selectedStudent)?.name}! ${selectedSubject}: 3rd Term ${term3Total}/100 · Aggregate ${aggregate300}/300 · Annual Avg ${annualAverage}% (${grade})`);
-    setTimeout(() => setSavedMsg(''), 5500);
+    try {
+      if (onSaveScore) {
+        await onSaveScore(selectedStudent, {
+          subject: selectedSubject,
+          ca1: ca1Num,
+          ca2: ca2Num,
+          exam: examNum,
+          total: term3Total,
+          term1: term1Val,
+          term2: term2Val,
+          term3: term3Total,
+          aggregate300,
+          annualAverage,
+          grade,
+          remark,
+        });
+      }
+      setSavedMsg(`3rd Term score & Annual Collation saved for ${(data?.students || []).find((s) => s.id === selectedStudent)?.name}! ${selectedSubject}: 3rd Term ${term3Total}/100 · Aggregate ${aggregate300}/300 · Annual Avg ${annualAverage}% (${grade})`);
+      setTimeout(() => setSavedMsg(''), 5500);
+    } catch (err) {
+      console.error('Error saving score:', err);
+    } finally {
+      setIsSavingScore(false);
+    }
   };
 
   const handleAssignmentSubmit = (e) => {
@@ -610,10 +617,20 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2"
+                  disabled={isSavingScore}
+                  className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
                 >
-                  <Check className="w-4 h-4" />
-                  <span>Save 3rd Term Score & Collate for {studentObj?.name || 'Student'} →</span>
+                  {isSavingScore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Collating & Saving 3rd Term Scores...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Save 3rd Term Score & Collate for {studentObj?.name || 'Student'} →</span>
+                    </>
+                  )}
                 </button>
               </form>
             </div>

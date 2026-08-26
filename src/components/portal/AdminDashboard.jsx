@@ -4,7 +4,7 @@ import {
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
   KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock,
-  Briefcase, Plus, Download, FileSpreadsheet
+  Briefcase, Plus, Download, FileSpreadsheet, Loader2
 } from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
 
@@ -24,10 +24,19 @@ export default function AdminDashboard({
   onAddStudent,
   onUpdateApplication,
   onUpdateStaff,
-  onAddStaff
+  onAddStaff,
+  onUpdateSessionInfo
 }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'staff', 'announcements'
+  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'staff', 'announcements', 'session'
+  const [sessionForm, setSessionForm] = useState({
+    currentSession: data?.sessionInfo?.currentSession || '2025/2026',
+    currentTerm: data?.sessionInfo?.currentTerm || '3rd Term',
+    nextTermBegins: data?.sessionInfo?.nextTermBegins || '2026-09-14',
+    schoolDays: data?.sessionInfo?.schoolDays || '118'
+  });
+  const [sessionFeedback, setSessionFeedback] = useState('');
+  const [isUpdatingSession, setIsUpdatingSession] = useState(false);
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [noticeMsg, setNoticeMsg] = useState('');
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
@@ -555,6 +564,22 @@ export default function AdminDashboard({
     });
   };
 
+  const handleSessionSubmit = async (e) => {
+    e.preventDefault();
+    setIsUpdatingSession(true);
+    try {
+      if (onUpdateSessionInfo) {
+        await onUpdateSessionInfo(sessionForm);
+      }
+      setSessionFeedback(`Academic Session (${sessionForm.currentSession}) and ${sessionForm.currentTerm} successfully set and broadcasted across all student & teacher portals!`);
+      setTimeout(() => setSessionFeedback(''), 5500);
+    } catch (err) {
+      console.error('Failed to update session settings:', err);
+    } finally {
+      setIsUpdatingSession(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Admin Summary Bar & Tab Navigation */}
@@ -569,7 +594,7 @@ export default function AdminDashboard({
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Manage incoming online applications, central student registry, teacher allocations, and broadcast notices.
+              Manage incoming online applications, central student registry, teacher allocations, session terms, and broadcast notices.
             </p>
           </div>
 
@@ -606,15 +631,15 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            <div className="flex items-center gap-2 bg-gray-50 px-3.5 py-2 rounded-xl border border-gray-200/80 text-xs font-bold text-gray-600 flex-shrink-0">
+            <div className="flex items-center gap-2 bg-emerald-50/80 px-3.5 py-2 rounded-xl border border-emerald-200 text-xs font-bold text-[#06452C] flex-shrink-0">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span>2026/2027 Academic Session</span>
+              <span>{sessionForm.currentSession} · {sessionForm.currentTerm}</span>
             </div>
           </div>
         </div>
 
         {/* Full-Width Tab Grid Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {/* 1. Online Applications */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
@@ -700,7 +725,20 @@ export default function AdminDashboard({
             }`}
           >
             <Megaphone className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Broadcast Circulars</span>
+            <span className="truncate">School Notices</span>
+          </button>
+
+          {/* 6. Academic Session & Term Control */}
+          <button
+            onClick={() => { setActiveAdminTab('session'); setRegisteredStudentSlip(null); }}
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
+              activeAdminTab === 'session'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+            }`}
+          >
+            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">Session & Term</span>
           </button>
         </div>
       </div>
@@ -2026,6 +2064,123 @@ export default function AdminDashboard({
             >
               <Megaphone className="w-4 h-4" />
               <span>Dispatch School Circular →</span>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ================= 6. ACADEMIC SESSION & ACTIVE TERM CONTROL ================= */}
+      {activeAdminTab === 'session' && (
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-6 max-w-3xl mx-auto">
+          <div className="border-b border-gray-200 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-green-primary flex items-center justify-center border border-emerald-200">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-[#1B2521]">Academic School Year & Term Control</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Update active session and term. Changes immediately propagate to teachers' collation, students' broadsheets, and printable report sheets.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {sessionFeedback && (
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-[#06452C] flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>{sessionFeedback}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSessionSubmit} className="space-y-5 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1.5">
+                  Academic Session / School Year *
+                </label>
+                <select
+                  value={sessionForm.currentSession}
+                  onChange={(e) => setSessionForm({ ...sessionForm, currentSession: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
+                >
+                  <option value="2026/2027">2026/2027 Academic Session</option>
+                  <option value="2025/2026">2025/2026 Academic Session</option>
+                  <option value="2024/2025">2024/2025 Academic Session</option>
+                  <option value="2023/2024">2023/2024 Academic Session</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1.5">
+                  Active School Term *
+                </label>
+                <select
+                  value={sessionForm.currentTerm}
+                  onChange={(e) => setSessionForm({ ...sessionForm, currentTerm: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
+                >
+                  <option value="3rd Term">3rd Term (Promotional & Cumulative Collation)</option>
+                  <option value="2nd Term">2nd Term (Easter Term)</option>
+                  <option value="1st Term">1st Term (Christmas / First Term)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1.5">
+                  Next Term Resumption Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={sessionForm.nextTermBegins}
+                  onChange={(e) => setSessionForm({ ...sessionForm, nextTermBegins: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1.5">
+                  Total Official School Days in Term *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="50"
+                  max="150"
+                  value={sessionForm.schoolDays}
+                  onChange={(e) => setSessionForm({ ...sessionForm, schoolDays: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#06452C] text-white space-y-2 text-xs shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-300 font-black text-xs uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                <span>Live School-Wide Broadcast Preview</span>
+              </div>
+              <p className="text-emerald-100">
+                Active Session: <strong>{sessionForm.currentSession}</strong> · Active Term: <strong>{sessionForm.currentTerm}</strong>. Next term scheduled to commence on <strong>{sessionForm.nextTermBegins}</strong>.
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isUpdatingSession}
+              className="w-full py-4 rounded-xl font-extrabold text-sm text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
+            >
+              {isUpdatingSession ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Broadcasting Academic Term Settings...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Save & Apply Active School Session & Term →</span>
+                </>
+              )}
             </button>
           </form>
         </div>
