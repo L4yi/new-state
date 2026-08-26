@@ -27,8 +27,17 @@ export default function AdminDashboard({
   onAddStaff,
   onUpdateSessionInfo
 }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'applications', 'database', 'register', 'staff', 'announcements', 'session'
+  const defaultAvailableSessions = ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'];
+  const [availableSessions, setAvailableSessions] = useState(data?.sessionInfo?.availableSessions || defaultAvailableSessions);
+  const [showNewSessionModal, setShowNewSessionModal] = useState(false);
+  const [newSessionForm, setNewSessionForm] = useState({
+    sessionName: '2027/2028',
+    startingTerm: '1st Term',
+    resumptionDate: '2027-09-13',
+    schoolDays: '118'
+  });
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+
   const [sessionForm, setSessionForm] = useState({
     currentSession: data?.sessionInfo?.currentSession || '2025/2026',
     currentTerm: data?.sessionInfo?.currentTerm || '3rd Term',
@@ -37,6 +46,44 @@ export default function AdminDashboard({
   });
   const [sessionFeedback, setSessionFeedback] = useState('');
   const [isUpdatingSession, setIsUpdatingSession] = useState(false);
+
+  const handleCreateNewSession = async (e) => {
+    if (e) e.preventDefault();
+    const cleanSession = newSessionForm.sessionName.trim();
+    if (!cleanSession) return;
+
+    setIsCreatingSession(true);
+    const updatedSessions = availableSessions.includes(cleanSession)
+      ? availableSessions
+      : [cleanSession, ...availableSessions];
+
+    setAvailableSessions(updatedSessions);
+
+    const newSettings = {
+      ...sessionForm,
+      currentSession: cleanSession,
+      currentTerm: newSessionForm.startingTerm || '1st Term',
+      nextTermBegins: newSessionForm.resumptionDate || '2027-09-13',
+      schoolDays: newSessionForm.schoolDays || '118',
+      availableSessions: updatedSessions,
+      newSession: cleanSession,
+    };
+
+    setSessionForm(newSettings);
+
+    try {
+      if (onUpdateSessionInfo) {
+        await onUpdateSessionInfo(newSettings);
+      }
+      setShowNewSessionModal(false);
+      setSessionFeedback(`New Academic Session (${cleanSession}) created and activated school-wide!`);
+      setTimeout(() => setSessionFeedback(''), 5500);
+    } catch (err) {
+      console.error('Failed to create new session:', err);
+    } finally {
+      setIsCreatingSession(false);
+    }
+  };
   const [newNotice, setNewNotice] = useState({ title: '', content: '' });
   const [noticeMsg, setNoticeMsg] = useState('');
   const [registeredStudentSlip, setRegisteredStudentSlip] = useState(null);
@@ -643,6 +690,10 @@ export default function AdminDashboard({
                 value={sessionForm.currentSession}
                 onChange={async (e) => {
                   const val = e.target.value;
+                  if (val === '__CREATE_NEW__') {
+                    setShowNewSessionModal(true);
+                    return;
+                  }
                   const updated = { ...sessionForm, currentSession: val };
                   setSessionForm(updated);
                   if (onUpdateSessionInfo) {
@@ -654,10 +705,12 @@ export default function AdminDashboard({
                 className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
                 title="Select Academic School Year"
               >
-                <option value="2026/2027">2026/2027 Session</option>
-                <option value="2025/2026">2025/2026 Session</option>
-                <option value="2024/2025">2024/2025 Session</option>
-                <option value="2023/2024">2023/2024 Session</option>
+                {availableSessions.map((sess) => (
+                  <option key={sess} value={sess}>
+                    {sess} Session
+                  </option>
+                ))}
+                <option value="__CREATE_NEW__">+ Create New School Year...</option>
               </select>
 
               {/* Present Term Dropdown */}
@@ -680,6 +733,16 @@ export default function AdminDashboard({
                 <option value="2nd Term">2nd Term</option>
                 <option value="3rd Term">3rd Term</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => setShowNewSessionModal(true)}
+                title="Create brand new academic school year"
+                className="px-2.5 py-1 rounded-xl bg-[#06452C] hover:bg-[#0B5D3B] text-white text-xs font-black flex items-center gap-1 shadow-xs transition-all cursor-pointer active:scale-95"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">New Year</span>
+              </button>
             </div>
           </div>
         </div>
@@ -2149,18 +2212,37 @@ export default function AdminDashboard({
           <form onSubmit={handleSessionSubmit} className="space-y-5 text-xs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold text-gray-700 mb-1.5">
-                  Academic Session / School Year *
-                </label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block font-bold text-gray-700 text-xs">
+                    Academic Session / School Year *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewSessionModal(true)}
+                    className="text-xs font-black text-green-primary hover:text-green-dark flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Create New Year</span>
+                  </button>
+                </div>
                 <select
                   value={sessionForm.currentSession}
-                  onChange={(e) => setSessionForm({ ...sessionForm, currentSession: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__CREATE_NEW__') {
+                      setShowNewSessionModal(true);
+                      return;
+                    }
+                    setSessionForm({ ...sessionForm, currentSession: val });
+                  }}
                   className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                 >
-                  <option value="2026/2027">2026/2027 Academic Session</option>
-                  <option value="2025/2026">2025/2026 Academic Session</option>
-                  <option value="2024/2025">2024/2025 Academic Session</option>
-                  <option value="2023/2024">2023/2024 Academic Session</option>
+                  {availableSessions.map((sess) => (
+                    <option key={sess} value={sess}>
+                      {sess} Academic Session
+                    </option>
+                  ))}
+                  <option value="__CREATE_NEW__">+ Create New School Year...</option>
                 </select>
               </div>
 
@@ -2236,6 +2318,104 @@ export default function AdminDashboard({
               )}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ================= MODAL: CREATE BRAND NEW ACADEMIC SCHOOL YEAR ================= */}
+      {showNewSessionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 space-y-5 animate-scaleUp">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-green-primary flex items-center justify-center border border-emerald-200">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-[#1B2521]">Create Academic School Year</h3>
+                  <p className="text-[11px] text-gray-500">Provision a new session for registration & grading</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewSessionModal(false)}
+                className="text-gray-400 hover:text-gray-700 p-1"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewSession} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">
+                  New School Year Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 2027/2028"
+                  value={newSessionForm.sessionName}
+                  onChange={(e) => setNewSessionForm({ ...newSessionForm, sessionName: e.target.value })}
+                  className="w-full p-3.5 rounded-xl border border-gray-200 text-sm font-bold text-[#06452C] bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                />
+                <p className="text-[10px] text-gray-400 mt-1">Format: YYYY/YYYY (e.g. 2027/2028, 2028/2029)</p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">
+                  Starting Term for New Session *
+                </label>
+                <select
+                  value={newSessionForm.startingTerm}
+                  onChange={(e) => setNewSessionForm({ ...newSessionForm, startingTerm: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                >
+                  <option value="1st Term">1st Term (First / Christmas Term)</option>
+                  <option value="2nd Term">2nd Term (Easter Term)</option>
+                  <option value="3rd Term">3rd Term (Promotional Term)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">
+                  Resumption Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newSessionForm.resumptionDate}
+                  onChange={(e) => setNewSessionForm({ ...newSessionForm, resumptionDate: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewSessionModal(false)}
+                  className="w-1/2 py-3.5 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreatingSession}
+                  className="w-1/2 py-3.5 rounded-xl font-extrabold text-white bg-green-primary hover:bg-green-dark transition-all text-xs shadow-md flex items-center justify-center gap-1.5 disabled:opacity-75 cursor-pointer"
+                >
+                  {isCreatingSession ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create & Activate</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

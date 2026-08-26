@@ -73,8 +73,11 @@ export const requireRole = (...allowedRoles) => {
 };
 
 const sessionInfo = {
-  currentSession: '2026/2027 Academic Session',
-  currentTerm: 'First Term',
+  currentSession: '2026/2027',
+  currentTerm: '3rd Term',
+  availableSessions: ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'],
+  nextTermBegins: '2026-09-14',
+  schoolDays: '118',
   schoolName: 'New State High School',
   schoolMotto: 'Domine Dirige Nos',
   address: '36 Palm Avenue, Mushin, Lagos, Nigeria',
@@ -822,11 +825,23 @@ router.patch('/staff/:id', authenticateToken, requireRole('admin'), async (req, 
   } catch (error) {
     console.error('Error updating staff record:', error);
     res.status(500).json({ error: 'Failed to update staff record', details: error.message });
-  }
-// 13. Update Academic School Year & Active Term (Restricted to Admin)
+// 13. Update Academic School Year & Active Term / Create New Session (Restricted to Admin)
 router.post('/session-settings', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const { currentSession, currentTerm, nextTermBegins, schoolDays } = req.body;
+    const { currentSession, currentTerm, nextTermBegins, schoolDays, newSession, availableSessions } = req.body;
+    if (newSession) {
+      const cleanNew = String(newSession).trim();
+      if (!sessionInfo.availableSessions) {
+        sessionInfo.availableSessions = ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'];
+      }
+      if (!sessionInfo.availableSessions.includes(cleanNew)) {
+        sessionInfo.availableSessions.unshift(cleanNew);
+      }
+      sessionInfo.currentSession = cleanNew;
+    }
+    if (availableSessions && Array.isArray(availableSessions)) {
+      sessionInfo.availableSessions = Array.from(new Set(availableSessions.map(s => String(s).trim()).filter(Boolean)));
+    }
     if (currentSession) sessionInfo.currentSession = String(currentSession).trim();
     if (currentTerm) sessionInfo.currentTerm = String(currentTerm).trim();
     if (nextTermBegins) sessionInfo.nextTermBegins = String(nextTermBegins).trim();
