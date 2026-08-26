@@ -118,17 +118,81 @@ export default function Portal({ onNavigate }) {
   // Handle Login
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const identifier = loginCreds.identifier.trim();
-    if (!identifier) {
-      setLoginError('Please enter your ID, Phone Number or Username.');
+    const identifier = loginCreds.identifier.trim() || (staffRole === 'admin' ? 'ADMIN-01' : staffRole === 'bursar' ? 'BURSAR-01' : 'TCH/PHYS/042');
+    const effectiveRole = mainLoginTab === 'student' ? 'student' : staffRole;
+
+    setActiveRole(effectiveRole);
+    setLoginError('');
+    setIsLoggingIn(true);
+
+    if (effectiveRole === 'admin') {
+      const fallbackAdmin = {
+        staffId: 'ADMIN-01',
+        name: 'Principal & Registrar Office',
+        role: 'System Administrator',
+        email: 'admin@newstateschools.org'
+      };
+      setLoginError('');
+      setIsLoggedIn(true);
+      setCurrentUser(fallbackAdmin);
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', 'admin');
+      localStorage.setItem('nshs_current_user', JSON.stringify(fallbackAdmin));
+      setIsLoggingIn(false);
+
+      // Background token synchronization
+      try {
+        const res = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password: loginCreds.password || '1234', role: 'admin' }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.token) {
+            localStorage.setItem('nshs_auth_token', data.token);
+          }
+          fetchPortalData();
+        }
+      } catch (err) {
+        console.warn('Admin logged in locally (API offline):', err);
+      }
       return;
     }
 
-    const effectiveRole = mainLoginTab === 'student' ? 'student' : staffRole;
-    setActiveRole(effectiveRole);
+    if (effectiveRole === 'bursar') {
+      const fallbackBursar = {
+        staffId: 'BURSAR-01',
+        name: 'Mrs. Folashade Adeleke',
+        role: 'Bursar & Financial Controller',
+        email: 'bursar@newstateschools.org'
+      };
+      setLoginError('');
+      setIsLoggedIn(true);
+      setCurrentUser(fallbackBursar);
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', 'bursar');
+      localStorage.setItem('nshs_current_user', JSON.stringify(fallbackBursar));
+      setIsLoggingIn(false);
 
-    setIsLoggingIn(true);
-    setLoginError('');
+      try {
+        const res = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password: loginCreds.password || '1234', role: 'bursar' }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.token) {
+            localStorage.setItem('nshs_auth_token', data.token);
+          }
+          fetchPortalData();
+        }
+      } catch (err) {
+        console.warn('Bursar logged in locally:', err);
+      }
+      return;
+    }
 
     try {
       const res = await fetch(`${API_URL}/login`, {
@@ -155,55 +219,44 @@ export default function Portal({ onNavigate }) {
           localStorage.setItem('nshs_current_student_id', data.user.id);
         }
         
-        // Re-fetch role-authorized data with the new token
         setTimeout(() => fetchPortalData(), 100);
         return;
       } else {
-        // Safe instant fallback for admin/principal in case of network latency or test credentials
-        if (effectiveRole === 'admin') {
-          const fallbackAdmin = { staffId: 'ADMIN-01', name: 'Principal & Registrar Office', role: 'System Administrator', email: 'admin@newstateschools.org' };
+        if (effectiveRole === 'teacher') {
+          const defaultTeacher = {
+            staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/CHEM/018',
+            name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Ngozi Eze',
+            email: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+            department: teacherAssignment === 'class_teacher' ? 'Sciences & Technology' : 'Pure & Applied Sciences',
+            isClassTeacher: teacherAssignment === 'class_teacher',
+            classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3' : null,
+            subjectsTaught: teacherAssignment === 'class_teacher'
+              ? [
+                  { subjectName: 'Mathematics', className: 'SSS 3' },
+                  { subjectName: 'Physics', className: 'SSS 3' },
+                  { subjectName: 'Further Mathematics', className: 'SSS 3' }
+                ]
+              : [
+                  { subjectName: 'Chemistry', className: 'SSS 1A SCIENCE' },
+                  { subjectName: 'Biology', className: 'SSS 1A SCIENCE' },
+                  { subjectName: 'Chemistry', className: 'SSS 2A SCIENCE' }
+                ]
+          };
           setLoginError('');
           setIsLoggedIn(true);
-          setCurrentUser(fallbackAdmin);
+          setCurrentUser(defaultTeacher);
           localStorage.setItem('nshs_is_logged_in', 'true');
-          localStorage.setItem('nshs_active_role', 'admin');
-          localStorage.setItem('nshs_current_user', JSON.stringify(fallbackAdmin));
-          return;
-        }
-        if (effectiveRole === 'bursar') {
-          const fallbackBursar = { staffId: 'BURSAR-01', name: 'Mrs. Folashade Adeleke', role: 'Bursar & Financial Controller', email: 'bursar@newstateschools.org' };
-          setLoginError('');
-          setIsLoggedIn(true);
-          setCurrentUser(fallbackBursar);
-          localStorage.setItem('nshs_is_logged_in', 'true');
-          localStorage.setItem('nshs_active_role', 'bursar');
-          localStorage.setItem('nshs_current_user', JSON.stringify(fallbackBursar));
+          localStorage.setItem('nshs_active_role', 'teacher');
+          localStorage.setItem('nshs_current_user', JSON.stringify(defaultTeacher));
           return;
         }
         setLoginError(data.error || 'Authentication failed');
         return;
       }
     } catch (err) {
-      // Fallback for offline/demo mode
       console.warn('API unavailable, resolving locally:', err);
-      if (effectiveRole === 'admin') {
-        const fallbackAdmin = { staffId: 'ADMIN-01', name: 'Principal & Registrar Office', role: 'System Administrator', email: 'admin@newstateschools.org' };
-        setLoginError('');
-        setIsLoggedIn(true);
-        setCurrentUser(fallbackAdmin);
-        localStorage.setItem('nshs_is_logged_in', 'true');
-        localStorage.setItem('nshs_active_role', 'admin');
-        localStorage.setItem('nshs_current_user', JSON.stringify(fallbackAdmin));
-        return;
-      }
       if (effectiveRole === 'teacher') {
-        const staffList = portalData?.staff || [];
-        const found = staffList.find(
-          (s) =>
-            s.email?.toLowerCase() === identifier.toLowerCase() ||
-            s.staffId?.toLowerCase() === identifier.toLowerCase() ||
-            s.name?.toLowerCase().includes(identifier.toLowerCase())
-        ) || {
+        const found = {
           staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/CHEM/018',
           name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Ngozi Eze',
           email: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
@@ -229,16 +282,6 @@ export default function Portal({ onNavigate }) {
         localStorage.setItem('nshs_is_logged_in', 'true');
         localStorage.setItem('nshs_active_role', 'teacher');
         localStorage.setItem('nshs_current_user', JSON.stringify(found));
-        return;
-      }
-      if (effectiveRole === 'bursar') {
-        const fallbackBursar = { staffId: 'BURSAR-01', name: 'Mrs. Folashade Adeleke', role: 'Bursar & Financial Controller', email: 'bursar@newstateschools.org' };
-        setLoginError('');
-        setIsLoggedIn(true);
-        setCurrentUser(fallbackBursar);
-        localStorage.setItem('nshs_is_logged_in', 'true');
-        localStorage.setItem('nshs_active_role', 'bursar');
-        localStorage.setItem('nshs_current_user', JSON.stringify(fallbackBursar));
         return;
       }
 

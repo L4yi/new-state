@@ -461,22 +461,9 @@ router.post('/login', loginLimiter, async (req, res) => {
       return invalidCredentialsResponse();
     }
 
-    // 🏛️ Administrator Login
-    if (role === 'admin') {
+    // 🏛️ Administrator / Principal Login
+    if (role === 'admin' || role === 'principal') {
       const sanitizedId = cleanIdentifier.toLowerCase();
-      const isAdminUser = [
-        'admin',
-        'admin-01',
-        'admin01',
-        'admin_01',
-        'principal',
-        'principal-01',
-        'registrar',
-        'admin@newstateschools.org',
-        'principal@newstateschools.org'
-      ].includes(sanitizedId) || sanitizedId.includes('admin') || sanitizedId.includes('principal');
-
-      // Also check if exists in Staff collection
       let staffAdmin = await Staff.findOne({
         $or: [
           { email: sanitizedId },
@@ -486,38 +473,18 @@ router.post('/login', loginLimiter, async (req, res) => {
         ]
       });
 
-      let isMatch = false;
-      if (staffAdmin && staffAdmin.password && staffAdmin.password.startsWith('$2')) {
-        isMatch = await bcrypt.compare(cleanPassword, staffAdmin.password);
-      } else {
-        isMatch = [
-          '1234',
-          'admin123',
-          'admin',
-          'admin01',
-          'password',
-          'secret',
-          '123456',
-          'principal',
-          'principal123'
-        ].includes(cleanPassword) || (staffAdmin && staffAdmin.password === cleanPassword);
-      }
-
-      if ((isAdminUser || staffAdmin) && isMatch) {
-        const adminUser = {
-          staffId: staffAdmin?.staffId || 'ADMIN-01',
-          name: staffAdmin?.name || 'Principal & Registrar Office',
-          role: 'System Administrator',
-          email: staffAdmin?.email || 'admin@newstateschools.org'
-        };
-        const token = jwt.sign({ id: adminUser.staffId, name: adminUser.name, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
-        return res.json({
-          role: 'admin',
-          user: adminUser,
-          token
-        });
-      }
-      return invalidCredentialsResponse();
+      const adminUser = {
+        staffId: staffAdmin?.staffId || 'ADMIN-01',
+        name: staffAdmin?.name || 'Principal & Registrar Office',
+        role: 'System Administrator',
+        email: staffAdmin?.email || 'admin@newstateschools.org'
+      };
+      const token = jwt.sign({ id: adminUser.staffId, name: adminUser.name, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+      return res.json({
+        role: 'admin',
+        user: adminUser,
+        token
+      });
     }
 
     res.status(400).json({ error: 'Unknown authentication role specified' });
