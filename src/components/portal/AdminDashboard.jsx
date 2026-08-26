@@ -28,7 +28,9 @@ export default function AdminDashboard({
   onUpdateSessionInfo
 }) {
   const defaultAvailableSessions = ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'];
-  const [availableSessions, setAvailableSessions] = useState(data?.sessionInfo?.availableSessions || defaultAvailableSessions);
+  const [availableSessions, setAvailableSessions] = useState(() => {
+    return Array.isArray(data?.sessionInfo?.availableSessions) ? data.sessionInfo.availableSessions : defaultAvailableSessions;
+  });
   const [showNewSessionModal, setShowNewSessionModal] = useState(false);
   const [newSessionForm, setNewSessionForm] = useState({
     sessionName: '2027/2028',
@@ -144,13 +146,13 @@ export default function AdminDashboard({
     portalPin: generateRandomPin(),
   });
 
-  const studentsList = data?.students || [];
+  const studentsList = Array.isArray(data?.students) ? data.students : [];
   const filteredStudents = studentsList.filter(
     (s) =>
-      s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.class?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.guardian && s.guardian?.toLowerCase().includes(searchTerm.toLowerCase()))
+      (s?.name || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s?.id || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s?.class || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s?.guardian && (s.guardian || '')?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Fallback sample applications if none submitted yet
@@ -208,18 +210,18 @@ export default function AdminDashboard({
     }
   ];
 
-  const applicationsList = (data?.applications && data.applications.length > 0)
+  const applicationsList = (Array.isArray(data?.applications) && data.applications.length > 0)
     ? data.applications
     : defaultApplications;
 
-  const pendingAppsCount = applicationsList.filter(a => a.status === 'Pending Review').length;
+  const pendingAppsCount = applicationsList.filter(a => a?.status === 'Pending Review').length;
 
   const filteredApplications = applicationsList.filter(
     (app) =>
-      app.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.applicationId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.classApplyingFor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.guardianName?.toLowerCase().includes(searchTerm.toLowerCase())
+      (app?.studentName || app?.name || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app?.applicationId || app?.id || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app?.classApplyingFor || app?.class || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app?.guardianName || app?.guardian || '')?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Default teachers list with standard Arm naming
@@ -283,14 +285,14 @@ export default function AdminDashboard({
     }
   ];
 
-  const staffList = (data?.staff && data.staff.length > 0) ? data.staff : defaultStaff;
+  const staffList = (Array.isArray(data?.staff) && data.staff.length > 0) ? data.staff : defaultStaff;
 
   const filteredStaff = staffList.filter(
     (st) =>
-      st.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      st.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (st.department && st.department?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (st.classAssigned && st.classAssigned?.toLowerCase().includes(searchTerm.toLowerCase()))
+      (st?.name || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (st?.email || '')?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (st?.department && (st.department || '')?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (st?.classAssigned && (st.classAssigned || '')?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const nigerianStates = [
@@ -705,7 +707,7 @@ export default function AdminDashboard({
                 className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
                 title="Select Academic School Year"
               >
-                {availableSessions.map((sess) => (
+                {(Array.isArray(availableSessions) ? availableSessions : defaultAvailableSessions).map((sess) => (
                   <option key={sess} value={sess}>
                     {sess} Session
                   </option>
@@ -2237,7 +2239,7 @@ export default function AdminDashboard({
                   }}
                   className="w-full p-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                 >
-                  {availableSessions.map((sess) => (
+                  {(Array.isArray(availableSessions) ? availableSessions : defaultAvailableSessions).map((sess) => (
                     <option key={sess} value={sess}>
                       {sess} Academic Session
                     </option>
