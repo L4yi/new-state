@@ -95,6 +95,9 @@ export default function AdminDashboard({
   const [copiedPin, setCopiedPin] = useState(false);
   const [selectedApplicationForReview, setSelectedApplicationForReview] = useState(null);
   const [staffUpdateFeedback, setStaffUpdateFeedback] = useState('');
+  const [isEnrollingStudent, setIsEnrollingStudent] = useState(false);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
+  const [isBroadcastingNotice, setIsBroadcastingNotice] = useState(false);
 
   // Add new teacher form state
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
@@ -411,7 +414,7 @@ export default function AdminDashboard({
     setTimeout(() => setStaffUpdateFeedback(''), 4500);
   };
 
-  const handleCreateStaffSubmit = (e) => {
+  const handleCreateStaffSubmit = async (e) => {
     e.preventDefault();
     const classVal = newStaffForm.classAssigned === 'None' || newStaffForm.classAssigned === 'None (Subject Teacher Only)'
       ? null
@@ -432,39 +435,56 @@ export default function AdminDashboard({
       ]
     };
 
-    if (onAddStaff) {
-      onAddStaff(newStaffObj);
+    setIsAddingStaff(true);
+    try {
+      if (onAddStaff) {
+        await onAddStaff(newStaffObj);
+      }
+      setShowAddStaffModal(false);
+      setNewStaffForm({
+        name: '',
+        email: '',
+        phone: '',
+        department: 'Sciences & Technology',
+        role: 'Teacher',
+        subject: 'Physics',
+        classAssigned: 'None',
+      });
+      setStaffUpdateFeedback(`Staff member ${newStaffObj.name} successfully onboarded!`);
+      setTimeout(() => setStaffUpdateFeedback(''), 4500);
+    } catch (err) {
+      console.error('Error onboarding staff member:', err);
+    } finally {
+      setIsAddingStaff(false);
     }
-    setShowAddStaffModal(false);
-    setNewStaffForm({
-      name: '',
-      email: '',
-      phone: '',
-      department: 'Sciences & Technology',
-      role: 'Teacher',
-      subject: 'Physics',
-      classAssigned: 'None',
-    });
-    setStaffUpdateFeedback(`Staff member ${newStaffObj.name} successfully onboarded!`);
-    setTimeout(() => setStaffUpdateFeedback(''), 4500);
   };
 
-  const handleNoticeSubmit = (e) => {
+  const handleNoticeSubmit = async (e) => {
     e.preventDefault();
-    onAddAnnouncement({
-      id: `ANN-${Math.floor(10 + Math.random() * 90)}`,
-      title: newNotice.title,
-      author: 'Principal / Admin Office',
-      date: new Date().toISOString().split('T')[0],
-      content: newNotice.content,
-    });
-    setNewNotice({ title: '', content: '' });
-    setNoticeMsg('Announcement broadcasted to all students, parents, and teachers!');
-    setTimeout(() => setNoticeMsg(''), 4000);
+    setIsBroadcastingNotice(true);
+    try {
+      if (onAddAnnouncement) {
+        await onAddAnnouncement({
+          id: `ANN-${Math.floor(10 + Math.random() * 90)}`,
+          title: newNotice.title,
+          author: 'Principal / Admin Office',
+          date: new Date().toISOString().split('T')[0],
+          content: newNotice.content,
+        });
+      }
+      setNewNotice({ title: '', content: '' });
+      setNoticeMsg('Announcement broadcasted to all students, parents, and teachers!');
+      setTimeout(() => setNoticeMsg(''), 4000);
+    } catch (err) {
+      console.error('Error broadcasting announcement:', err);
+    } finally {
+      setIsBroadcastingNotice(false);
+    }
   };
 
-  const handleStudentSubmit = (e) => {
+  const handleStudentSubmit = async (e) => {
     e.preventDefault();
+    setIsEnrollingStudent(true);
     const nextNum = studentsList.length + 1;
     const newId = `NSHS/2026/00${nextNum}`;
     const fullName = `${studentForm.surname.toUpperCase()} ${studentForm.firstName} ${studentForm.middleName}`.trim();
@@ -514,12 +534,20 @@ export default function AdminDashboard({
       admissionDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
     };
 
-    onAddStudent(newStudentData);
-    setRegisteredStudentSlip(newStudentData);
+    try {
+      if (onAddStudent) {
+        await onAddStudent(newStudentData);
+      }
+      setRegisteredStudentSlip(newStudentData);
 
-    // If enrolling an existing online application, update its status
-    if (selectedApplicationForReview && onUpdateApplication) {
-      onUpdateApplication(selectedApplicationForReview.applicationId || selectedApplicationForReview.id, 'Accepted & Enrolled');
+      // If enrolling an existing online application, update its status
+      if (selectedApplicationForReview && onUpdateApplication) {
+        await onUpdateApplication(selectedApplicationForReview.applicationId || selectedApplicationForReview.id, 'Accepted & Enrolled');
+      }
+    } catch (err) {
+      console.error('Error adding student:', err);
+    } finally {
+      setIsEnrollingStudent(false);
     }
   };
 
@@ -635,32 +663,32 @@ export default function AdminDashboard({
   return (
     <div className="space-y-6">
       {/* Top Admin Summary Bar & Tab Navigation */}
-      <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-5 print:hidden">
+      <div className="p-3.5 sm:p-6 rounded-3xl bg-white border border-gray-100 shadow-sm space-y-4 print:hidden">
         {/* Top Header Row */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-gray-100">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pb-3 border-b border-gray-100">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-black text-[#1B2521] tracking-tight">Principal & Registrar Control Center</h2>
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-green-primary text-xs font-extrabold border border-emerald-200 shadow-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-[#1B2521] tracking-tight">Principal & Registrar Control Center</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] sm:text-xs font-extrabold border border-emerald-200 shadow-xs">
                 Admin Level 1
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
               Manage incoming online applications, central student registry, teacher allocations, session terms, and broadcast notices.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full lg:w-auto">
             {/* Quick Export Actions for Principal & Bursary */}
-            <div className="flex items-center gap-1.5 bg-emerald-50/80 p-1 rounded-xl border border-emerald-200">
-              <span className="text-[11px] font-black text-[#06452C] px-2 flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1.5 bg-emerald-50/80 p-1.5 rounded-2xl border border-emerald-200 w-full sm:w-auto">
+              <span className="text-[11px] font-black text-[#06452C] px-1 flex items-center gap-1">
                 <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Export CSV:</span>
+                <span>Export:</span>
               </span>
               <button
                 onClick={exportStudentsCSV}
                 title="Download full student enrollment list to Excel/CSV"
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center gap-1 active:scale-95"
+                className="flex-1 sm:flex-initial px-2 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center justify-center gap-1 active:scale-95"
               >
                 <Download className="w-3 h-3" />
                 <span>Students ({studentsList.length})</span>
@@ -668,7 +696,7 @@ export default function AdminDashboard({
               <button
                 onClick={exportStaffCSV}
                 title="Download teachers & staff directory to Excel/CSV"
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center gap-1 active:scale-95"
+                className="flex-1 sm:flex-initial px-2 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center justify-center gap-1 active:scale-95"
               >
                 <Download className="w-3 h-3" />
                 <span>Staff ({staffList.length})</span>
@@ -676,7 +704,7 @@ export default function AdminDashboard({
               <button
                 onClick={exportApplicationsCSV}
                 title="Download incoming admission applicants list to Excel/CSV"
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center gap-1 active:scale-95"
+                className="flex-1 sm:flex-initial px-2 py-1 rounded-lg bg-white hover:bg-[#06452C] hover:text-white text-[#06452C] text-[11px] font-bold border border-emerald-200 shadow-xs transition-all flex items-center justify-center gap-1 active:scale-95"
               >
                 <Download className="w-3 h-3" />
                 <span>Applicants ({applicationsList.length})</span>
@@ -684,8 +712,8 @@ export default function AdminDashboard({
             </div>
 
             {/* Direct Interactive Session & Present Term Selector for Admin */}
-            <div className="flex flex-wrap items-center gap-1.5 bg-[#F0F7F4] p-1.5 rounded-2xl border border-emerald-300/80 shadow-xs">
-              <div className="flex items-center gap-1.5 px-2 text-[#06452C] font-black text-xs">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#F0F7F4] p-1.5 rounded-2xl border border-emerald-300/80 shadow-xs w-full sm:w-auto">
+              <div className="flex items-center gap-1 px-1 text-[#06452C] font-black text-xs">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 <span>Active:</span>
               </div>
@@ -707,15 +735,15 @@ export default function AdminDashboard({
                   setSessionFeedback(`Academic Session switched to ${val} school-wide!`);
                   setTimeout(() => setSessionFeedback(''), 4000);
                 }}
-                className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
+                className="flex-1 sm:flex-initial py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
                 title="Select Academic School Year"
               >
                 {(Array.isArray(availableSessions) ? availableSessions : defaultAvailableSessions).map((sess) => (
                   <option key={sess} value={sess}>
-                    {sess} Session
+                    {sess}
                   </option>
                 ))}
-                <option value="__CREATE_NEW__">+ Create New School Year...</option>
+                <option value="__CREATE_NEW__">+ Create New Year...</option>
               </select>
 
               {/* Present Term Dropdown */}
@@ -731,7 +759,7 @@ export default function AdminDashboard({
                   setSessionFeedback(`Present Active Term set to ${val} school-wide!`);
                   setTimeout(() => setSessionFeedback(''), 4000);
                 }}
-                className="py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
+                className="flex-1 sm:flex-initial py-1 px-2 rounded-xl border border-emerald-300 bg-white text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer"
                 title="Select Present Active Term"
               >
                 <option value="1st Term">1st Term</option>
@@ -743,10 +771,10 @@ export default function AdminDashboard({
                 type="button"
                 onClick={() => setShowNewSessionModal(true)}
                 title="Create brand new academic school year"
-                className="px-2.5 py-1 rounded-xl bg-[#06452C] hover:bg-[#0B5D3B] text-white text-xs font-black flex items-center gap-1 shadow-xs transition-all cursor-pointer active:scale-95"
+                className="px-2.5 py-1 rounded-xl bg-[#06452C] hover:bg-[#0B5D3B] text-white text-xs font-black flex items-center justify-center gap-1 shadow-xs transition-all cursor-pointer active:scale-95"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">New Year</span>
+                <span className="inline">New Year</span>
               </button>
             </div>
           </div>
@@ -760,17 +788,17 @@ export default function AdminDashboard({
         )}
 
         {/* Full-Width Tab Grid Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {/* 1. Online Applications */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
               activeAdminTab === 'applications'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <div className="flex items-center gap-2 truncate">
+            <div className="flex items-center gap-1.5 min-w-0">
               <Inbox className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">Applications</span>
             </div>
@@ -786,15 +814,15 @@ export default function AdminDashboard({
           {/* 2. Student Registry */}
           <button
             onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
               activeAdminTab === 'database'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <div className="flex items-center gap-2 truncate">
+            <div className="flex items-center gap-1.5 min-w-0">
               <Database className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Student Registry</span>
+              <span className="truncate">Registry</span>
             </div>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
               activeAdminTab === 'database' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'
@@ -806,28 +834,28 @@ export default function AdminDashboard({
           {/* 3. Admissions & Enrollment */}
           <button
             onClick={() => { setActiveAdminTab('register'); setSelectedApplicationForReview(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
               activeAdminTab === 'register'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
             <UserPlus className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">Admissions & Form</span>
+            <span className="truncate">Admissions Form</span>
           </button>
 
           {/* 4. Teachers & Staff */}
           <button
             onClick={() => { setActiveAdminTab('staff'); setRegisteredStudentSlip(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-between gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
               activeAdminTab === 'staff'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
             }`}
           >
-            <div className="flex items-center gap-2 truncate">
+            <div className="flex items-center gap-1.5 min-w-0">
               <Briefcase className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Teachers & Staff</span>
+              <span className="truncate">Staff Directory</span>
             </div>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
               activeAdminTab === 'staff' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'
@@ -839,7 +867,7 @@ export default function AdminDashboard({
           {/* 5. Broadcast Notices */}
           <button
             onClick={() => { setActiveAdminTab('announcements'); setRegisteredStudentSlip(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
               activeAdminTab === 'announcements'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
@@ -852,7 +880,7 @@ export default function AdminDashboard({
           {/* 6. Academic Session & Term Control */}
           <button
             onClick={() => { setActiveAdminTab('session'); setRegisteredStudentSlip(null); }}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
               activeAdminTab === 'session'
                 ? 'bg-green-primary text-white border-green-primary shadow-md'
                 : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
@@ -1885,20 +1913,30 @@ export default function AdminDashboard({
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200 flex justify-end gap-3">
+              <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-6 py-3.5 rounded-xl border border-gray-300 text-[#1B2521] text-xs font-bold hover:bg-gray-50"
+                  className="px-6 py-3.5 rounded-2xl border border-gray-300 text-[#1B2521] text-xs font-bold hover:bg-gray-50 cursor-pointer"
                 >
                   Clear Form
                 </button>
                 <button
                   type="submit"
-                  className="px-8 py-3.5 rounded-xl bg-[#06452C] hover:bg-[#0B5D3B] text-white text-xs font-black transition-all shadow-md flex items-center gap-2"
+                  disabled={isEnrollingStudent}
+                  className="px-6 sm:px-8 py-3.5 rounded-2xl bg-[#06452C] hover:bg-[#0B5D3B] text-white text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 cursor-pointer active:scale-95"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Enroll Student & Issue Admission Slip →</span>
+                  {isEnrollingStudent ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Enrolling Student & Issuing Slip...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Enroll Student & Issue Admission Slip →</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -2119,15 +2157,23 @@ export default function AdminDashboard({
                     <button
                       type="button"
                       onClick={() => setShowAddStaffModal(false)}
-                      className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold"
+                      className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black shadow-md"
+                      disabled={isAddingStaff}
+                      className="px-6 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black shadow-md flex items-center gap-1.5 disabled:opacity-75 cursor-pointer"
                     >
-                      Add Teacher →
+                      {isAddingStaff ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                          <span>Onboarding...</span>
+                        </>
+                      ) : (
+                        <span>Add Teacher →</span>
+                      )}
                     </button>
                   </div>
                 </form>
@@ -2181,10 +2227,20 @@ export default function AdminDashboard({
 
             <button
               type="submit"
-              className="w-full py-4 rounded-xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2"
+              disabled={isBroadcastingNotice}
+              className="w-full py-4 rounded-2xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 cursor-pointer active:scale-95"
             >
-              <Megaphone className="w-4 h-4" />
-              <span>Dispatch School Circular →</span>
+              {isBroadcastingNotice ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Dispatching Circular...</span>
+                </>
+              ) : (
+                <>
+                  <Megaphone className="w-4 h-4" />
+                  <span>Dispatch School Circular →</span>
+                </>
+              )}
             </button>
           </form>
         </div>

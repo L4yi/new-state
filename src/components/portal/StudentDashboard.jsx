@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
   Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User, Award, Sparkles,
-  History, Archive, Filter, ChevronDown
+  History, Archive, Filter, ChevronDown, Loader2, Paperclip
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
 
@@ -19,6 +19,8 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     reference: '',
     bankName: 'First Bank Nigeria',
   });
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState('');
 
   const students = data?.students || [];
@@ -86,19 +88,30 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     return student.class;
   }, [selectedSessionArchive, student.class]);
 
-  const handlePaySubmit = (e) => {
+  const handlePaySubmit = async (e) => {
     e.preventDefault();
-    onUploadReceipt({
-      id: `PAY-${Math.floor(1000 + Math.random() * 9000)}`,
-      studentId: student.id,
-      studentName: student.name,
-      amount: `₦${Number(paymentForm.amount).toLocaleString()}`,
-      bankName: paymentForm.bankName,
-      reference: paymentForm.reference,
-      dateSubmitted: new Date().toISOString().split('T')[0],
-      status: 'Pending',
-    });
-    setSubmittedMessage('Fee payment receipt submitted! The Bursar will verify and approve your payment.');
+    setIsSubmittingPayment(true);
+    try {
+      if (onUploadReceipt) {
+        await onUploadReceipt({
+          id: `PAY-${Math.floor(1000 + Math.random() * 9000)}`,
+          studentId: student.id,
+          studentName: student.name,
+          class: student.class,
+          amount: `₦${Number(paymentForm.amount).toLocaleString()}`,
+          bankName: paymentForm.bankName,
+          reference: paymentForm.reference,
+          dateSubmitted: new Date().toISOString().split('T')[0],
+          status: 'Pending',
+          receiptImage: receiptFile ? receiptFile.name : null,
+        });
+      }
+      setSubmittedMessage('Fee payment receipt submitted successfully! The Bursar has received your receipt for verification.');
+    } catch (err) {
+      console.error('Error submitting payment receipt:', err);
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   const navigationItems = [
@@ -462,54 +475,86 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
           </div>
 
           {/* Upload Form */}
-          <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <div className="lg:col-span-7 bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-extrabold text-lg text-[#1B2521]">Submit Fee Payment Receipt</h3>
 
             {submittedMessage ? (
-              <div className="p-4 rounded-xl bg-green-50 border border-green-200 text-xs text-green-800 font-bold">
-                ✓ {submittedMessage}
+              <div className="p-4 rounded-2xl bg-green-50 border border-green-200 text-xs text-green-800 font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-700 flex-shrink-0" />
+                <span>{submittedMessage}</span>
               </div>
             ) : (
-              <form onSubmit={handlePaySubmit} className="space-y-4 text-xs">
+              <form onSubmit={handlePaySubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Amount Paid (₦)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Amount Paid (₦) *</label>
                   <input
                     type="number"
                     required
                     value={paymentForm.amount}
                     onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-bold text-gray-700 mb-1">Bank Name Used for Transfer</label>
-                  <input
-                    type="text"
-                    required
-                    value={paymentForm.bankName}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, bankName: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Bank Name Used *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. GTBank / First Bank / OPay"
+                      value={paymentForm.bankName}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, bankName: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 mb-1">Transaction Reference *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. TRX-9081239"
+                      value={paymentForm.reference}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
+                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Transaction Reference / ID</label>
+                  <label className="block font-bold text-gray-700 mb-1">Attach Receipt Slip / Screenshot (Optional)</label>
                   <input
-                    type="text"
-                    required
-                    placeholder="e.g. TRX-9081239"
-                    value={paymentForm.reference}
-                    onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) setReceiptFile(f);
+                    }}
+                    className="w-full text-xs text-gray-600 file:mr-2.5 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-[#06452C] hover:file:bg-emerald-100 cursor-pointer"
                   />
+                  {receiptFile && (
+                    <div className="mt-1 text-[11px] text-[#06452C] font-semibold">
+                      ✓ Attached: {receiptFile.name}
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-xl font-extrabold text-xs text-white bg-green-primary hover:bg-green-dark"
+                  disabled={isSubmittingPayment}
+                  className="w-full py-3.5 rounded-2xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 cursor-pointer active:scale-[0.99]"
                 >
-                  Send Payment to Bursar for Approval →
+                  {isSubmittingPayment ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Sending Receipt to Bursar...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send Payment to Bursar for Approval →</span>
+                    </>
+                  )}
                 </button>
               </form>
             )}

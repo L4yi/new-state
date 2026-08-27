@@ -1,0 +1,398 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>Commercial Proposal & Quotation — New State High School Digital Campus</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page Section1 {
+    size: 595.3pt 841.9pt; /* A4 */
+    margin: 42.5pt 42.5pt 42.5pt 42.5pt;
+    mso-header-margin: 35.4pt;
+    mso-footer-margin: 35.4pt;
+    mso-paper-source: 0;
+  }
+  div.Section1 {
+    page: Section1;
+  }
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1B2521;
+  }
+  h1 {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 20pt;
+    font-weight: bold;
+    color: #06452C;
+    margin-bottom: 4pt;
+    line-height: 1.2;
+  }
+  h2 {
+    font-family: 'Calibri', Arial, sans-serif;
+    font-size: 14pt;
+    font-weight: bold;
+    color: #06452C;
+    border-bottom: 2pt solid #06452C;
+    padding-bottom: 3pt;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #0B6B46;
+    margin-top: 12pt;
+    margin-bottom: 4pt;
+  }
+  p {
+    margin-top: 0;
+    margin-bottom: 8pt;
+    text-align: justify;
+  }
+  .header-card {
+    background-color: #06452C;
+    color: #FFFFFF;
+    padding: 16pt 18pt;
+    margin-bottom: 15pt;
+    border-radius: 6pt;
+  }
+  .header-card h1 {
+    color: #FFFFFF;
+    margin: 0 0 4pt 0;
+  }
+  .header-card p {
+    color: #A7F3D0;
+    margin: 0;
+    font-size: 11pt;
+  }
+  .meta-table {
+    width: 100%;
+    margin-top: 10pt;
+    border-top: 1pt solid #2D6A4F;
+    padding-top: 8pt;
+  }
+  .meta-table td {
+    color: #FFFFFF;
+    font-size: 9.5pt;
+    padding: 2pt 4pt;
+    vertical-align: top;
+  }
+  .meta-table strong {
+    color: #FDE68A;
+    text-transform: uppercase;
+    font-size: 8.5pt;
+  }
+  table.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8pt;
+    margin-bottom: 12pt;
+    font-size: 10pt;
+  }
+  table.custom-table th {
+    background-color: #06452C;
+    color: #FFFFFF;
+    font-weight: bold;
+    text-align: left;
+    padding: 6pt 8pt;
+    border: 1pt solid #06452C;
+  }
+  table.custom-table td {
+    padding: 6pt 8pt;
+    border: 1pt solid #D1D5DB;
+    vertical-align: top;
+  }
+  table.custom-table tr:nth-child(even) td {
+    background-color: #F9FAFB;
+  }
+  .total-row td {
+    background-color: #FEF3C7 !important;
+    font-weight: bold;
+    color: #06452C;
+    font-size: 11pt;
+    border-top: 2pt solid #06452C;
+  }
+  .badge {
+    background-color: #E0F2FE;
+    color: #0369A1;
+    font-weight: bold;
+    padding: 2pt 6pt;
+    border-radius: 3pt;
+    font-size: 8.5pt;
+    display: inline-block;
+  }
+  .highlight-box {
+    background-color: #ECFDF5;
+    border: 1pt solid #A7F3D0;
+    border-left: 4pt solid #06452C;
+    padding: 10pt 12pt;
+    margin: 10pt 0;
+  }
+  .highlight-box h4 {
+    margin: 0 0 4pt 0;
+    color: #065F46;
+    font-size: 11pt;
+  }
+  .sign-table {
+    width: 100%;
+    margin-top: 25pt;
+    border-collapse: collapse;
+  }
+  .sign-table td {
+    width: 50%;
+    padding: 10pt 15pt;
+    vertical-align: top;
+    border: 1pt solid #E5E7EB;
+    background-color: #FAFAFA;
+  }
+  .sign-line {
+    border-bottom: 1pt solid #374151;
+    height: 40pt;
+    margin-bottom: 6pt;
+  }
+</style>
+</head>
+<body>
+<div class="Section1">
+
+  <!-- Header Block -->
+  <div class="header-card">
+    <div style="font-size: 9pt; font-weight: bold; color: #FDE68A; text-transform: uppercase; letter-spacing: 1pt; margin-bottom: 4pt;">
+      Official Institutional Transformation Proposal & Commercial Quotation
+    </div>
+    <h1>Enterprise Digital Campus, Admissions Engine & Academic Portal</h1>
+    <p>Modernizing Academic Record Management, Fee Reconciliation, and Institutional Brand</p>
+
+    <table class="meta-table">
+      <tr>
+        <td><strong>Client Institution:</strong><br>New State High School, Mushin, Lagos</td>
+        <td><strong>Target Audience:</strong><br>The Board of Governors & Principal</td>
+        <td><strong>Proposal Ref:</strong><br>PROP-NSHS-2026-V1</td>
+        <td><strong>Date:</strong><br>August 2026</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 1. Executive Summary -->
+  <h2>1. Executive Summary</h2>
+  <p>
+    In today’s competitive secondary education sector in Lagos State, leading institutions require modern digital systems to eliminate manual grade compilation delays, prevent tuition collection leakages, and project institutional prestige to prospective parents.
+  </p>
+  <p>
+    This proposal outlines the commercial delivery of the <strong>New State High School Digital Campus System</strong>: a high-converting public presence, paperless admissions engine, multi-role academic portal, Ministry-grade report card generator with QR verification, and Bursar financial ledger.
+  </p>
+
+  <!-- 2. Scope of Deliverables -->
+  <h2>2. Scope of Deliverables & Implemented Modules</h2>
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th style="width: 28%;">Module</th>
+        <th>Scope & Functional Capabilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Public Web Experience</strong></td>
+        <td>10+ branded fast-loading SEO pages, mobile sticky action bar (Call, WhatsApp, Apply), NDPR child privacy policy, and terms of admission.</td>
+      </tr>
+      <tr>
+        <td><strong>2. Online Admissions & Screening</strong></td>
+        <td>Digital prospective student registration form, automated application reference generation, and online CBT screening login portal.</td>
+      </tr>
+      <tr>
+        <td><strong>3. Academic Broadsheet & Grading</strong></td>
+        <td>Continuous assessment entry: CA1 (20) + CA2 (20) + Exam (60) = 100 with automated WAEC/NECO scale conversion (A1 to F9) and teacher remarks.</td>
+      </tr>
+      <tr>
+        <td><strong>4. Ministry-Grade Report Cards</strong></td>
+        <td>A4 continuous assessment report sheet generator formatted to Lagos State Ministry standards, complete with dynamic QR verification and principal stamp seals.</td>
+      </tr>
+      <tr>
+        <td><strong>5. Bursar Fee Reconciliation</strong></td>
+        <td>Student fee payment tracking, bank transfer slip verification, zero-leakage financial reconciliation, and 1-click Master CSV export.</td>
+      </tr>
+      <tr>
+        <td><strong>6. Enterprise Security Layer</strong></td>
+        <td>Role-Based Access Control (RBAC), 100% IDOR immunity, NoSQL/ReDoS input sanitization, and anti-brute-force rate limiting.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 3. Commercial Quotation -->
+  <h2>3. Commercial Quotation & Investment Breakdown</h2>
+  <p>Below is the itemized investment schedule covering full-stack software development, security hardening, database initialization, and deployment:</p>
+
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th style="width: 8%; text-align: center;">Item</th>
+        <th style="width: 52%;">Deliverable / Module Description</th>
+        <th style="width: 18%; text-align: center;">Delivery</th>
+        <th style="width: 22%; text-align: right;">Cost (NGN ₦)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center;"><strong>01</strong></td>
+        <td>
+          <strong>Full-Stack Architecture & Responsive UI Engineering</strong><br>
+          <span style="font-size: 8.5pt; color: #4B5563;">React 18 SPA, Vite 8.2 bundler, Tailwind CSS, mobile quick bar, SEO sitemaps, NDPR legal compliance pages.</span>
+        </td>
+        <td style="text-align: center;">Week 1</td>
+        <td style="text-align: right; font-weight: bold;">₦350,000</td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>02</strong></td>
+        <td>
+          <strong>Multi-Role Portal & Ministry Broadsheet Engine</strong><br>
+          <span style="font-size: 8.5pt; color: #4B5563;">Teacher score entries, automated WAEC A1–F9 grading, printable A4 official report cards with QR verification.</span>
+        </td>
+        <td style="text-align: center;">Week 2</td>
+        <td style="text-align: right; font-weight: bold;">₦400,000</td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>03</strong></td>
+        <td>
+          <strong>Bursar Ledger, Online Admissions & CSV Export Engine</strong><br>
+          <span style="font-size: 8.5pt; color: #4B5563;">Fee tracking, bank transfer upload, candidate screening login, 1-click UTF-8 Master CSV export.</span>
+        </td>
+        <td style="text-align: center;">Week 3</td>
+        <td style="text-align: right; font-weight: bold;">₦250,000</td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>04</strong></td>
+        <td>
+          <strong>Security Hardening, Database Setup & Cloud Deployment</strong><br>
+          <span style="font-size: 8.5pt; color: #4B5563;">MongoDB Atlas cluster, Express REST API, JWT RBAC, IDOR defense, Helmet headers, Firebase CDN deployment.</span>
+        </td>
+        <td style="text-align: center;">Week 4</td>
+        <td style="text-align: right; font-weight: bold;">₦200,000</td>
+      </tr>
+      <tr>
+        <td style="text-align: center;"><strong>05</strong></td>
+        <td>
+          <strong>Staff Onboarding, Master Handover & Admin Training</strong><br>
+          <span style="font-size: 8.5pt; color: #4B5563;">Staff user guides, comprehensive DEVELOPER_HANDOVER documentation, and admin handover session.</span>
+        </td>
+        <td style="text-align: center;">Launch</td>
+        <td style="text-align: right; font-weight: bold;">₦100,000</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="3" style="text-align: right; font-size: 11pt;">TOTAL PROJECT INVESTMENT:</td>
+        <td style="text-align: right; font-size: 12pt; color: #06452C;">₦1,300,000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 4. Optional Add-ons -->
+  <h2>4. Optional Value-Added Add-on Upgrades</h2>
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th style="width: 32%;">Optional Module</th>
+        <th>Description & Business Capability</th>
+        <th style="width: 25%; text-align: right;">Optional Investment</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Direct Paystack / Card Gateway</strong></td>
+        <td>Enable direct debit card, USSD, and instant bank transfer checkout for tuition and prospectus purchases.</td>
+        <td style="text-align: right; font-weight: bold;">₦150,000</td>
+      </tr>
+      <tr>
+        <td><strong>Automated SMS & WhatsApp Alerts</strong></td>
+        <td>Automated Termii SMS dispatch to parents for exam result release, emergency notices, and fee receipts.</td>
+        <td style="text-align: right; font-weight: bold;">₦120,000</td>
+      </tr>
+      <tr>
+        <td><strong>Printable PVC Student ID Generator</strong></td>
+        <td>1-click batch generation of high-resolution PVC student identity cards with barcodes and photo frames.</td>
+        <td style="text-align: right; font-weight: bold;">₦100,000</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 5. Return on Investment -->
+  <h2>5. Projected Institutional Benefits & ROI</h2>
+  <div class="highlight-box">
+    <h4>🏆 Direct Quantifiable Benefits for New State High School:</h4>
+    <p>• <strong>₦600,000+ Annual Cost Savings:</strong> Complete elimination of physical result sheets, manual broadsheets, and booklet printing.</p>
+    <p>• <strong>80% Reduction in Teacher Compilation Time:</strong> Automatic grade calculation, aggregation, and position assignment.</p>
+    <p>• <strong>Zero Tuition Revenue Leakages:</strong> All fee payments reconciled in the Bursar digital ledger before report card clearance.</p>
+    <p>• <strong>25%+ Increase in Prospective Enrollments:</strong> 24/7 mobile-friendly online application portal for Lagos parents.</p>
+  </div>
+
+  <!-- 6. Payment Terms -->
+  <h2>6. Payment Schedule & Milestones</h2>
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Milestone</th>
+        <th style="width: 25%; text-align: center;">Percentage</th>
+        <th style="width: 25%; text-align: center;">Amount (₦)</th>
+        <th style="width: 25%;">Trigger Event</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Milestone 1</strong></td>
+        <td style="text-align: center;">50%</td>
+        <td style="text-align: center; font-weight: bold;">₦650,000</td>
+        <td>Upon contract signing & project mobilization</td>
+      </tr>
+      <tr>
+        <td><strong>Milestone 2</strong></td>
+        <td style="text-align: center;">30%</td>
+        <td style="text-align: center; font-weight: bold;">₦390,000</td>
+        <td>Upon demonstration of academic portal & report card generator</td>
+      </tr>
+      <tr>
+        <td><strong>Milestone 3</strong></td>
+        <td style="text-align: center;">20%</td>
+        <td style="text-align: center; font-weight: bold;">₦260,000</td>
+        <td>Upon final live deployment, staff training & master handover</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 7. Formal Sign-off -->
+  <h2>7. Formal Acceptance & Authorization</h2>
+  <p>By signing below, the parties agree to the project scope, technical specifications, and commercial terms outlined in this proposal:</p>
+
+  <table class="sign-table">
+    <tr>
+      <td>
+        <div style="font-size: 8.5pt; font-weight: bold; color: #4B5563; text-transform: uppercase; margin-bottom: 20pt;">
+          FOR: LEAD TECHNICAL CONSULTANT / DEVELOPER
+        </div>
+        <div class="sign-line"></div>
+        <div style="font-weight: bold; font-size: 10.5pt; color: #1B2521;">Lead Technical Consultant / Developer</div>
+        <div style="font-size: 9pt; color: #6B7280;">Full-Stack Digital Solutions Architect</div>
+        <div style="font-size: 8.5pt; color: #9CA3AF; margin-top: 4pt;">Date: ________________________</div>
+      </td>
+      <td>
+        <div style="font-size: 8.5pt; font-weight: bold; color: #4B5563; text-transform: uppercase; margin-bottom: 20pt;">
+          FOR: NEW STATE HIGH SCHOOL (MANAGEMENT)
+        </div>
+        <div class="sign-line"></div>
+        <div style="font-weight: bold; font-size: 10.5pt; color: #1B2521;">The Principal / Chairman, Board of Governors</div>
+        <div style="font-size: 9pt; color: #6B7280;">New State High School, Mushin, Lagos</div>
+        <div style="font-size: 8.5pt; color: #9CA3AF; margin-top: 4pt;">Date: ________________________</div>
+      </td>
+    </tr>
+  </table>
+
+</div>
+</body>
+</html>

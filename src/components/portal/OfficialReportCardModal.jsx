@@ -1,381 +1,469 @@
 import React from 'react';
-import { Printer, X, GraduationCap, Download } from 'lucide-react';
+import { Printer, X, GraduationCap, Download, Check } from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
 
 export default function OfficialReportCardModal({ student, results = [], sessionInfo, onClose }) {
-  // If no results provided, generate a standard comprehensive secondary curriculum
+  const studentName = student?.name || 'OLADEJO Abdulmatin Olatubosun';
+  const admissionNo = student?.id || 'JSS2A20232024-01';
+  const studentClass = student?.class || 'SSS 1B';
+  const sessionYear = sessionInfo?.currentSession || '2025/2026';
+  const termName = (sessionInfo?.currentTerm || 'THIRD TERM').toUpperCase();
+  const studentGender = student?.gender || 'Male';
+  const studentAge = student?.age || '15';
+  const classSize = student?.classSize || '43';
+  const classPosition = student?.position || '22nd';
+
+  // Authentic subject results matching the official report sheet
   const defaultSubjects = [
-    { subject: 'Agricultural Sciences', ca: 19, exam: 48, total: 67, term2: 62, term1: 62, pos: '27th' },
-    { subject: 'Animal Husbandry', ca: 16, exam: 37, total: 53, term2: 71, term1: 66, pos: '34th' },
-    { subject: 'Biology', ca: 12, exam: 47, total: 59, term2: 47, term1: 46, pos: '27th' },
-    { subject: 'Chemistry', ca: 18, exam: 21, total: 39, term2: 38, term1: 70, pos: '41st' },
-    { subject: 'Civic Education', ca: 21, exam: 48, total: 69, term2: 70, term1: 74, pos: '38th' },
-    { subject: 'English Language', ca: 15, exam: 36, total: 51, term2: 59, term1: 64, pos: '35th' },
-    { subject: 'Further Mathematics', ca: 15, exam: 23, total: 38, term2: 53, term1: 57, pos: '24th' },
-    { subject: 'Geography', ca: 13, exam: 31, total: 44, term2: 68, term1: 57, pos: '30th' },
-    { subject: 'Mathematics', ca: 24, exam: 46, total: 70, term2: 63, term1: 70, pos: '10th' },
-    { subject: 'Physics', ca: 19, exam: 50, total: 69, term2: 51, term1: 62, pos: '15th' },
+    { subject: 'Civic Education', firstCa: 0, secondCa: 0, homework: 10, project: 8, participation: 10, exam: 21.6, total: 49.6, term2: 49.8, term1: 62.9, pos: '20th' },
+    { subject: 'Computer Studies', firstCa: 0, secondCa: 0, homework: 0, project: 0, participation: 0, exam: 0, total: 0, term2: 41.5, term1: 63.0, pos: '1st' },
+    { subject: 'Crs', firstCa: 0, secondCa: 3, homework: 2, project: 4, participation: 5, exam: 19, total: 33, term2: 59.0, term1: 47.0, pos: '25th' },
+    { subject: 'Economics', firstCa: 0, secondCa: 8.5, homework: 8, project: 8, participation: 5, exam: 11, total: 40.5, term2: 40.0, term1: 48.5, pos: '22nd' },
+    { subject: 'English', firstCa: 9.8, secondCa: 10, homework: 8, project: 10, participation: 9, exam: 11.5, total: 58.3, term2: 40.6, term1: 43.3, pos: '27th' },
+    { subject: 'Government', firstCa: 0, secondCa: 0, homework: 10, project: 8, participation: 8, exam: 11, total: 37, term2: 66.0, term1: 37.2, pos: '20th' },
+    { subject: 'History', firstCa: 0, secondCa: 6.5, homework: 1, project: 3, participation: 7, exam: 14.4, total: 31.9, term2: 43.5, term1: 54.0, pos: '21st' },
+    { subject: 'Igbo/yoruba', firstCa: 10, secondCa: 0, homework: 10, project: 6, participation: 7, exam: 29, total: 62, term2: 61.5, term1: 42.8, pos: '8th' },
+    { subject: 'Literature', firstCa: 6, secondCa: 6, homework: 6, project: 7, participation: 5, exam: 22, total: 52, term2: 40.0, term1: 49.0, pos: '37th' },
+    { subject: 'Mathematics', firstCa: 6, secondCa: 8.5, homework: 7, project: 6, participation: 8, exam: 34, total: 69.5, term2: 27.3, term1: 61.0, pos: '19th' },
   ];
 
-  const processedResults = results.length > 0
-    ? results.map((r, idx) => {
-        const caVal = Number(r.ca1 || 0) + Number(r.ca2 || 0) || Number(r.ca || 18);
-        const examVal = Number(r.exam || 45);
-        const totalVal = Number(r.total || (caVal + examVal));
-        const term2Val = r.term2 || Math.max(38, totalVal - (idx % 4) * 2 + 1);
-        const term1Val = r.term1 || Math.max(40, totalVal + (idx % 3) * 3 - 2);
-        const aggVal = totalVal + term2Val + term1Val;
-        const avgVal = (aggVal / 3).toFixed(2);
-        
-        let gradeLetter = 'E';
-        let remarkText = 'Fair';
-        if (parseFloat(avgVal) >= 80) { gradeLetter = 'A'; remarkText = 'Excellent'; }
-        else if (parseFloat(avgVal) >= 60) { gradeLetter = 'B'; remarkText = 'Very Good'; }
-        else if (parseFloat(avgVal) >= 50) { gradeLetter = 'C'; remarkText = 'Good'; }
-        else if (parseFloat(avgVal) >= 40) { gradeLetter = 'D'; remarkText = 'Pass'; }
-        else { gradeLetter = 'E'; remarkText = 'Below Pass'; }
+  const processedResults = (results.length > 0 ? results : defaultSubjects).map((r, idx) => {
+    const firstCa = Number(r.firstCa ?? r.ca1 ?? 8);
+    const secondCa = Number(r.secondCa ?? r.ca2 ?? 8);
+    const homework = Number(r.homework ?? 8);
+    const project = Number(r.project ?? 7);
+    const participation = Number(r.participation ?? 8);
+    const exam = Number(r.exam ?? 35);
+    
+    // Calculate 3rd term total
+    const total3rd = Number(r.total ?? (firstCa + secondCa + homework + project + participation + exam));
+    const term2 = Number(r.term2 ?? Math.max(30, total3rd - 5));
+    const term1 = Number(r.term1 ?? Math.max(35, total3rd + 4));
+    const cumulative = Number((total3rd + term2 + term1).toFixed(1));
+    const avgWeighted = Number((cumulative / 3).toFixed(2));
 
-        return {
-          subject: r.subject,
-          ca: caVal,
-          exam: examVal,
-          total: totalVal,
-          term2: term2Val,
-          term1: term1Val,
-          agg: aggVal,
-          avg: avgVal,
-          grade: gradeLetter,
-          remark: remarkText,
-          pos: r.pos || `${(idx * 3 + 10) % 45 + 1}th`
-        };
-      })
-    : defaultSubjects.map((d) => {
-        const aggVal = d.total + d.term2 + d.term1;
-        const avgVal = (aggVal / 3).toFixed(2);
-        let gradeLetter = 'E';
-        let remarkText = 'Fair';
-        if (parseFloat(avgVal) >= 80) { gradeLetter = 'A'; remarkText = 'Excellent'; }
-        else if (parseFloat(avgVal) >= 60) { gradeLetter = 'B'; remarkText = 'Very Good'; }
-        else if (parseFloat(avgVal) >= 50) { gradeLetter = 'C'; remarkText = 'Good'; }
-        else if (parseFloat(avgVal) >= 40) { gradeLetter = 'D'; remarkText = 'Pass'; }
+    let grade = 'F9';
+    let remark = 'FAIL';
+    if (avgWeighted >= 75) { grade = 'A1'; remark = 'DISTINCTION'; }
+    else if (avgWeighted >= 70) { grade = 'B2'; remark = 'VERY GOOD'; }
+    else if (avgWeighted >= 65) { grade = 'B3'; remark = 'GOOD'; }
+    else if (avgWeighted >= 60) { grade = 'C4'; remark = 'CREDIT'; }
+    else if (avgWeighted >= 55) { grade = 'C5'; remark = 'CREDIT'; }
+    else if (avgWeighted >= 50) { grade = 'C6'; remark = 'CREDIT'; }
+    else if (avgWeighted >= 45) { grade = 'D7'; remark = 'PASS'; }
+    else if (avgWeighted >= 40) { grade = 'E8'; remark = 'PASS'; }
+    else { grade = 'F9'; remark = 'FAIL'; }
 
-        return {
-          ...d,
-          agg: aggVal,
-          avg: avgVal,
-          grade: gradeLetter,
-          remark: remarkText
-        };
-      });
+    return {
+      subject: r.subject,
+      firstCa: Number(firstCa.toFixed(1)),
+      secondCa: Number(secondCa.toFixed(1)),
+      homework: Number(homework.toFixed(1)),
+      project: Number(project.toFixed(1)),
+      participation: Number(participation.toFixed(1)),
+      exam: Number(exam.toFixed(1)),
+      total: Number(total3rd.toFixed(1)),
+      term2: Number(term2.toFixed(1)),
+      term1: Number(term1.toFixed(1)),
+      cumulative,
+      avgWeighted,
+      grade,
+      position: r.pos || r.position || `${(idx * 3 + 7) % 40 + 1}th`,
+      remark,
+    };
+  });
 
-  const totalScoreSum = processedResults.reduce((acc, curr) => acc + curr.total, 0);
-  const totalAvgPercentage = (totalScoreSum / (processedResults.length * 100) * 100).toFixed(2);
+  const subjectOfferedCount = processedResults.length;
+  const markObtainedSum = Number(processedResults.reduce((acc, curr) => acc + curr.total, 0).toFixed(2));
+  const markObtainableSum = subjectOfferedCount * 100;
+  const percentageOfMark = Number(((markObtainedSum / markObtainableSum) * 100).toFixed(2));
 
-  const studentName = student?.name || 'Adeyeri Muslimah';
-  const admissionNo = student?.id || 'FFC202500520';
-  const studentClass = student?.class || 'SSS 1A SCIENCE';
-  const sessionYear = sessionInfo?.currentSession || '2025-26';
-  const termName = sessionInfo?.currentTerm || '3rd';
+  const averageAnnualScore = Number((processedResults.reduce((acc, curr) => acc + curr.avgWeighted, 0) / subjectOfferedCount).toFixed(2));
+  const promotionStatus = averageAnnualScore >= 50 ? 'Promoted' : averageAnnualScore >= 45 ? 'Promoted on Trial' : 'To Repeat';
+  const headOfSchoolRemark = averageAnnualScore >= 70
+    ? 'EXCELLENT PERFORMANCE, KEEP UP THE STELLAR STANDARD!'
+    : averageAnnualScore >= 50
+    ? 'GOOD PERFORMANCE, WITH MORE FOCUS AND CONSISTENCY YOU WILL EXCEL FURTHER.'
+    : 'BELOW AVERAGE PERFORMANCE, PUT MORE EFFORT NEXT TERM';
 
   const handlePrint = () => {
-    printDocument('printable-report-sheet', `${studentName} - Academic Report Sheet`);
+    printDocument('printable-report-sheet', `${studentName} - Official Report Sheet`);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
       {/* Modal Container */}
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
         
-        {/* Top Control Bar (Hidden when printing) */}
-        <div className="print:hidden bg-[#06452C] text-white px-5 py-3.5 flex justify-between items-center border-b border-emerald-800">
+        {/* Top Control Bar (Hidden during print) */}
+        <div className="print:hidden bg-[#06452C] text-white px-4 sm:px-6 py-3.5 flex justify-between items-center border-b border-emerald-800">
           <div className="flex items-center gap-2.5">
-            <GraduationCap className="w-5 h-5 text-emerald-300" />
+            <GraduationCap className="w-5 h-5 text-emerald-300 flex-shrink-0" />
             <div>
-              <span className="font-bold text-sm tracking-wide block leading-tight">
-                Academic Terminal Report Sheet
+              <span className="font-extrabold text-xs sm:text-sm tracking-wide block leading-tight">
+                Official Student Report Sheet (Original Format)
               </span>
               <span className="text-[10px] text-emerald-200">
-                Official Lagos State Ministry-Compliant Layout
+                New State High School — 36 Palm Avenue, Mushin, Lagos
               </span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-sm active:scale-95"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>Print / Download PDF</span>
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* ================= EXACT PRINTABLE REPORT SHEET ================= */}
+        {/* ================= 100% AUTHENTIC PRINTABLE REPORT SHEET ================= */}
         <div
           id="printable-report-sheet"
-          className="p-6 sm:p-8 text-[#1B2521] bg-white print:p-4 print:m-0 print:text-black font-sans leading-tight text-[11px]"
-          style={{ fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif" }}
+          className="p-5 sm:p-8 text-black bg-white print:p-2 print:m-0 font-sans leading-tight text-[11px] select-text"
+          style={{ fontFamily: "'Arial', 'Segoe UI', sans-serif" }}
         >
-          
-          {/* 1. Top Institutional Header */}
-          <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-3">
-            {/* Left Header Text */}
-            <div className="text-left space-y-0.5">
-              <div className="text-sm sm:text-base font-medium text-gray-500 tracking-tight">
-                New State High School
-              </div>
-              <div className="text-[10px] text-gray-400 font-normal">
-                Opening Hours: Monday to Friday - 8 AM to 5 PM
-              </div>
-            </div>
-
-            {/* Center Logo Shield Emblem */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 flex items-center justify-center">
+          {/* 1. Header Section with School Logo & Details */}
+          <div className="text-center relative pb-3 mb-2 border-b border-gray-300">
+            <div className="absolute left-0 top-0 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
               <img
                 src="/school-logo.png"
-                alt="School Crest"
+                alt="New State High School Crest"
                 className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
+                onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>
 
-            {/* Right Contact Info */}
-            <div className="text-right space-y-0.5">
-              <div className="text-[11px] text-gray-500 font-normal">
-                info@newstateschools.org
+            <div className="px-16">
+              <h1 className="text-lg sm:text-xl font-black tracking-tight text-gray-900 uppercase">
+                NEW STATE HIGH SCHOOL
+              </h1>
+              <p className="text-[11px] text-gray-700 font-medium leading-tight">
+                36 Palm avenue, mushin Lagos
+              </p>
+              <p className="text-[10px] text-gray-600 font-medium leading-tight">
+                (info@newstatehighschool.org)
+              </p>
+              <p className="text-[10px] text-gray-600 font-medium leading-tight">
+                +234 (0) 7018001948
+              </p>
+              <h2 className="text-xs sm:text-sm font-extrabold tracking-wider text-gray-900 mt-1 uppercase">
+                STUDENT REPORT SHEET
+              </h2>
+            </div>
+          </div>
+
+          {/* 2. Student & Session Information Grid */}
+          <div className="border border-gray-400 mb-3 text-[10px] sm:text-[11px]">
+            {/* Row 1 */}
+            <div className="grid grid-cols-12 border-b border-gray-400 divide-x divide-gray-400">
+              <div className="col-span-5 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">NAME:</strong>{' '}
+                <span className="font-bold text-gray-900 uppercase">{studentName}</span>
               </div>
-              <div className="text-[10px] text-gray-400 font-normal">
-                Need Help? Call us free <span className="text-[#C29B38] font-bold">+234 813-400-0644</span>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">ADMISSION NUMBER:</strong>{' '}
+                <span className="font-mono font-bold text-gray-900">{admissionNo}</span>
+              </div>
+              <div className="col-span-3 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">GENDER:</strong>{' '}
+                <span className="font-semibold text-gray-900">{studentGender}</span>
+              </div>
+            </div>
+
+            {/* Row 2 */}
+            <div className="grid grid-cols-12 border-b border-gray-400 divide-x divide-gray-400">
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">CLASS:</strong>{' '}
+                <span className="font-bold text-gray-900 uppercase">{studentClass}</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">TERM:</strong>{' '}
+                <span className="font-bold text-gray-900 uppercase">{termName}</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2 flex justify-between items-center">
+                <div>
+                  <strong className="text-gray-900 uppercase">YEAR:</strong>{' '}
+                  <span className="font-bold text-gray-900">{sessionYear}</span>
+                </div>
+                <div className="px-2 py-0.5 border border-gray-400 rounded-xs text-[9px] font-bold text-gray-700 bg-gray-50 uppercase">
+                  {studentName.split(' ')[0]}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3 */}
+            <div className="grid grid-cols-12 border-b border-gray-400 divide-x divide-gray-400">
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">AGE:</strong>{' '}
+                <span className="font-semibold text-gray-900">{studentAge}</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">CLASS AGE AVERAGE:</strong>{' '}
+                <span className="text-gray-600">—</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">NO. IN CLASS:</strong>{' '}
+                <span className="font-bold text-gray-900">{classSize}</span>
+              </div>
+            </div>
+
+            {/* Row 4 */}
+            <div className="grid grid-cols-12 divide-x divide-gray-400">
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">TIMES SCHOOL OPENED:</strong>{' '}
+                <span className="font-semibold text-gray-900">0</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">% TIMES PRESENT:</strong>{' '}
+                <span className="font-semibold text-gray-900">0%</span>
+              </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">POSITION:</strong>{' '}
+                <span className="font-black text-gray-900">{classPosition}</span>
               </div>
             </div>
           </div>
 
-          {/* 2. Student Information Box Grid */}
-          <div className="mb-4 border border-gray-300 rounded-sm">
-            <div className="grid grid-cols-3 border-b border-gray-300">
-              <div className="col-span-2 p-1.5 px-2.5 text-[11px]">
-                <span className="font-bold text-black">Name:</span> <span className="text-gray-800 ml-1">{studentName}</span>
-              </div>
-              <div className="p-1.5 px-2.5 border-l border-gray-300 text-[11px]">
-                <span className="font-bold text-black">Admission No:</span> <span className="text-gray-800 ml-1 font-mono">{admissionNo}</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-3">
-              <div className="p-1.5 px-2.5 text-[11px]">
-                <span className="font-bold text-black">Class:</span> <span className="text-gray-800 ml-1 uppercase">{studentClass}</span>
-              </div>
-              <div className="p-1.5 px-2.5 border-l border-gray-300 text-[11px]">
-                <span className="font-bold text-black">Session:</span> <span className="text-gray-800 ml-1">{sessionYear}</span>
-              </div>
-              <div className="p-1.5 px-2.5 border-l border-gray-300 text-[11px]">
-                <span className="font-bold text-black">Term:</span> <span className="text-gray-800 ml-1">{termName}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Comprehensive Report for All Terms (Academic Table) */}
-          <div className="mb-3">
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Comprehensive Report for All Terms
-            </h3>
-
-            <div className="border border-gray-300 rounded-sm overflow-hidden">
-              <table className="w-full text-left text-[10px] border-collapse">
-                <thead>
-                  <tr className="bg-white text-black font-bold border-b border-gray-300">
-                    <th className="p-1 px-1.5 border-r border-gray-300 w-7 text-center">S/N</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300">Subject</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-12">3rd CA</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-14">3rd Exam</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-14">3rd Total</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-14">2nd Total</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-14">1st Total</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-16">Agg (300)</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-16">Avg (100)</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-center w-10">Grade</th>
-                    <th className="p-1 px-1.5 border-r border-gray-300 text-left w-20">Remark</th>
-                    <th className="p-1 px-1.5 text-center w-10">Pos</th>
+          {/* 3. Main Subject Scores Table */}
+          <div className="border border-gray-400 mb-2 overflow-x-auto">
+            <table className="w-full text-left text-[9px] sm:text-[9.5px] border-collapse">
+              <thead>
+                {/* Top Grouped Header Row */}
+                <tr className="bg-gray-100 text-gray-900 font-bold border-b border-gray-400 divide-x divide-gray-400 text-center">
+                  <th rowSpan="2" className="p-1 px-1.5 text-left font-black uppercase w-24">SUBJECT</th>
+                  <th colSpan="7" className="p-1 font-black uppercase bg-gray-200/80">3rd TERM</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-11">2nd TERM<br />100</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-11">1st TERM<br />100</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-14">CUMMULATIVE<br />300</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-16">AGGREGATE<br />WEIGHTED<br />AVERAGE</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-9">GRADE</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-11">POSITION</th>
+                  <th rowSpan="2" className="p-1 font-black uppercase w-14">REMARK</th>
+                </tr>
+                {/* 3rd Term Sub-headers */}
+                <tr className="bg-gray-50 text-gray-900 font-bold border-b border-gray-400 divide-x divide-gray-400 text-center text-[8.5px]">
+                  <th className="p-1">FIRSTCA<br />10</th>
+                  <th className="p-1">SECONDCA<br />10</th>
+                  <th className="p-1">HOMEWORK<br />10</th>
+                  <th className="p-1">PROJECT<br />10</th>
+                  <th className="p-1">SUBJECTPARTICIPATION<br />10</th>
+                  <th className="p-1">EXAM<br />50</th>
+                  <th className="p-1 font-black bg-gray-100">TOTAL<br />100</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-300">
+                {processedResults.map((r, idx) => (
+                  <tr key={idx} className="divide-x divide-gray-300 hover:bg-gray-50/50">
+                    <td className="p-1 px-1.5 font-bold text-gray-900">{r.subject}</td>
+                    <td className="p-1 text-center">{r.firstCa}</td>
+                    <td className="p-1 text-center">{r.secondCa}</td>
+                    <td className="p-1 text-center">{r.homework}</td>
+                    <td className="p-1 text-center">{r.project}</td>
+                    <td className="p-1 text-center">{r.participation}</td>
+                    <td className="p-1 text-center">{r.exam}</td>
+                    <td className="p-1 text-center font-bold bg-gray-50">{r.total}</td>
+                    <td className="p-1 text-center">{r.term2}</td>
+                    <td className="p-1 text-center">{r.term1}</td>
+                    <td className="p-1 text-center font-semibold">{r.cumulative}</td>
+                    <td className="p-1 text-center font-bold">{r.avgWeighted}</td>
+                    <td className="p-1 text-center font-black">{r.grade}</td>
+                    <td className="p-1 text-center">{r.position}</td>
+                    <td className="p-1 text-center font-bold uppercase text-[8.5px]">{r.remark}</td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {processedResults.map((r, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50/50">
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-700">{idx + 1}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-gray-900 font-medium">{r.subject}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.ca}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.exam}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.total}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.term2}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.term1}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.agg}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center text-gray-800">{r.avg}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-center font-semibold text-gray-900">{r.grade}</td>
-                      <td className="p-1 px-1.5 border-r border-gray-300 text-gray-800 text-[9.5px]">{r.remark}</td>
-                      <td className="p-1 px-1.5 text-center text-gray-800">{r.pos}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Performance Summary Strip */}
-            <div className="text-[10px] font-bold text-black mt-2">
-              Total Number Of Students in Class: <span className="font-normal">83</span> | Total Subjects: <span className="font-normal">{processedResults.length}</span> | Total Score: <span className="font-normal">{totalScoreSum}</span> | Percentage: <span className="font-normal">{totalAvgPercentage}%</span>
+          {/* 4. Subject Summary Row */}
+          <div className="border border-gray-400 grid grid-cols-4 divide-x divide-gray-400 p-1 px-2 mb-3 text-[10px] font-bold uppercase bg-gray-50">
+            <div>
+              SUBJECT OFFERED: <span className="font-black text-black">{subjectOfferedCount}</span>
+            </div>
+            <div>
+              MARK OBTAINED: <span className="font-black text-black">{markObtainedSum}</span>
+            </div>
+            <div>
+              MARK OBTAINABLE: <span className="font-black text-black">{markObtainableSum}</span>
+            </div>
+            <div>
+              % OF MARK: <span className="font-black text-black">{percentageOfMark}%</span>
             </div>
           </div>
 
-          {/* 4. Affective Report Grid */}
-          <div className="mb-3">
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Affective Report
-            </h3>
+          {/* 5. Remarks & Principal Signature Grid */}
+          <div className="border border-gray-400 mb-3 text-[10px]">
+            {/* Class Teacher Remark */}
+            <div className="p-1.5 px-2 border-b border-gray-400">
+              <strong className="text-gray-900 uppercase">CLASS TEACHER'S REMARK:</strong>{' '}
+              <span className="text-gray-700 italic ml-1">
+                {studentName.split(' ')[0]} displays commendable diligence in classroom activities; keep working harder.
+              </span>
+            </div>
 
-            <div className="border border-gray-300 rounded-sm text-[9.5px]">
-              {/* Row 1 */}
-              <div className="grid grid-cols-7 border-b border-gray-300 text-center font-bold">
-                <div className="p-1 border-r border-gray-300">Aesthetic Appreciation</div>
-                <div className="p-1 border-r border-gray-300">Attendance in Class</div>
-                <div className="p-1 border-r border-gray-300">Creativity</div>
-                <div className="p-1 border-r border-gray-300">Honesty</div>
-                <div className="p-1 border-r border-gray-300">Initiative</div>
-                <div className="p-1 border-r border-gray-300">Leadership Role</div>
-                <div className="p-1">Neatness</div>
+            {/* Head of School Remark with Principal signature */}
+            <div className="p-1.5 px-2 border-b border-gray-400 flex justify-between items-center">
+              <div>
+                <strong className="text-gray-900 uppercase">HEAD OF SCHOOL REMARK:</strong>{' '}
+                <span className="font-bold text-gray-900 uppercase ml-1">{headOfSchoolRemark}</span>
               </div>
-              <div className="grid grid-cols-7 border-b border-gray-300 text-center text-gray-800">
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">A</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1">B</div>
+              <div className="flex items-center gap-1.5 font-cursive text-[12px] text-gray-800 pr-2">
+                <span className="text-[9px] text-gray-500 font-sans font-bold uppercase">Principal:</span>
+                <span className="italic font-bold font-serif">O. Ogunlesi</span>
               </div>
+            </div>
 
-              {/* Row 2 */}
-              <div className="grid grid-cols-6 border-b border-gray-300 text-center font-bold">
-                <div className="p-1 border-r border-gray-300">Obedience</div>
-                <div className="p-1 border-r border-gray-300">Politeness</div>
-                <div className="p-1 border-r border-gray-300">Punctuality</div>
-                <div className="p-1 border-r border-gray-300">Self Control</div>
-                <div className="p-1 border-r border-gray-300">Sense of Responsibility</div>
-                <div className="p-1">Sociability</div>
+            {/* Next Term & Promotion Status */}
+            <div className="grid grid-cols-12 divide-x divide-gray-400">
+              <div className="col-span-6 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">NEXT TERM BEGINS:</strong>{' '}
+                <span className="font-bold text-gray-900">14TH SEPTEMBER, 2026</span>
               </div>
-              <div className="grid grid-cols-6 text-center text-gray-800">
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1">B</div>
+              <div className="col-span-6 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">PROMOTION STATUS:</strong>{' '}
+                <span className="font-black text-gray-900 uppercase">{promotionStatus}</span>
               </div>
             </div>
           </div>
 
-          {/* 5. Psychomotor Report Grid */}
-          <div className="mb-3">
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Psychomotor Report
-            </h3>
-
-            <div className="border border-gray-300 rounded-sm text-[9.5px]">
-              <div className="grid grid-cols-5 border-b border-gray-300 text-center font-bold">
-                <div className="p-1 border-r border-gray-300">Handling of Tools</div>
-                <div className="p-1 border-r border-gray-300">Handwriting</div>
-                <div className="p-1 border-r border-gray-300">Communication Skill</div>
-                <div className="p-1 border-r border-gray-300">Painting/Drawing</div>
-                <div className="p-1">Sport</div>
+          {/* 6. SKILLS & BEHAVIOUR DUAL TABLES & OFFICIAL STAMP */}
+          <div className="grid grid-cols-12 gap-3 relative">
+            
+            {/* Left Box: Skills 1-5 & Key to Ratings */}
+            <div className="col-span-6 border border-gray-400 text-[9px]">
+              {/* Header */}
+              <div className="grid grid-cols-6 border-b border-gray-400 font-bold bg-gray-100 divide-x divide-gray-400 text-center">
+                <div className="col-span-1 p-1 text-left uppercase">SKILLS 1-5</div>
+                <div className="p-1">5</div>
+                <div className="p-1">4</div>
+                <div className="p-1">3</div>
+                <div className="p-1">2</div>
+                <div className="p-1">1</div>
               </div>
-              <div className="grid grid-cols-5 text-center text-gray-800">
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1 border-r border-gray-300">B</div>
-                <div className="p-1">A</div>
+              {/* Fluency */}
+              <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                <div className="col-span-1 p-1 text-left font-semibold">Fluency</div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+              </div>
+              {/* Games */}
+              <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                <div className="col-span-1 p-1 text-left font-semibold">Games</div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+              </div>
+              {/* Musical Skills */}
+              <div className="grid grid-cols-6 border-b border-gray-400 divide-x divide-gray-300 text-center">
+                <div className="col-span-1 p-1 text-left font-semibold">Musical Skills</div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+              </div>
+
+              {/* Key to Ratings */}
+              <div className="p-1.5 space-y-0.5 text-[8.5px] leading-tight">
+                <strong className="block text-center uppercase font-bold text-gray-900 border-b border-gray-200 pb-0.5 mb-1">
+                  KEY TO RATINGS
+                </strong>
+                <div><strong>5</strong> Maintains an excellent degree of observable traits</div>
+                <div><strong>4</strong> Maintains high level of observable traits</div>
+                <div><strong>3</strong> Maintains an acceptable level of observable traits</div>
+                <div><strong>2</strong> Shows minimal level for observable traits</div>
+                <div><strong>1</strong> Has no regards for observable traits</div>
               </div>
             </div>
-          </div>
 
-          {/* 6. Comments Box */}
-          <div className="mb-3">
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Comments
-            </h3>
-
-            <div className="border border-gray-300 rounded-sm grid grid-cols-2 text-[10px]">
-              <div className="p-2 border-r border-gray-300">
-                <span className="font-bold text-black">Teacher's Comments:</span>{' '}
-                <span className="text-gray-800 ml-1">
-                  {studentName.split(' ')[0]} shows wonderful enthusiasm and a helpful spirit.
-                </span>
+            {/* Right Box: Behaviour 1-5 & Official School Seal Stamp */}
+            <div className="col-span-6 border border-gray-400 text-[9px] flex flex-col justify-between">
+              <div>
+                {/* Header */}
+                <div className="grid grid-cols-6 border-b border-gray-400 font-bold bg-gray-100 divide-x divide-gray-400 text-center">
+                  <div className="col-span-1 p-1 text-left uppercase">BEHAVIOUR 1-5</div>
+                  <div className="p-1">1</div>
+                  <div className="p-1">2</div>
+                  <div className="p-1">3</div>
+                  <div className="p-1">4</div>
+                  <div className="p-1">5</div>
+                </div>
+                {/* Punctuality */}
+                <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                  <div className="col-span-1 p-1 text-left font-semibold">Punctuality</div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                </div>
+                {/* Neatness */}
+                <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                  <div className="col-span-1 p-1 text-left font-semibold">Neatness</div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                </div>
+                {/* Politeness */}
+                <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                  <div className="col-span-1 p-1 text-left font-semibold">Politeness</div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                </div>
+                {/* Self Control */}
+                <div className="grid grid-cols-6 border-b border-gray-300 divide-x divide-gray-300 text-center">
+                  <div className="col-span-1 p-1 text-left font-semibold">Self Control</div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block bg-black"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                  <div className="p-1 flex items-center justify-center"><span className="w-2.5 h-2.5 border border-gray-400 inline-block"></span></div>
+                </div>
               </div>
-              <div className="p-2">
-                <span className="font-bold text-black">Principal's Comments:</span>{' '}
-                <span className="text-gray-800 ml-1">
-                  Promoted to SS2 Science. Continue to strive for academic excellence.
-                </span>
+
+              {/* Official Seal / Stamp at Bottom Right */}
+              <div className="p-2 flex justify-end items-center pt-2">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-2 border-dashed border-[#5B21B6] p-1.5 flex flex-col items-center justify-center text-center transform rotate-[-6deg] opacity-90 select-none pointer-events-none">
+                  <div className="w-full h-full rounded-full border border-[#5B21B6] flex flex-col items-center justify-center p-1 bg-purple-50/20">
+                    <span className="text-[7.5px] font-black text-[#5B21B6] tracking-tighter uppercase leading-none">
+                      ★ NEW STATE HIGH SCHOOL ★
+                    </span>
+                    <div className="my-0.5 py-0.5 px-2 border-y border-[#5B21B6] w-full text-center">
+                      <span className="font-serif italic font-bold text-[9.5px] text-[#4C1D95] block leading-none">
+                        PRINCIPAL
+                      </span>
+                      <span className="text-[8px] font-black text-[#5B21B6] block leading-none mt-0.5 font-mono">
+                        31/7/26
+                      </span>
+                    </div>
+                    <span className="text-[6.5px] font-bold text-[#5B21B6] uppercase tracking-tighter leading-none">
+                      36 Palm Avenue Mushin Lagos
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* 7. Additional Information Box */}
-          <div className="mb-3">
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Additional Information
-            </h3>
-
-            <div className="border border-gray-300 rounded-sm grid grid-cols-4 text-[10px]">
-              <div className="p-1.5 px-2 border-r border-gray-300">
-                <span className="font-bold text-black">Total Attendance:</span>{' '}
-                <span className="text-gray-800 ml-1">118</span>
-              </div>
-              <div className="p-1.5 px-2 border-r border-gray-300">
-                <span className="font-bold text-black">Total Present:</span>{' '}
-                <span className="text-gray-800 ml-1">114</span>
-              </div>
-              <div className="p-1.5 px-2 border-r border-gray-300">
-                <span className="font-bold text-black">Total Absent:</span>{' '}
-                <span className="text-gray-800 ml-1">4</span>
-              </div>
-              <div className="p-1.5 px-2">
-                <span className="font-bold text-black">Next Term Begins:</span>{' '}
-                <span className="text-gray-800 ml-1">2026-09-14</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 8. Key to Rating for Academic Report */}
-          <div>
-            <h3 className="font-bold text-xs text-black mb-1.5 tracking-tight">
-              Key to Rating for Academic Report
-            </h3>
-
-            <div className="border border-gray-300 rounded-sm text-[9.5px]">
-              <div className="grid grid-cols-6 border-b border-gray-300 font-bold">
-                <div className="p-1 px-2 border-r border-gray-300 bg-gray-50/50">Grade</div>
-                <div className="p-1 text-center border-r border-gray-300">A</div>
-                <div className="p-1 text-center border-r border-gray-300">B</div>
-                <div className="p-1 text-center border-r border-gray-300">C</div>
-                <div className="p-1 text-center border-r border-gray-300">D</div>
-                <div className="p-1 text-center">E</div>
-              </div>
-              <div className="grid grid-cols-6 text-gray-800">
-                <div className="p-1 px-2 border-r border-gray-300 font-bold bg-gray-50/50 text-black">Percentage Range</div>
-                <div className="p-1 text-center border-r border-gray-300">80% and above</div>
-                <div className="p-1 text-center border-r border-gray-300">60–79%</div>
-                <div className="p-1 text-center border-r border-gray-300">50–59%</div>
-                <div className="p-1 text-center border-r border-gray-300">40–49%</div>
-                <div className="p-1 text-center">Below 40%</div>
-              </div>
-            </div>
           </div>
 
         </div>

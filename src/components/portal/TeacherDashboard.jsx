@@ -3,11 +3,14 @@ import {
   Calculator, FilePlus, Upload, Users, CheckCircle2,
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
-  Layers, Filter, Loader2
+  Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer
 } from 'lucide-react';
+import OfficialReportCardModal from './OfficialReportCardModal';
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
   const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass'
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportStudent, setReportStudent] = useState(null);
 
   const isClassTeacher = Boolean(currentUser?.classAssigned);
 
@@ -166,23 +169,34 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     }
   }, [availableSubjects, selectedSubject]);
 
-  // New Assignment Form State
+  // New Assignment Form State with Class Selector & PDF / Link upload
   const [newAsn, setNewAsn] = useState({
     subject: teacherDistinctSubjects[0] || 'Mathematics',
-    targetClass: distinctClasses[0] || 'All',
+    targetClass: distinctClasses[0] || 'All Assigned Classes',
     title: '',
     dueDate: '',
     desc: '',
+    attachmentType: 'none', // 'none' | 'file' | 'link'
+    fileName: '',
+    fileSize: '',
+    fileData: null,
+    linkUrl: '',
   });
   const [asnMsg, setAsnMsg] = useState('');
+  const [isSubmittingAsn, setIsSubmittingAsn] = useState(false);
 
   // New Study Material Form State
   const [newMat, setNewMat] = useState({
     title: '',
     subject: teacherDistinctSubjects[0] || 'Mathematics',
+    targetClass: distinctClasses[0] || 'All Classes',
     format: 'PDF',
+    attachmentType: 'file', // 'file' | 'link'
+    fileName: '',
+    linkUrl: '',
   });
   const [matMsg, setMatMsg] = useState('');
+  const [isSubmittingMat, setIsSubmittingMat] = useState(false);
 
   const calculateGrade = (score) => {
     const total = parseFloat(score) || 0;
@@ -237,39 +251,86 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     }
   };
 
-  const handleAssignmentSubmit = (e) => {
+  const handleAssignmentSubmit = async (e) => {
     e.preventDefault();
-    onAddAssignment({
-      id: `ASN-${Math.floor(10 + Math.random() * 90)}`,
+    setIsSubmittingAsn(true);
+
+    const payload = {
+      id: `ASN-${Math.floor(100 + Math.random() * 900)}`,
       subject: newAsn.subject,
+      targetClass: newAsn.targetClass,
       title: newAsn.title,
       dueDate: newAsn.dueDate,
       desc: newAsn.desc,
+      attachmentType: newAsn.attachmentType,
+      attachmentName: newAsn.fileName || (newAsn.attachmentType === 'link' ? 'Web Resource Link' : null),
+      attachmentUrl: newAsn.linkUrl || newAsn.fileData || null,
       status: 'Pending Submission',
-    });
-    setNewAsn({
-      subject: teacherDistinctSubjects[0] || 'Mathematics',
-      targetClass: distinctClasses[0] || 'All',
-      title: '',
-      dueDate: '',
-      desc: ''
-    });
-    setAsnMsg('Assignment created & published to students!');
-    setTimeout(() => setAsnMsg(''), 4000);
+      dateCreated: new Date().toISOString().split('T')[0],
+    };
+
+    try {
+      if (onAddAssignment) {
+        await onAddAssignment(payload);
+      }
+      setNewAsn({
+        subject: teacherDistinctSubjects[0] || 'Mathematics',
+        targetClass: distinctClasses[0] || 'All Assigned Classes',
+        title: '',
+        dueDate: '',
+        desc: '',
+        attachmentType: 'none',
+        fileName: '',
+        fileSize: '',
+        fileData: null,
+        linkUrl: '',
+      });
+      setAsnMsg(`Assignment published to students in ${payload.targetClass}!`);
+      setTimeout(() => setAsnMsg(''), 4500);
+    } catch (err) {
+      console.error('Error posting assignment:', err);
+    } finally {
+      setIsSubmittingAsn(false);
+    }
   };
 
-  const handleMaterialSubmit = (e) => {
+  const handleMaterialSubmit = async (e) => {
     e.preventDefault();
-    onUploadMaterial({
+    setIsSubmittingMat(true);
+
+    const payload = {
+      id: `MAT-${Math.floor(100 + Math.random() * 900)}`,
       title: newMat.title,
       subject: newMat.subject,
+      targetClass: newMat.targetClass,
       format: newMat.format,
-      size: '2.8 MB',
+      attachmentType: newMat.attachmentType,
+      fileName: newMat.fileName,
+      linkUrl: newMat.linkUrl,
+      size: newMat.fileName ? '3.2 MB' : 'Online Document',
       dateAdded: new Date().toISOString().split('T')[0],
-    });
-    setNewMat({ title: '', subject: teacherDistinctSubjects[0] || 'Physics', format: 'PDF' });
-    setMatMsg('Learning material uploaded to central repository!');
-    setTimeout(() => setMatMsg(''), 4000);
+    };
+
+    try {
+      if (onUploadMaterial) {
+        await onUploadMaterial(payload);
+      }
+      setNewMat({
+        title: '',
+        subject: teacherDistinctSubjects[0] || 'Mathematics',
+        targetClass: distinctClasses[0] || 'All Classes',
+        format: 'PDF',
+        attachmentType: 'file',
+        fileName: '',
+        linkUrl: '',
+      });
+      setMatMsg(`Learning material uploaded & dispatched to ${payload.targetClass}!`);
+      setTimeout(() => setMatMsg(''), 4500);
+    } catch (err) {
+      console.error('Error uploading material:', err);
+    } finally {
+      setIsSubmittingMat(false);
+    }
   };
 
   const handleSaveFormTeacherRemark = (e) => {
@@ -449,7 +510,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <div className="lg:col-span-7 bg-white p-3.5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
               <div className="border-b border-gray-100 pb-3">
                 <h3 className="font-extrabold text-lg text-[#1B2521]">Continuous Assessment & Exam Score Entry</h3>
                 <p className="text-xs text-gray-500">
@@ -670,22 +731,24 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       {activeTab === 'assignments' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Post Homework */}
-          <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <div className="lg:col-span-7 bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
             <div className="border-b border-gray-100 pb-3">
               <h3 className="font-extrabold text-lg text-[#1B2521]">Create & Post Digital Assignment</h3>
-              <p className="text-xs text-gray-500">Publish homework questions to students' dashboards</p>
+              <p className="text-xs text-gray-500">Publish homework questions, attach worksheets or resource links to students' dashboards</p>
             </div>
 
             {asnMsg && (
-              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800">
-                ✓ {asnMsg}
+              <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-green-700 flex-shrink-0" />
+                <span>{asnMsg}</span>
               </div>
             )}
 
             <form onSubmit={handleAssignmentSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Subject Selector */}
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Subject</label>
+                  <label className="block font-bold text-gray-700 mb-1">Subject *</label>
                   <select
                     value={newAsn.subject}
                     onChange={(e) => setNewAsn({ ...newAsn, subject: e.target.value })}
@@ -699,8 +762,39 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   </select>
                 </div>
 
+                {/* Target Class Selector */}
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Due Date</label>
+                  <label className="block font-bold text-gray-700 mb-1">Target Class *</label>
+                  <select
+                    value={newAsn.targetClass}
+                    onChange={(e) => setNewAsn({ ...newAsn, targetClass: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
+                  >
+                    <option value="All Assigned Classes">All My Assigned Classes</option>
+                    {distinctClasses.map((cls) => (
+                      <option key={cls} value={cls}>
+                        {cls}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Assignment Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Quadratic Equations & Graph Exercises 3B"
+                    value={newAsn.title}
+                    onChange={(e) => setNewAsn({ ...newAsn, title: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Submission Due Date *</label>
                   <input
                     type="date"
                     required
@@ -712,67 +806,148 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               </div>
 
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Assignment Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Quadratic Equations & Graph Exercises 3B"
-                  value={newAsn.title}
-                  onChange={(e) => setNewAsn({ ...newAsn, title: e.target.value })}
-                  className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-gray-700 mb-1">Instructions / Description</label>
+                <label className="block font-bold text-gray-700 mb-1">Instructions / Questions *</label>
                 <textarea
                   required
                   rows="3"
-                  placeholder="State instructions and question numbers..."
+                  placeholder="State detailed instructions, exercise numbers, and rubric..."
                   value={newAsn.desc}
                   onChange={(e) => setNewAsn({ ...newAsn, desc: e.target.value })}
                   className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                 ></textarea>
               </div>
 
+              {/* Optional Attachment Type Picker */}
+              <div className="p-3.5 rounded-2xl bg-[#FAFCFA] border border-gray-200/80 space-y-2.5">
+                <label className="block font-bold text-gray-700 text-xs">Attachment / Resource (Optional)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewAsn({ ...newAsn, attachmentType: 'none', fileName: '', fileData: null, linkUrl: '' })}
+                    className={`py-2 px-2 rounded-xl font-bold text-[11px] border transition-all ${
+                      newAsn.attachmentType === 'none'
+                        ? 'bg-emerald-100 text-[#06452C] border-emerald-300 shadow-xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    No Attachment
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewAsn({ ...newAsn, attachmentType: 'file', linkUrl: '' })}
+                    className={`py-2 px-2 rounded-xl font-bold text-[11px] border flex items-center justify-center gap-1 transition-all ${
+                      newAsn.attachmentType === 'file'
+                        ? 'bg-emerald-100 text-[#06452C] border-emerald-300 shadow-xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span>Upload PDF</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewAsn({ ...newAsn, attachmentType: 'link', fileName: '', fileData: null })}
+                    className={`py-2 px-2 rounded-xl font-bold text-[11px] border flex items-center justify-center gap-1 transition-all ${
+                      newAsn.attachmentType === 'link'
+                        ? 'bg-emerald-100 text-[#06452C] border-emerald-300 shadow-xs'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                    <span>Web Link</span>
+                  </button>
+                </div>
+
+                {newAsn.attachmentType === 'file' && (
+                  <div className="pt-2">
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Choose PDF / Document File:</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.png,.jpg"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          setNewAsn({
+                            ...newAsn,
+                            fileName: f.name,
+                            fileSize: `${(f.size / (1024 * 1024)).toFixed(2)} MB`,
+                            fileData: URL.createObjectURL(f),
+                          });
+                        }
+                      }}
+                      className="w-full text-xs text-gray-600 file:mr-2.5 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-[#06452C] hover:file:bg-emerald-100 cursor-pointer"
+                    />
+                    {newAsn.fileName && (
+                      <div className="mt-1 text-[11px] text-[#06452C] font-semibold">
+                        ✓ Selected: {newAsn.fileName} ({newAsn.fileSize})
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {newAsn.attachmentType === 'link' && (
+                  <div className="pt-2">
+                    <label className="block text-[11px] font-bold text-gray-600 mb-1">Resource URL / Google Drive / Video Link:</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/worksheet.pdf"
+                      value={newAsn.linkUrl}
+                      onChange={(e) => setNewAsn({ ...newAsn, linkUrl: e.target.value })}
+                      className="w-full p-2.5 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none focus:border-green-primary"
+                    />
+                  </div>
+                )}
+              </div>
+
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark"
+                disabled={isSubmittingAsn}
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 cursor-pointer active:scale-[0.99]"
               >
-                + Post Assignment to Class →
+                {isSubmittingAsn ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Publishing Assignment to {newAsn.targetClass}...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>+ Post Assignment to {newAsn.targetClass} →</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
 
           {/* Upload Materials */}
-          <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+          <div className="lg:col-span-5 bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
             <div className="border-b border-gray-100 pb-3">
               <h3 className="font-extrabold text-lg text-[#1B2521]">Upload Study Material & Notes</h3>
-              <p className="text-xs text-gray-500">Upload PDF lesson notes to student central library</p>
+              <p className="text-xs text-gray-500">Upload PDF lesson notes and materials to student central library</p>
             </div>
 
             {matMsg && (
-              <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800">
-                ✓ {matMsg}
+              <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-green-700 flex-shrink-0" />
+                <span>{matMsg}</span>
               </div>
             )}
 
             <form onSubmit={handleMaterialSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Document Title</label>
+                <label className="block font-bold text-gray-700 mb-1">Document Title *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Waves & Optics Lecture Notes"
+                  placeholder="e.g. Waves & Optics Lecture Notes (Term 3)"
                   value={newMat.title}
                   onChange={(e) => setNewMat({ ...newMat, title: e.target.value })}
                   className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Subject</label>
+                  <label className="block font-bold text-gray-700 mb-1">Subject *</label>
                   <select
                     value={newMat.subject}
                     onChange={(e) => setNewMat({ ...newMat, subject: e.target.value })}
@@ -787,6 +962,24 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 </div>
 
                 <div>
+                  <label className="block font-bold text-gray-700 mb-1">Target Class *</label>
+                  <select
+                    value={newMat.targetClass}
+                    onChange={(e) => setNewMat({ ...newMat, targetClass: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
+                  >
+                    <option value="All Classes">All Classes</option>
+                    {distinctClasses.map((cls) => (
+                      <option key={cls} value={cls}>
+                        {cls}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block font-bold text-gray-700 mb-1">Format</label>
                   <select
                     value={newMat.format}
@@ -794,17 +987,43 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                     className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                   >
                     <option value="PDF">PDF Document</option>
-                    <option value="ZIP">ZIP Archive</option>
                     <option value="DOCX">Word Document</option>
+                    <option value="ZIP">ZIP Archive</option>
+                    <option value="Web Link">Web Resource / Link</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Select File:</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.zip,.ppt,.pptx"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        setNewMat({ ...newMat, fileName: f.name });
+                      }
+                    }}
+                    className="w-full text-xs text-gray-600 file:mr-2 file:py-2 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-[#06452C] hover:file:bg-emerald-100 cursor-pointer"
+                  />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B]"
+                disabled={isSubmittingMat}
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 cursor-pointer active:scale-[0.99]"
               >
-                📤 Upload to Library →
+                {isSubmittingMat ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Uploading Material to Library...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📤 Upload to Central Library →</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -978,16 +1197,40 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" />
-                <span>Save Form Master's Remark & Behavioral Ratings →</span>
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="sm:w-2/3 py-3.5 rounded-2xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save Form Master's Remark & Behavioral Ratings →</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentFormStudentObj = formClassStudents.find(s => s.id === selectedFormStudent) || formClassStudents[0];
+                    setReportStudent(currentFormStudentObj);
+                    setShowReportModal(true);
+                  }}
+                  className="sm:w-1/3 py-3.5 rounded-2xl font-black text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>View / Print Report Sheet</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Terminal Report Sheet Modal */}
+      {showReportModal && (
+        <OfficialReportCardModal
+          student={reportStudent || formClassStudents.find(s => s.id === selectedFormStudent) || { name: 'Student', class: currentUser?.classAssigned || 'SSS 1B' }}
+          results={[]}
+          sessionInfo={data?.sessionInfo}
+          onClose={() => setShowReportModal(false)}
+        />
       )}
     </div>
   );
