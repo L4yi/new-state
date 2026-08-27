@@ -1,10 +1,23 @@
-import React from 'react';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Phone, Mail, Sparkles, Code } from 'lucide-react';
+import DeveloperEasterEgg from './DeveloperEasterEgg';
 
 export default function Footer({ onNavigate }) {
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
+
   const handleNavClick = (page) => {
     onNavigate(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogoClick = () => {
+    const nextCount = logoClickCount + 1;
+    setLogoClickCount(nextCount);
+    if (nextCount >= 3) {
+      setShowEasterEgg(true);
+      setLogoClickCount(0);
+    }
   };
 
   return (
@@ -14,11 +27,15 @@ export default function Footer({ onNavigate }) {
           {/* Brand Info */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 flex items-center justify-center flex-shrink-0 bg-white/10 p-1.5 rounded-xl border border-white/15">
+              <div
+                onClick={handleLogoClick}
+                title="Triple click for easter egg!"
+                className="w-12 h-12 flex items-center justify-center flex-shrink-0 bg-white/10 p-1.5 rounded-xl border border-white/15 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+              >
                 <img 
                   src="/school-logo.png" 
                   alt="New State High School Crest" 
-                  className="w-full h-full object-contain" 
+                  className="w-full h-full object-contain select-none" 
                 />
               </div>
               <div>
@@ -76,9 +93,21 @@ export default function Footer({ onNavigate }) {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row justify-between items-center text-[13px] opacity-60 gap-4">
+        <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row justify-between items-center text-[13px] opacity-80 gap-4">
           <p>© {new Date().getFullYear()} New State High School. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-xs">
+          
+          {/* Creator Easter Egg Badge */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowEasterEgg(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 border border-emerald-400/30 text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 group"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
+              <span>Engineered by 𝕃𝟜𝕪𝕚</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs opacity-60">
             <button onClick={() => handleNavClick('privacy')} className="hover:underline">Privacy Policy</button>
             <span>•</span>
             <button onClick={() => handleNavClick('terms')} className="hover:underline">Terms of Admission</button>
@@ -87,6 +116,12 @@ export default function Footer({ onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* Developer Easter Egg Modal */}
+      <DeveloperEasterEgg
+        isOpen={showEasterEgg}
+        onClose={() => setShowEasterEgg(false)}
+      />
     </footer>
   );
 }

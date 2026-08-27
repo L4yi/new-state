@@ -1,8 +1,14 @@
-import React from 'react';
-import { Printer, X, GraduationCap, Download, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Printer, X, GraduationCap, Download, Check, ChevronDown, ChevronUp,
+  LayoutGrid, FileText, CheckCircle2, Award, Sparkles, BookOpen, BarChart2
+} from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
 
 export default function OfficialReportCardModal({ student, results = [], sessionInfo, onClose }) {
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' (mobile friendly) | 'paper' (authentic sheet)
+  const [expandedSubject, setExpandedSubject] = useState(null);
+
   const studentName = student?.name || 'OLADEJO Abdulmatin Olatubosun';
   const admissionNo = student?.id || 'JSS2A20232024-01';
   const studentClass = student?.class || 'SSS 1B';
@@ -90,32 +96,64 @@ export default function OfficialReportCardModal({ student, results = [], session
     printDocument('printable-report-sheet', `${studentName} - Official Report Sheet`);
   };
 
+  const toggleSubjectExpand = (subjName) => {
+    setExpandedSubject(expandedSubject === subjName ? null : subjName);
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
       {/* Modal Container */}
-      <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
         
         {/* Top Control Bar (Hidden during print) */}
-        <div className="print:hidden bg-[#06452C] text-white px-4 sm:px-6 py-3.5 flex justify-between items-center border-b border-emerald-800">
+        <div className="print:hidden bg-[#06452C] text-white px-4 sm:px-6 py-3.5 flex flex-wrap justify-between items-center border-b border-emerald-800 gap-3">
           <div className="flex items-center gap-2.5">
             <GraduationCap className="w-5 h-5 text-emerald-300 flex-shrink-0" />
             <div>
               <span className="font-extrabold text-xs sm:text-sm tracking-wide block leading-tight">
-                Official Student Report Sheet (Original Format)
+                Official Student Report Sheet
               </span>
               <span className="text-[10px] text-emerald-200">
-                New State High School — 36 Palm Avenue, Mushin, Lagos
+                New State High School · {sessionYear} ({termName})
               </span>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* View Mode Toggle Switcher */}
+            <div className="bg-emerald-950/80 p-1 rounded-xl flex items-center gap-1 border border-emerald-700/50">
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'cards'
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'text-emerald-300 hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Cards View</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('paper')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  viewMode === 'paper'
+                    ? 'bg-emerald-500 text-white shadow-xs'
+                    : 'text-emerald-300 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Paper Sheet</span>
+              </button>
+            </div>
+
             <button
               onClick={handlePrint}
               className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>Print / Download PDF</span>
+              <span className="hidden sm:inline">Print / PDF</span>
             </button>
             <button
               onClick={onClose}
@@ -126,10 +164,207 @@ export default function OfficialReportCardModal({ student, results = [], session
           </div>
         </div>
 
-        {/* ================= 100% AUTHENTIC PRINTABLE REPORT SHEET ================= */}
+        {/* ================= 1. MOBILE CARDS VIEW (NO HORIZONTAL SCROLLING) ================= */}
+        {viewMode === 'cards' && (
+          <div className="p-4 sm:p-6 space-y-4 print:hidden max-h-[80vh] overflow-y-auto">
+            {/* Student Header Card */}
+            <div className="bg-gradient-to-br from-[#06452C] to-[#0A6B45] text-white p-4 sm:p-5 rounded-2xl shadow-sm space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] text-emerald-300 font-bold uppercase tracking-widest block">
+                    {sessionYear} · {termName}
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black">{studentName}</h3>
+                  <p className="text-xs text-emerald-200 mt-0.5">
+                    Admission No: <strong className="font-mono text-white">{admissionNo}</strong> · Class: <strong className="text-white">{studentClass}</strong>
+                  </p>
+                </div>
+                <div className="text-right bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                  <span className="text-[10px] text-emerald-200 block font-bold uppercase">Class Position</span>
+                  <span className="text-base font-black text-white">{classPosition}</span>
+                  <span className="text-[9px] text-emerald-200 block">out of {classSize}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/15 text-center text-xs">
+                <div className="p-2 rounded-xl bg-black/20">
+                  <span className="text-[10px] text-emerald-300 block">Mark Obtained</span>
+                  <span className="font-black text-sm">{markObtainedSum}</span>
+                  <span className="text-[9px] text-emerald-200 block">/ {markObtainableSum}</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/20">
+                  <span className="text-[10px] text-emerald-300 block">Average Score</span>
+                  <span className="font-black text-sm">{percentageOfMark}%</span>
+                  <span className="text-[9px] text-emerald-200 block">Term Average</span>
+                </div>
+                <div className="p-2 rounded-xl bg-black/20">
+                  <span className="text-[10px] text-emerald-300 block">Promotion Status</span>
+                  <span className="font-black text-sm text-emerald-300 uppercase">{promotionStatus}</span>
+                  <span className="text-[9px] text-emerald-200 block">Annual Summary</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Subject Performance List - Touch Friendly Expandable Cards */}
+            <div className="space-y-2.5">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-xs font-black text-gray-800 uppercase tracking-wider">
+                  Subject Performance Breakdown ({processedResults.length} Subjects)
+                </span>
+                <span className="text-[11px] text-gray-400 font-medium">Tap any card to view Continuous Assessment scores</span>
+              </div>
+
+              {processedResults.map((r) => {
+                const isExpanded = expandedSubject === r.subject;
+                const isPassing = r.avgWeighted >= 40;
+                return (
+                  <div
+                    key={r.subject}
+                    className={`rounded-2xl border transition-all overflow-hidden ${
+                      isExpanded
+                        ? 'border-emerald-500 bg-emerald-50/20 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-emerald-300 shadow-xs'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSubjectExpand(r.subject)}
+                      className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-3 cursor-pointer"
+                    >
+                      <div className="min-w-0 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-black flex-shrink-0 text-xs ${
+                          isPassing ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}>
+                          <span>{r.grade}</span>
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-extrabold text-sm text-gray-900 truncate">{r.subject}</h4>
+                          <div className="text-[11px] text-gray-500 flex items-center gap-2 mt-0.5">
+                            <span>Score: <strong className="text-gray-900 font-bold">{r.total}/100</strong></span>
+                            <span>·</span>
+                            <span>Annual Avg: <strong className="text-gray-900 font-bold">{r.avgWeighted}%</strong></span>
+                            <span>·</span>
+                            <span className="font-bold text-gray-700">Rank: {r.position}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                          r.remark === 'FAIL' ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {r.remark}
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    </button>
+
+                    {/* Expandable Breakdown Drawer */}
+                    {isExpanded && (
+                      <div className="p-4 bg-white border-t border-emerald-100 text-xs space-y-3 animate-in slide-in-from-top-2 duration-150">
+                        <div>
+                          <span className="font-extrabold text-[11px] text-[#06452C] uppercase tracking-wider block mb-1.5">
+                            3rd Term Continuous Assessment (CA) Matrix:
+                          </span>
+                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[11px]">
+                            <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                              <span className="text-gray-500 text-[10px] block">1st CA (10)</span>
+                              <strong className="text-gray-900 font-bold">{r.firstCa}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                              <span className="text-gray-500 text-[10px] block">2nd CA (10)</span>
+                              <strong className="text-gray-900 font-bold">{r.secondCa}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                              <span className="text-gray-500 text-[10px] block">Homework (10)</span>
+                              <strong className="text-gray-900 font-bold">{r.homework}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                              <span className="text-gray-500 text-[10px] block">Project (10)</span>
+                              <strong className="text-gray-900 font-bold">{r.project}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                              <span className="text-gray-500 text-[10px] block">Class Part. (10)</span>
+                              <strong className="text-gray-900 font-bold">{r.participation}</strong>
+                            </div>
+                            <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                              <span className="text-emerald-700 text-[10px] block font-bold">Exam (50)</span>
+                              <strong className="text-emerald-950 font-black">{r.exam}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px]">
+                          <div className="p-2 rounded-xl bg-[#FAFCFA] border border-gray-200">
+                            <span className="text-gray-500 text-[10px] block">3rd Term Total</span>
+                            <strong className="text-[#06452C] font-black">{r.total} / 100</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-[#FAFCFA] border border-gray-200">
+                            <span className="text-gray-500 text-[10px] block">2nd Term Total</span>
+                            <strong className="text-gray-900 font-bold">{r.term2} / 100</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-[#FAFCFA] border border-gray-200">
+                            <span className="text-gray-500 text-[10px] block">1st Term Total</span>
+                            <strong className="text-gray-900 font-bold">{r.term1} / 100</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span className="text-emerald-800 text-[10px] block font-bold">Cumulative (300)</span>
+                            <strong className="text-emerald-950 font-black">{r.cumulative}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Remarks & Principal Assessment Card */}
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 text-xs">
+              <div className="flex items-center gap-2 text-[#06452C] font-black">
+                <Award className="w-4 h-4" />
+                <span>Official Remarks & School Recommendation</span>
+              </div>
+              <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <span className="font-bold text-gray-600 text-[10px] block uppercase">Head of School Remark:</span>
+                <p className="font-extrabold text-gray-900 mt-0.5">{headOfSchoolRemark}</p>
+              </div>
+              <div className="flex justify-between items-center pt-2 text-[11px] text-gray-600">
+                <span>Next Term Resumption: <strong className="text-gray-900">14th September, 2026</strong></span>
+                <span className="font-black text-[#06452C] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                  Status: {promotionStatus}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Action to switch to Full Paper View or Print */}
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setViewMode('paper')}
+                className="w-1/2 py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>View Full Paper Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="w-1/2 py-3 rounded-xl bg-[#06452C] hover:bg-[#0B5D3B] text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Official PDF</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= 2. 100% AUTHENTIC PRINTABLE REPORT SHEET (Always rendered in print, and selectable in UI) ================= */}
         <div
           id="printable-report-sheet"
-          className="p-5 sm:p-8 text-black bg-white print:p-2 print:m-0 font-sans leading-tight text-[11px] select-text"
+          className={`p-5 sm:p-8 text-black bg-white print:p-2 print:m-0 font-sans leading-tight text-[11px] select-text ${
+            viewMode === 'cards' ? 'hidden print:block' : 'block'
+          }`}
           style={{ fontFamily: "'Arial', 'Segoe UI', sans-serif" }}
         >
           {/* 1. Header Section with School Logo & Details */}

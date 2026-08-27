@@ -8,6 +8,7 @@ import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
 import BursarDashboard from '../components/portal/BursarDashboard';
 import AdminDashboard from '../components/portal/AdminDashboard';
+import DeveloperEasterEgg from '../components/DeveloperEasterEgg';
 import { initialPortalData } from '../data/mockPortalData';
 import { API_URL } from '../config/api';
 
@@ -90,6 +91,8 @@ export default function Portal({ onNavigate }) {
   const [mainLoginTab, setMainLoginTab] = useState('student'); // 'student' | 'staff'
   const [staffRole, setStaffRole] = useState('teacher'); // 'teacher' | 'bursar' | 'admin'
   const [teacherAssignment, setTeacherAssignment] = useState('class_teacher'); // 'class_teacher' | 'subject_teacher'
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
 
   // Update activeRole whenever mainLoginTab or staffRole changes
   const handleSelectMainTab = (tab) => {
@@ -1008,9 +1011,24 @@ export default function Portal({ onNavigate }) {
       </main>
 
       {/* Standalone Portal Footer */}
-      <footer className="relative z-10 max-w-[1280px] w-full mx-auto px-6 py-4 border-t border-emerald-800/60 text-center text-xs text-emerald-200/80">
-        © 2026 New State High School · Domine Dirige Nos · mushin, Lagos State, Nigeria
+      <footer className="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 border-t border-emerald-800/60 flex flex-col sm:flex-row justify-between items-center text-xs text-emerald-200/80 gap-3">
+        <div>© 2026 New State High School · Domine Dirige Nos · Mushin, Lagos State</div>
+        
+        {/* Creator Easter Egg Trigger */}
+        <button
+          onClick={() => setShowEasterEgg(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-100 border border-emerald-400/30 text-[11px] font-mono font-bold transition-all cursor-pointer active:scale-95 group"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
+          <span>Engineered by 𝕃𝟜𝕪𝕚</span>
+        </button>
       </footer>
+
+      {/* Developer Easter Egg Modal */}
+      <DeveloperEasterEgg
+        isOpen={showEasterEgg}
+        onClose={() => setShowEasterEgg(false)}
+      />
     </div>
   );
 }

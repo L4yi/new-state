@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
   Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User, Award, Sparkles,
-  History, Archive, Filter, ChevronDown, Loader2, Paperclip
+  History, Archive, Filter, ChevronDown, ChevronUp, Loader2, Paperclip, LayoutGrid
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
 
@@ -11,6 +11,8 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   const activeSchoolTerm = data?.sessionInfo?.currentTerm || '3rd Term';
 
   const [activeTab, setActiveTab] = useState('results');
+  const [resultViewMode, setResultViewMode] = useState('cards'); // 'cards' | 'table'
+  const [expandedResultSubj, setExpandedResultSubj] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedSessionArchive, setSelectedSessionArchive] = useState(activeSchoolSession);
   const [selectedTermArchive, setSelectedTermArchive] = useState(activeSchoolTerm);
@@ -317,7 +319,7 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
               <select
                 value={selectedSessionArchive}
                 onChange={(e) => setSelectedSessionArchive(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-emerald-500 bg-emerald-950 text-xs font-black text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                className="px-3 py-1.5 rounded-xl border border-emerald-500 bg-emerald-950 text-xs font-black text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
               >
                 <option value="2026/2027">2026/2027 Session</option>
                 <option value="2025/2026">2025/2026 Session (Current)</option>
@@ -328,7 +330,7 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
               <select
                 value={selectedTermArchive}
                 onChange={(e) => setSelectedTermArchive(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-emerald-500 bg-emerald-950 text-xs font-black text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                className="px-3 py-1.5 rounded-xl border border-emerald-500 bg-emerald-950 text-xs font-black text-white focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
               >
                 <option value="3rd Term">3rd Term (Promotional)</option>
                 <option value="2nd Term">2nd Term (Easter)</option>
@@ -337,38 +339,143 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
-                  <th className="p-3">Subject</th>
-                  <th className="p-3">CA 1 (20)</th>
-                  <th className="p-3">CA 2 (20)</th>
-                  <th className="p-3">Exam (60)</th>
-                  <th className="p-3">Total (100)</th>
-                  <th className="p-3">Grade</th>
-                  <th className="p-3">Remark</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {displayedResults.map((r, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50/50">
-                    <td className="p-3 font-bold text-[#1B2521]">{r.subject}</td>
-                    <td className="p-3">{r.ca1}</td>
-                    <td className="p-3">{r.ca2}</td>
-                    <td className="p-3">{r.exam}</td>
-                    <td className="p-3 font-bold text-green-primary">{r.total}</td>
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 font-bold text-[11px]">
-                        {r.grade}
-                      </span>
-                    </td>
-                    <td className="p-3 text-gray-600">{r.remark}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* View Toggle Bar */}
+          <div className="flex justify-between items-center px-1">
+            <span className="text-xs font-black text-[#1B2521] uppercase tracking-wider">
+              Graded Subjects ({displayedResults.length})
+            </span>
+            <div className="bg-gray-100 p-1 rounded-xl flex items-center gap-1 border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setResultViewMode('cards')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  resultViewMode === 'cards'
+                    ? 'bg-[#06452C] text-white shadow-xs'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Card View</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setResultViewMode('table')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                  resultViewMode === 'table'
+                    ? 'bg-[#06452C] text-white shadow-xs'
+                    : 'text-gray-600 hover:text-black'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Table View</span>
+              </button>
+            </div>
           </div>
+
+          {/* 1. CARDS VIEW (NO HORIZONTAL SCROLLING ON MOBILE) */}
+          {resultViewMode === 'cards' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {displayedResults.map((r, idx) => {
+                const isExpanded = expandedResultSubj === r.subject;
+                const isPass = Number(r.total || 0) >= 40;
+                return (
+                  <div
+                    key={idx}
+                    className={`rounded-2xl border transition-all overflow-hidden ${
+                      isExpanded
+                        ? 'border-emerald-500 bg-emerald-50/20 shadow-md'
+                        : 'border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 shadow-xs'
+                    }`}
+                  >
+                    <div
+                      onClick={() => setExpandedResultSubj(isExpanded ? null : r.subject)}
+                      className="p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer"
+                    >
+                      <div className="min-w-0 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black flex-shrink-0 text-sm ${
+                          isPass ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}>
+                          {r.grade}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-extrabold text-sm text-[#1B2521] truncate">{r.subject}</h4>
+                          <div className="text-[11px] text-gray-500 flex items-center gap-2 mt-0.5">
+                            <span className="font-bold text-green-primary">{r.total} / 100</span>
+                            <span>·</span>
+                            <span className="text-gray-600">{r.remark}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                      </div>
+                    </div>
+
+                    {/* Expandable Breakdown Drawer */}
+                    {isExpanded && (
+                      <div className="p-3.5 bg-white border-t border-gray-200 text-xs space-y-2 animate-in slide-in-from-top-2 duration-150">
+                        <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+                          <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                            <span className="text-gray-500 text-[10px] block">1st CA</span>
+                            <strong className="text-gray-900 font-bold">{r.ca1} / 20</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                            <span className="text-gray-500 text-[10px] block">2nd CA</span>
+                            <strong className="text-gray-900 font-bold">{r.ca2} / 20</strong>
+                          </div>
+                          <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                            <span className="text-emerald-700 text-[10px] block font-bold">Exam</span>
+                            <strong className="text-emerald-950 font-black">{r.exam} / 60</strong>
+                          </div>
+                        </div>
+                        <div className="p-2 rounded-xl bg-[#FAFCFA] border border-gray-200 flex justify-between items-center text-[11px]">
+                          <span className="text-gray-500">Continuous Assessment Total:</span>
+                          <span className="font-black text-green-primary">{r.total} / 100</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 2. TABLE VIEW */}
+          {resultViewMode === 'table' && (
+            <div className="overflow-x-auto rounded-2xl border border-gray-200">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
+                    <th className="p-3">Subject</th>
+                    <th className="p-3">CA 1 (20)</th>
+                    <th className="p-3">CA 2 (20)</th>
+                    <th className="p-3">Exam (60)</th>
+                    <th className="p-3">Total (100)</th>
+                    <th className="p-3">Grade</th>
+                    <th className="p-3">Remark</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {displayedResults.map((r, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50/50">
+                      <td className="p-3 font-bold text-[#1B2521]">{r.subject}</td>
+                      <td className="p-3">{r.ca1}</td>
+                      <td className="p-3">{r.ca2}</td>
+                      <td className="p-3">{r.exam}</td>
+                      <td className="p-3 font-bold text-green-primary">{r.total}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 font-bold text-[11px]">
+                          {r.grade}
+                        </span>
+                      </td>
+                      <td className="p-3 text-gray-600">{r.remark}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
