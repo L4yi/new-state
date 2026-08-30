@@ -3,14 +3,16 @@ import {
   Calculator, FilePlus, Upload, Users, CheckCircle2,
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
-  Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer
+  Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer,
+  CalendarDays, MapPin
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
-  const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass'
+  const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass', 'timetable'
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportStudent, setReportStudent] = useState(null);
+  const [selectedTeacherTimetableDay, setSelectedTeacherTimetableDay] = useState('All');
 
   const isClassTeacher = Boolean(currentUser?.classAssigned);
 
@@ -157,6 +159,39 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
     return teacherDistinctSubjects;
   }, [currentUser, studentObj, teacherSubjectsTaught, selectedClassFilter, teacherDistinctSubjects]);
+
+  // Personalized Teaching Schedule
+  const teacherTimetable = useMemo(() => {
+    const rawTimetable = Array.isArray(data?.timetable) ? data.timetable : [];
+    if (rawTimetable.length === 0) return [];
+
+    const teacherName = currentUser?.name?.toLowerCase() || '';
+    const assignedClasses = distinctClasses.map(c => c.toLowerCase());
+    const assignedSubjects = teacherDistinctSubjects.map(s => s.toLowerCase());
+
+    // 1. Direct teacher name match
+    let matched = rawTimetable.filter(s =>
+      teacherName && s.teacherName && (
+        s.teacherName.toLowerCase().includes(teacherName) ||
+        teacherName.includes(s.teacherName.toLowerCase())
+      )
+    );
+
+    if (matched.length > 0) return matched;
+
+    // 2. Class + Subject match
+    matched = rawTimetable.filter(s =>
+      assignedClasses.some(c => s.className?.toLowerCase().includes(c) || c.includes(s.className?.toLowerCase())) &&
+      assignedSubjects.some(sub => s.subject?.toLowerCase().includes(sub) || sub.includes(s.subject?.toLowerCase()))
+    );
+
+    if (matched.length > 0) return matched;
+
+    // 3. Fallback to assigned class
+    return rawTimetable.filter(s =>
+      assignedClasses.some(c => s.className?.toLowerCase().includes(c))
+    );
+  }, [data?.timetable, currentUser, distinctClasses, teacherDistinctSubjects]);
 
   // Sync selectedSubject whenever availableSubjects changes
   useEffect(() => {
@@ -406,7 +441,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         )}
 
         {/* Tab Switcher Grid */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClassTeacher ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-2.5`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClassTeacher ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2.5`}>
           <button
             onClick={() => setActiveTab('scores')}
             className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
@@ -431,6 +466,18 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             <span>Assignments & Lecture Notes</span>
           </button>
 
+          <button
+            onClick={() => setActiveTab('timetable')}
+            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
+              activeTab === 'timetable'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+            }`}
+          >
+            <CalendarDays className="w-4 h-4 flex-shrink-0" />
+            <span>Teaching Schedule ({teacherTimetable.length})</span>
+          </button>
+
           {isClassTeacher && (
             <button
               onClick={() => setActiveTab('formclass')}
@@ -441,7 +488,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               }`}
             >
               <Users className="w-4 h-4 flex-shrink-0" />
-              <span>Form Master Evaluation ({currentUser.classAssigned})</span>
+              <span>Form Master Evaluation</span>
             </button>
           )}
         </div>
@@ -1220,6 +1267,98 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ================= TAB 4: TEACHING SCHEDULE / TIMETABLE ================= */}
+      {activeTab === 'timetable' && (
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <CalendarDays className="w-4 h-4" />
+                <span>My Weekly Teaching Schedule</span>
+              </div>
+              <h3 className="font-extrabold text-lg text-[#1B2521]">{currentUser?.name || 'Faculty Member'} — Teaching Schedule</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Weekly assigned class periods and laboratory venues across the school.
+              </p>
+            </div>
+          </div>
+
+          {/* Day Selector Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => (
+              <button
+                key={day}
+                type="button"
+                onClick={() => setSelectedTeacherTimetableDay(day)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  selectedTeacherTimetableDay === day
+                    ? 'bg-[#06452C] text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {day === 'All' ? '📅 Full Week' : day}
+              </button>
+            ))}
+          </div>
+
+          {/* Schedule Cards by Day */}
+          {teacherTimetable.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+              <CalendarDays className="w-8 h-8 text-gray-400 mx-auto" />
+              <p className="text-xs font-bold text-gray-600">No teaching periods scheduled yet for your subjects.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {(selectedTeacherTimetableDay === 'All' ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] : [selectedTeacherTimetableDay]).map((day) => {
+                const daySlots = teacherTimetable.filter(s => s.day === day);
+                if (daySlots.length === 0) return null;
+
+                return (
+                  <div key={day} className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-primary" />
+                      <h4 className="text-xs font-black text-[#1B2521] uppercase tracking-wider">{day}</h4>
+                      <span className="text-[11px] text-gray-400 font-medium">({daySlots.length} Periods)</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {daySlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className="p-4 rounded-2xl border border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 transition-all space-y-2 shadow-xs"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-black text-[10px]">
+                              {slot.period || 'Period'}
+                            </span>
+                            <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              {slot.time}
+                            </span>
+                          </div>
+
+                          <h5 className="font-extrabold text-sm text-[#1B2521] pt-0.5">{slot.subject}</h5>
+
+                          <div className="text-xs text-emerald-800 font-extrabold flex items-center gap-1.5">
+                            <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span>Class: {slot.className}</span>
+                          </div>
+
+                          <div className="text-[11px] text-gray-500 flex items-center gap-1.5 pt-1 border-t border-gray-100">
+                            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{slot.room || 'Classroom'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

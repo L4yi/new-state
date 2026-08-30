@@ -4,9 +4,10 @@ import {
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
   KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock,
-  Briefcase, Plus, Download, FileSpreadsheet, Loader2
+  Briefcase, Plus, Download, FileSpreadsheet, Loader2, CalendarDays, Trash2, Edit3, RotateCcw, AlertTriangle, X
 } from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
+import { STANDARD_PERIODS, JSS_SUBJECTS, SSS_SUBJECTS, STANDARD_ROOMS, STANDARD_DAYS } from '../../data/defaultTimetableData';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
 const generateRandomPin = () => {
@@ -25,7 +26,10 @@ export default function AdminDashboard({
   onUpdateApplication,
   onUpdateStaff,
   onAddStaff,
-  onUpdateSessionInfo
+  onUpdateSessionInfo,
+  onSaveTimetableSlot,
+  onDeleteTimetableSlot,
+  onResetClassTimetable
 }) {
   const [activeAdminTab, setActiveAdminTab] = useState('applications');
   const [searchTerm, setSearchTerm] = useState('');
@@ -396,6 +400,81 @@ export default function AdminDashboard({
       a.dateSubmitted || ''
     ]);
     exportToCSV('NSHS_Admissions_Applications', rows, headers);
+  };
+
+  // Timetable & Schedules State
+  const [selectedTimetableClass, setSelectedTimetableClass] = useState('SSS 3 - Arm A');
+  const [selectedTimetableDay, setSelectedTimetableDay] = useState('All');
+  const [showAddSlotModal, setShowAddSlotModal] = useState(false);
+  const [editingSlot, setEditingSlot] = useState(null);
+  const [slotForm, setSlotForm] = useState({
+    id: '',
+    className: 'SSS 3 - Arm A',
+    day: 'Monday',
+    period: '1st Period',
+    time: '08:00 AM - 08:45 AM',
+    subject: 'Mathematics',
+    teacherName: 'Mr. Babatunde Ogunlesi',
+    room: 'Room 201 (Senior Block)'
+  });
+  const [isSavingSlot, setIsSavingSlot] = useState(false);
+  const [timetableFeedback, setTimetableFeedback] = useState('');
+  const [showPrintTimetableModal, setShowPrintTimetableModal] = useState(false);
+
+  const timetableList = Array.isArray(data?.timetable) ? data.timetable : [];
+  const classTimetable = timetableList.filter(s =>
+    s.className === selectedTimetableClass ||
+    s.className?.includes(selectedTimetableClass) ||
+    selectedTimetableClass?.includes(s.className)
+  );
+
+  const handleSaveSlotSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!slotForm.subject?.trim()) return;
+
+    setIsSavingSlot(true);
+    const targetClass = slotForm.className || selectedTimetableClass;
+    const slotPayload = {
+      ...slotForm,
+      id: slotForm.id || `TT-${targetClass.replace(/\s+/g, '')}-${slotForm.day.substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}`,
+      className: targetClass
+    };
+
+    try {
+      if (onSaveTimetableSlot) {
+        await onSaveTimetableSlot(slotPayload);
+      }
+      setShowAddSlotModal(false);
+      setEditingSlot(null);
+      setTimetableFeedback(`Timetable period for ${slotPayload.subject} (${slotPayload.day}) saved successfully!`);
+      setTimeout(() => setTimetableFeedback(''), 4500);
+    } catch (err) {
+      console.error('Failed to save timetable slot:', err);
+    } finally {
+      setIsSavingSlot(false);
+    }
+  };
+
+  const handleDeleteSlot = async (slotId) => {
+    if (!window.confirm('Are you sure you want to delete this period slot from the timetable?')) return;
+    try {
+      if (onDeleteTimetableSlot) {
+        await onDeleteTimetableSlot(slotId);
+      }
+      setTimetableFeedback('Period slot removed from schedule.');
+      setTimeout(() => setTimetableFeedback(''), 3500);
+    } catch (err) {
+      console.error('Failed to delete timetable slot:', err);
+    }
+  };
+
+  const handleResetTimetableForClass = (className) => {
+    if (!window.confirm(`Reset timetable for ${className} to the official standard Lagos State curriculum template?`)) return;
+    if (onResetClassTimetable) {
+      onResetClassTimetable(className);
+      setTimetableFeedback(`Timetable for ${className} reset to standard school template!`);
+      setTimeout(() => setTimetableFeedback(''), 4500);
+    }
   };
 
   const handleClassAssignmentChange = (teacher, selectedClass) => {
@@ -788,7 +867,7 @@ export default function AdminDashboard({
         )}
 
         {/* Full-Width Tab Grid Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
           {/* 1. Online Applications */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
@@ -864,7 +943,27 @@ export default function AdminDashboard({
             </span>
           </button>
 
-          {/* 5. Broadcast Notices */}
+          {/* 5. Timetable & Schedules */}
+          <button
+            onClick={() => { setActiveAdminTab('timetable'); setRegisteredStudentSlip(null); }}
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
+              activeAdminTab === 'timetable'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <CalendarDays className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Timetable</span>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
+              activeAdminTab === 'timetable' ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'
+            }`}>
+              {classTimetable.length}
+            </span>
+          </button>
+
+          {/* 6. Broadcast Notices */}
           <button
             onClick={() => { setActiveAdminTab('announcements'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
@@ -877,7 +976,7 @@ export default function AdminDashboard({
             <span className="truncate">School Notices</span>
           </button>
 
-          {/* 6. Academic Session & Term Control */}
+          {/* 7. Academic Session & Term Control */}
           <button
             onClick={() => { setActiveAdminTab('session'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
@@ -2183,7 +2282,235 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* ================= 5. BROADCAST ANNOUNCEMENTS ================= */}
+      {/* ================= 5. TIMETABLE & CLASS SCHEDULES MANAGEMENT TAB ================= */}
+      {activeAdminTab === 'timetable' && (
+        <div className="space-y-6">
+          {/* Header & Quick Action Bar */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <CalendarDays className="w-4 h-4" />
+                <span>Academic Timetable & Schedule Engine</span>
+              </div>
+              <h3 className="text-xl font-black text-[#1B2521]">Class Timetables & Period Allocations</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Customize weekly periods, assign subject teachers, and manage venues for every class arm.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingSlot(null);
+                  setSlotForm({
+                    id: '',
+                    className: selectedTimetableClass,
+                    day: selectedTimetableDay === 'All' ? 'Monday' : selectedTimetableDay,
+                    period: '1st Period',
+                    time: '08:00 AM - 08:45 AM',
+                    subject: 'Mathematics',
+                    teacherName: staffList[0]?.name || 'Mr. Babatunde Ogunlesi',
+                    room: selectedTimetableClass.startsWith('SSS') ? 'Room 201 (Senior Block)' : 'Room 101 (Junior Block)'
+                  });
+                  setShowAddSlotModal(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Period Slot</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleResetTimetableForClass(selectedTimetableClass)}
+                className="px-3.5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-all border border-gray-200 flex items-center gap-1.5 cursor-pointer"
+                title="Reset to standard Lagos State curriculum template"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-gray-600" />
+                <span>Reset Class</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowPrintTimetableModal(true)}
+                className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#06452C] font-bold text-xs transition-all border border-emerald-200 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Schedule</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const headers = ['Class', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Room'];
+                  const rows = classTimetable.map(s => [
+                    s.className, s.day, s.period, s.time, s.subject, s.teacherName, s.room
+                  ]);
+                  exportToCSV(`${selectedTimetableClass.replace(/\s+/g, '_')}_Timetable`, rows, headers);
+                }}
+                className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#06452C] font-bold text-xs transition-all border border-emerald-200 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback banner */}
+          {timetableFeedback && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-[#06452C] flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>{timetableFeedback}</span>
+            </div>
+          )}
+
+          {/* Filter Bar: Class Selector & Day Tabs */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-gray-700 uppercase">Select Target Class:</span>
+                <select
+                  value={selectedTimetableClass}
+                  onChange={(e) => setSelectedTimetableClass(e.target.value)}
+                  className="px-3.5 py-2 rounded-xl border border-emerald-500/40 bg-emerald-50 text-xs font-black text-[#06452C] focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+                >
+                  {availableClassArms.filter(c => !c.includes('None')).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="text-xs text-gray-500 font-medium">
+                Showing <strong className="text-gray-900 font-bold">{classTimetable.length} scheduled periods</strong> for {selectedTimetableClass}
+              </div>
+            </div>
+
+            {/* Day Selector Pill Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-100 pt-3">
+              {['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setSelectedTimetableDay(day)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    selectedTimetableDay === day
+                      ? 'bg-[#06452C] text-white shadow-xs'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {day === 'All' ? '📅 Full Week' : day}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Schedule Grid by Day */}
+          {classTimetable.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-gray-200 shadow-sm space-y-3">
+              <CalendarDays className="w-12 h-12 text-gray-300 mx-auto" />
+              <h4 className="text-base font-bold text-gray-700">No Timetable Slots Found for {selectedTimetableClass}</h4>
+              <p className="text-xs text-gray-400 max-w-md mx-auto">
+                This class doesn't have any periods configured yet. Click below to auto-populate the official standard schedule or add slots manually.
+              </p>
+              <button
+                type="button"
+                onClick={() => handleResetTimetableForClass(selectedTimetableClass)}
+                className="mt-2 px-5 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs shadow-sm cursor-pointer"
+              >
+                Auto-Generate Standard Timetable
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {(selectedTimetableDay === 'All' ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] : [selectedTimetableDay]).map((day) => {
+                const daySlots = classTimetable.filter(s => s.day === day);
+                if (daySlots.length === 0) return null;
+
+                return (
+                  <div key={day} className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-200 shadow-sm space-y-3">
+                    <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-green-primary" />
+                        <h4 className="text-sm sm:text-base font-black text-[#1B2521] uppercase tracking-wide">{day} Schedule</h4>
+                      </div>
+                      <span className="text-xs font-bold text-gray-400">{daySlots.length} Periods</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {daySlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className="p-4 rounded-2xl border border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 transition-all flex flex-col justify-between space-y-3 group"
+                        >
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-start">
+                              <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-extrabold text-[10px]">
+                                {slot.period || 'Period'}
+                              </span>
+                              <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-gray-400" />
+                                {slot.time}
+                              </span>
+                            </div>
+
+                            <h5 className="font-extrabold text-sm text-[#1B2521] pt-1">{slot.subject}</h5>
+
+                            <div className="text-xs text-gray-600 flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+                              <span className="truncate">{slot.teacherName || 'Subject Teacher'}</span>
+                            </div>
+
+                            <div className="text-[11px] text-gray-500 flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                              <span className="truncate">{slot.room || 'Classroom'}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end items-center gap-2 pt-2 border-t border-gray-100">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingSlot(slot);
+                                setSlotForm({
+                                  id: slot.id,
+                                  className: slot.className || selectedTimetableClass,
+                                  day: slot.day || day,
+                                  period: slot.period || '1st Period',
+                                  time: slot.time || '08:00 AM - 08:45 AM',
+                                  subject: slot.subject || '',
+                                  teacherName: slot.teacherName || '',
+                                  room: slot.room || 'Room 201'
+                                });
+                                setShowAddSlotModal(true);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSlot(slot.id)}
+                              className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= 6. BROADCAST ANNOUNCEMENTS ================= */}
       {activeAdminTab === 'announcements' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm space-y-6 max-w-2xl mx-auto">
           <div className="border-b border-gray-200 pb-4">
@@ -2476,6 +2803,351 @@ export default function AdminDashboard({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: ADD / EDIT PERIOD SLOT ================= */}
+      {showAddSlotModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-gray-100 overflow-hidden my-8">
+            <div className="bg-[#06452C] text-white p-5 sm:p-6 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="w-5 h-5 text-emerald-300 flex-shrink-0" />
+                <div>
+                  <h4 className="font-extrabold text-sm sm:text-base">
+                    {editingSlot ? 'Edit Timetable Period' : 'Add New Timetable Period Slot'}
+                  </h4>
+                  <p className="text-[11px] text-emerald-200">{slotForm.className || selectedTimetableClass}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowAddSlotModal(false); setEditingSlot(null); }}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSlotSubmit} className="p-5 sm:p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Target Class *</label>
+                  <select
+                    value={slotForm.className}
+                    onChange={(e) => setSlotForm({ ...slotForm, className: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary cursor-pointer"
+                  >
+                    {availableClassArms.filter(c => !c.includes('None')).map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Day of the Week *</label>
+                  <select
+                    value={slotForm.day}
+                    onChange={(e) => setSlotForm({ ...slotForm, day: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary cursor-pointer"
+                  >
+                    {STANDARD_DAYS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Period Name *</label>
+                  <select
+                    value={slotForm.period}
+                    onChange={(e) => {
+                      const periodVal = e.target.value;
+                      const matched = STANDARD_PERIODS.find(p => p.period === periodVal);
+                      setSlotForm({
+                        ...slotForm,
+                        period: periodVal,
+                        time: matched ? matched.time : slotForm.time
+                      });
+                    }}
+                    className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary cursor-pointer"
+                  >
+                    {STANDARD_PERIODS.map((p) => (
+                      <option key={p.period} value={p.period}>{p.period}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Period Time (Duration) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 08:00 AM - 08:45 AM"
+                    value={slotForm.time}
+                    onChange={(e) => setSlotForm({ ...slotForm, time: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Subject Name *</label>
+                <div className="space-y-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) setSlotForm({ ...slotForm, subject: e.target.value });
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-semibold bg-gray-50 cursor-pointer"
+                  >
+                    <option value="">-- Quick Preset Subjects --</option>
+                    {(slotForm.className.startsWith('SSS') ? SSS_SUBJECTS : JSS_SUBJECTS).map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Or type exact subject name..."
+                    value={slotForm.subject}
+                    onChange={(e) => setSlotForm({ ...slotForm, subject: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Assigned Teacher</label>
+                <select
+                  value={slotForm.teacherName}
+                  onChange={(e) => setSlotForm({ ...slotForm, teacherName: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary cursor-pointer"
+                >
+                  <option value="Subject Master">Subject Master (Unassigned)</option>
+                  {staffList.map((st) => (
+                    <option key={st.staffId || st.email || st.name} value={st.name}>
+                      {st.name} ({st.department || 'Staff'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Classroom / Laboratory / Venue</label>
+                <div className="space-y-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) setSlotForm({ ...slotForm, room: e.target.value });
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-gray-200 text-xs font-semibold bg-gray-50 cursor-pointer"
+                  >
+                    <option value="">-- Quick Standard Venues --</option>
+                    {STANDARD_ROOMS.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="e.g. Room 201 (Senior Block)"
+                    value={slotForm.room}
+                    onChange={(e) => setSlotForm({ ...slotForm, room: e.target.value })}
+                    className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowAddSlotModal(false); setEditingSlot(null); }}
+                  className="w-1/2 py-3.5 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSlot}
+                  className="w-1/2 py-3.5 rounded-xl font-extrabold text-white bg-green-primary hover:bg-green-dark transition-all text-xs shadow-md flex items-center justify-center gap-1.5 disabled:opacity-75 cursor-pointer"
+                >
+                  {isSavingSlot ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                      <span>Saving Slot...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{editingSlot ? 'Update Period' : 'Add Period'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: PRINT OFFICIAL CLASS TIMETABLE ================= */}
+      {showPrintTimetableModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static">
+          <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl border border-gray-200 overflow-hidden my-auto print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+            {/* Header Control Bar */}
+            <div className="print:hidden bg-[#06452C] text-white p-4 sm:p-5 flex justify-between items-center border-b border-emerald-800">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="w-5 h-5 text-emerald-300" />
+                <div>
+                  <h4 className="font-extrabold text-sm sm:text-base">Official Class Timetable — {selectedTimetableClass}</h4>
+                  <p className="text-[11px] text-emerald-200">{sessionForm.currentSession} · {sessionForm.currentTerm}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => printDocument('printable-class-timetable', `${selectedTimetableClass} - Official Timetable`)}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrintTimetableModal(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Content */}
+            <div
+              id="printable-class-timetable"
+              className="p-6 sm:p-8 text-black bg-white select-text print:p-2"
+              style={{ fontFamily: "'Arial', 'Segoe UI', sans-serif" }}
+            >
+              {/* Header with School Crest */}
+              <div className="text-center relative pb-3 mb-4 border-b-2 border-gray-900">
+                <div className="absolute left-0 top-0 w-16 h-16 flex items-center justify-center">
+                  <img
+                    src="/school-logo.png"
+                    alt="New State High School Logo"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="px-16">
+                  <h1 className="text-xl font-black uppercase text-gray-900">NEW STATE HIGH SCHOOL</h1>
+                  <p className="text-xs text-gray-700 font-bold">36 Palm Avenue, Mushin, Lagos State · info@newstateschools.org</p>
+                  <h2 className="text-sm font-black uppercase text-emerald-900 mt-1">
+                    OFFICIAL CLASS ACADEMIC TIMETABLE — {selectedTimetableClass}
+                  </h2>
+                  <p className="text-xs text-gray-600 font-semibold">{sessionForm.currentSession} Academic Session · {sessionForm.currentTerm}</p>
+                </div>
+              </div>
+
+              {/* Weekly Timetable Table Grid */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border-2 border-gray-900 text-xs">
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-900 font-black border-b-2 border-gray-900">
+                      <th className="p-2.5 border border-gray-400 text-left w-24">Day</th>
+                      <th className="p-2.5 border border-gray-400 text-center">1st Period<br/><span className="text-[10px] font-normal text-gray-600">08:00-08:45</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">2nd Period<br/><span className="text-[10px] font-normal text-gray-600">08:45-09:30</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">3rd Period<br/><span className="text-[10px] font-normal text-gray-600">09:30-10:15</span></th>
+                      <th className="p-2 border border-gray-400 text-center bg-amber-50 text-[10px] font-bold">Break<br/>10:15-10:45</th>
+                      <th className="p-2.5 border border-gray-400 text-center">4th Period<br/><span className="text-[10px] font-normal text-gray-600">10:45-11:30</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">5th Period<br/><span className="text-[10px] font-normal text-gray-600">11:30-12:15</span></th>
+                      <th className="p-2 border border-gray-400 text-center bg-amber-50 text-[10px] font-bold">Lunch<br/>12:15-01:00</th>
+                      <th className="p-2.5 border border-gray-400 text-center">6th Period<br/><span className="text-[10px] font-normal text-gray-600">01:00-01:45</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">7th Period<br/><span className="text-[10px] font-normal text-gray-600">01:45-02:30</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {STANDARD_DAYS.map((day) => {
+                      const daySlots = classTimetable.filter(s => s.day === day);
+                      const getSlot = (pName) => daySlots.find(s => s.period?.includes(pName) || s.period === pName);
+
+                      return (
+                        <tr key={day} className="border-b border-gray-400">
+                          <td className="p-2.5 border border-gray-400 font-black bg-gray-50">{day}</td>
+                          {['1st Period', '2nd Period', '3rd Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-1 border border-gray-400 text-center bg-amber-50/50 text-[9px] font-bold text-amber-900 rotate-180 writing-mode-vertical">
+                            Snack
+                          </td>
+                          {['4th Period', '5th Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-1 border border-gray-400 text-center bg-amber-50/50 text-[9px] font-bold text-amber-900 rotate-180 writing-mode-vertical">
+                            Lunch
+                          </td>
+                          {['6th Period', '7th Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer Stamp & Signatures */}
+              <div className="mt-8 pt-4 border-t border-gray-400 flex justify-between items-end text-xs">
+                <div>
+                  <p className="font-bold text-gray-800">New State High School Administration</p>
+                  <p className="text-[10px] text-gray-500">Motto: Domine Dirige Nos</p>
+                </div>
+                <div className="text-right">
+                  <div className="border-b border-gray-800 w-40 pb-1 mb-1 font-bold text-center text-gray-900">
+                    Principal's Office
+                  </div>
+                  <p className="text-[10px] text-gray-600 text-center">Approved & Authorized</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

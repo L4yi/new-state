@@ -1,5 +1,6 @@
 // Production initial data fallback schema for New State High School Portal
 // Live persistent records are loaded directly from MongoDB Atlas
+import { generateDefaultSchoolTimetable } from './defaultTimetableData';
 
 export const initialPortalData = {
   sessionInfo: {
@@ -18,7 +19,7 @@ export const initialPortalData = {
   },
   students: [],
   results: {},
-  timetable: [],
+  timetable: generateDefaultSchoolTimetable(),
   assignments: [],
   learningMaterials: [],
   feePayments: [],

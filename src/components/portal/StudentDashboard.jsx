@@ -2,9 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
   BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
   Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User, Award, Sparkles,
-  History, Archive, Filter, ChevronDown, ChevronUp, Loader2, Paperclip, LayoutGrid
+  History, Archive, Filter, ChevronDown, ChevronUp, Loader2, Paperclip, LayoutGrid,
+  CalendarDays, MapPin, X
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
+import { printDocument } from '../../utils/printUtils';
 
 export default function StudentDashboard({ data, onUploadReceipt, currentStudentId }) {
   const activeSchoolSession = data?.sessionInfo?.currentSession || '2025/2026';
@@ -16,6 +18,8 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedSessionArchive, setSelectedSessionArchive] = useState(activeSchoolSession);
   const [selectedTermArchive, setSelectedTermArchive] = useState(activeSchoolTerm);
+  const [selectedTimetableDay, setSelectedTimetableDay] = useState('All');
+  const [showPrintTimetable, setShowPrintTimetable] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     amount: '125000',
     reference: '',
@@ -116,6 +120,27 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     }
   };
 
+  const studentTimetable = useMemo(() => {
+    const rawTimetable = Array.isArray(data?.timetable) ? data.timetable : [];
+    if (rawTimetable.length === 0) return [];
+
+    const studentClassClean = (student?.class || 'SSS 3').trim();
+    // 1. Direct match (e.g. SSS 3 - Arm A)
+    let matched = rawTimetable.filter(s => s.className === studentClassClean);
+    if (matched.length > 0) return matched;
+
+    // 2. Partial match (e.g. SSS 3 in SSS 3 - Arm A)
+    matched = rawTimetable.filter(s => s.className?.includes(studentClassClean) || studentClassClean.includes(s.className));
+    if (matched.length > 0) return matched;
+
+    // 3. Level match
+    const baseLevel = studentClassClean.split(' ')[0] + ' ' + (studentClassClean.split(' ')[1] || '');
+    matched = rawTimetable.filter(s => s.className?.includes(baseLevel));
+    if (matched.length > 0) return matched;
+
+    return rawTimetable.slice(0, 35);
+  }, [data?.timetable, student?.class]);
+
   const navigationItems = [
     {
       id: 'results',
@@ -129,7 +154,7 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       label: 'Class Timetable',
       desc: 'Weekly schedule & classroom locations',
       icon: Calendar,
-      badge: data?.timetable?.length ? `${data.timetable.length} Slots` : null,
+      badge: studentTimetable.length > 0 ? `${studentTimetable.length} Periods` : null,
     },
     {
       id: 'assignments',
@@ -481,20 +506,104 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
 
       {/* 2. Timetable Tab */}
       {activeTab === 'timetable' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-lg text-[#1B2521]">Personal Class Timetable</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.timetable.map((tt, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-[#FAFCFA]">
-                <span className="px-2.5 py-0.5 rounded bg-green-primary text-white text-[10px] font-bold">
-                  {tt.day}
-                </span>
-                <h4 className="font-bold text-sm text-[#1B2521] mt-2">{tt.subject}</h4>
-                <p className="text-xs text-gray-500 mt-1">🕒 {tt.time}</p>
-                <p className="text-xs text-green-primary font-medium mt-0.5">📍 {tt.room}</p>
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <CalendarDays className="w-4 h-4" />
+                <span>Class Academic Schedule</span>
               </div>
+              <h3 className="font-extrabold text-lg text-[#1B2521]">Personal Weekly Timetable — {student.class || 'SSS 3'}</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Weekly period timetable for {activeSchoolSession} ({activeSchoolTerm}).
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPrintTimetable(true)}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-green-primary bg-green-light border border-green-primary/20 hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Timetable</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Day Selector Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => (
+              <button
+                key={day}
+                type="button"
+                onClick={() => setSelectedTimetableDay(day)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  selectedTimetableDay === day
+                    ? 'bg-[#06452C] text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {day === 'All' ? '📅 Full Week' : day}
+              </button>
             ))}
           </div>
+
+          {/* Timetable Cards by Day */}
+          {studentTimetable.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+              <CalendarDays className="w-8 h-8 text-gray-400 mx-auto" />
+              <p className="text-xs font-bold text-gray-600">No timetable periods scheduled yet for your class.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {(selectedTimetableDay === 'All' ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] : [selectedTimetableDay]).map((day) => {
+                const daySlots = studentTimetable.filter(s => s.day === day);
+                if (daySlots.length === 0) return null;
+
+                return (
+                  <div key={day} className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-primary" />
+                      <h4 className="text-xs font-black text-[#1B2521] uppercase tracking-wider">{day}</h4>
+                      <span className="text-[11px] text-gray-400 font-medium">({daySlots.length} Periods)</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {daySlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className="p-4 rounded-2xl border border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 transition-all space-y-2 shadow-xs"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-black text-[10px]">
+                              {slot.period || 'Period'}
+                            </span>
+                            <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-gray-400" />
+                              {slot.time}
+                            </span>
+                          </div>
+
+                          <h5 className="font-extrabold text-sm text-[#1B2521] pt-0.5">{slot.subject}</h5>
+
+                          <div className="text-xs text-gray-600 flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+                            <span className="truncate">{slot.teacherName || 'Subject Teacher'}</span>
+                          </div>
+
+                          <div className="text-[11px] text-gray-500 flex items-center gap-1.5 pt-1 border-t border-gray-100">
+                            <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{slot.room || 'Classroom'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -725,6 +834,166 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
           }}
           onClose={() => setShowReportModal(false)}
         />
+      )}
+
+      {/* ================= MODAL: PRINT STUDENT CLASS TIMETABLE ================= */}
+      {showPrintTimetable && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static">
+          <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl border border-gray-200 overflow-hidden my-auto print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+            {/* Header Control Bar */}
+            <div className="print:hidden bg-[#06452C] text-white p-4 sm:p-5 flex justify-between items-center border-b border-emerald-800">
+              <div className="flex items-center gap-2.5">
+                <CalendarDays className="w-5 h-5 text-emerald-300" />
+                <div>
+                  <h4 className="font-extrabold text-sm sm:text-base">Official Class Timetable — {student.class || 'SSS 3'}</h4>
+                  <p className="text-[11px] text-emerald-200">{activeSchoolSession} · {activeSchoolTerm}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => printDocument('printable-student-timetable', `${student.class || 'Student'} - Official Timetable`)}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print PDF</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPrintTimetable(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Content */}
+            <div
+              id="printable-student-timetable"
+              className="p-6 sm:p-8 text-black bg-white select-text print:p-2"
+              style={{ fontFamily: "'Arial', 'Segoe UI', sans-serif" }}
+            >
+              {/* Header with School Crest */}
+              <div className="text-center relative pb-3 mb-4 border-b-2 border-gray-900">
+                <div className="absolute left-0 top-0 w-16 h-16 flex items-center justify-center">
+                  <img
+                    src="/school-logo.png"
+                    alt="New State High School Logo"
+                    className="w-full h-full object-contain"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+                <div className="px-16">
+                  <h1 className="text-xl font-black uppercase text-gray-900">NEW STATE HIGH SCHOOL</h1>
+                  <p className="text-xs text-gray-700 font-bold">36 Palm Avenue, Mushin, Lagos State · info@newstateschools.org</p>
+                  <h2 className="text-sm font-black uppercase text-emerald-900 mt-1">
+                    STUDENT CLASS ACADEMIC TIMETABLE — {student.class || 'SSS 3'}
+                  </h2>
+                  <p className="text-xs text-gray-600 font-semibold">{activeSchoolSession} Academic Session · {activeSchoolTerm}</p>
+                </div>
+              </div>
+
+              {/* Weekly Timetable Table Grid */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border-2 border-gray-900 text-xs">
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-900 font-black border-b-2 border-gray-900">
+                      <th className="p-2.5 border border-gray-400 text-left w-24">Day</th>
+                      <th className="p-2.5 border border-gray-400 text-center">1st Period<br/><span className="text-[10px] font-normal text-gray-600">08:00-08:45</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">2nd Period<br/><span className="text-[10px] font-normal text-gray-600">08:45-09:30</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">3rd Period<br/><span className="text-[10px] font-normal text-gray-600">09:30-10:15</span></th>
+                      <th className="p-2 border border-gray-400 text-center bg-amber-50 text-[10px] font-bold">Break<br/>10:15-10:45</th>
+                      <th className="p-2.5 border border-gray-400 text-center">4th Period<br/><span className="text-[10px] font-normal text-gray-600">10:45-11:30</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">5th Period<br/><span className="text-[10px] font-normal text-gray-600">11:30-12:15</span></th>
+                      <th className="p-2 border border-gray-400 text-center bg-amber-50 text-[10px] font-bold">Lunch<br/>12:15-01:00</th>
+                      <th className="p-2.5 border border-gray-400 text-center">6th Period<br/><span className="text-[10px] font-normal text-gray-600">01:00-01:45</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">7th Period<br/><span className="text-[10px] font-normal text-gray-600">01:45-02:30</span></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => {
+                      const daySlots = studentTimetable.filter(s => s.day === day);
+                      const getSlot = (pName) => daySlots.find(s => s.period?.includes(pName) || s.period === pName);
+
+                      return (
+                        <tr key={day} className="border-b border-gray-400">
+                          <td className="p-2.5 border border-gray-400 font-black bg-gray-50">{day}</td>
+                          {['1st Period', '2nd Period', '3rd Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-1 border border-gray-400 text-center bg-amber-50/50 text-[9px] font-bold text-amber-900 rotate-180 writing-mode-vertical">
+                            Snack
+                          </td>
+                          {['4th Period', '5th Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-1 border border-gray-400 text-center bg-amber-50/50 text-[9px] font-bold text-amber-900 rotate-180 writing-mode-vertical">
+                            Lunch
+                          </td>
+                          {['6th Period', '7th Period'].map((pName) => {
+                            const slot = getSlot(pName);
+                            return (
+                              <td key={pName} className="p-2 border border-gray-400 text-center align-top">
+                                {slot ? (
+                                  <div>
+                                    <strong className="block text-gray-900 font-bold">{slot.subject}</strong>
+                                    <span className="text-[10px] text-gray-600 block">{slot.teacherName}</span>
+                                    <span className="text-[9px] text-gray-500 italic block">{slot.room}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px]">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer Stamp */}
+              <div className="mt-8 pt-4 border-t border-gray-400 flex justify-between items-end text-xs">
+                <div>
+                  <p className="font-bold text-gray-800">New State High School, Mushin</p>
+                  <p className="text-[10px] text-gray-500">Student Copy · Domine Dirige Nos</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-800">Academic Dean & Administration</p>
+                  <p className="text-[10px] text-emerald-800 font-bold">Authorized Schedule</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

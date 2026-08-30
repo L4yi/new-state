@@ -10,6 +10,7 @@ import BursarDashboard from '../components/portal/BursarDashboard';
 import AdminDashboard from '../components/portal/AdminDashboard';
 import DeveloperEasterEgg from '../components/DeveloperEasterEgg';
 import { initialPortalData } from '../data/mockPortalData';
+import { generateDefaultSchoolTimetable } from '../data/defaultTimetableData';
 import { API_URL } from '../config/api';
 
 class DashboardErrorBoundary extends Component {
@@ -77,7 +78,21 @@ export default function Portal({ onNavigate }) {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [portalData, setPortalData] = useState(() => {
     const saved = localStorage.getItem('nshs_portal_data');
-    return saved ? JSON.parse(saved) : initialPortalData;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (!parsed.timetable || !Array.isArray(parsed.timetable) || parsed.timetable.length === 0) {
+          parsed.timetable = generateDefaultSchoolTimetable();
+        }
+        return parsed;
+      } catch (e) {
+        console.warn('Error parsing cached portal data:', e);
+      }
+    }
+    return {
+      ...initialPortalData,
+      timetable: generateDefaultSchoolTimetable()
+    };
   });
   const [isLoading, setIsLoading] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState(() => {
@@ -675,6 +690,74 @@ export default function Portal({ onNavigate }) {
     }
   };
 
+  const handleSaveTimetableSlot = async (slotData) => {
+    // 1. Optimistic update
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.timetable) ? prev.timetable : [];
+      let updated;
+      if (slotData.id && existing.some(s => s.id === slotData.id)) {
+        updated = existing.map(s => s.id === slotData.id ? { ...s, ...slotData } : s);
+      } else {
+        const newSlot = {
+          id: slotData.id || `TT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          ...slotData
+        };
+        updated = [...existing, newSlot];
+      }
+      const nextState = { ...prev, timetable: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
+    try {
+      await fetch(`${API_URL}/timetable`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(slotData),
+      });
+    } catch (err) {
+      console.warn('Timetable saved locally:', err);
+    }
+  };
+
+  const handleDeleteTimetableSlot = async (slotId) => {
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.timetable) ? prev.timetable : [];
+      const updated = existing.filter(s => s.id !== slotId);
+      const nextState = { ...prev, timetable: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    try {
+      await fetch(`${API_URL}/timetable/${slotId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+    } catch (err) {
+      console.warn('Timetable slot deleted locally:', err);
+    }
+  };
+
+  const handleResetClassTimetable = (className) => {
+    const defaultFull = generateDefaultSchoolTimetable();
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.timetable) ? prev.timetable : [];
+      let updated;
+      if (!className || className === 'ALL') {
+        updated = defaultFull;
+      } else {
+        const otherClasses = existing.filter(s => s.className !== className);
+        const classDefaults = defaultFull.filter(s => s.className === className);
+        updated = [...otherClasses, ...classDefaults];
+      }
+      const nextState = { ...prev, timetable: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+  };
+
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -1003,6 +1086,9 @@ export default function Portal({ onNavigate }) {
                   onUpdateStaff={handleUpdateStaff}
                   onAddStaff={handleAddStaff}
                   onUpdateSessionInfo={handleUpdateSessionInfo}
+                  onSaveTimetableSlot={handleSaveTimetableSlot}
+                  onDeleteTimetableSlot={handleDeleteTimetableSlot}
+                  onResetClassTimetable={handleResetClassTimetable}
                 />
               )}
             </DashboardErrorBoundary>
