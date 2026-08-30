@@ -42,32 +42,34 @@ export default function OfficialReportCardModal({ student, results = [], session
     { subject: 'Mathematics', firstCa: 6, secondCa: 8.5, homework: 7, project: 6, participation: 8, exam: 34, total: 69.5, term2: 27.3, term1: 61.0, pos: '19th' },
   ];
 
-  const processedResults = (results.length > 0 ? results : defaultSubjects).map((r, idx) => {
-    const firstCa = Number(r.firstCa ?? r.ca1 ?? 8);
-    const secondCa = Number(r.secondCa ?? r.ca2 ?? 8);
-    const homework = Number(r.homework ?? 8);
-    const project = Number(r.project ?? 7);
-    const participation = Number(r.participation ?? 8);
-    const exam = Number(r.exam ?? 35);
+  const processedResults = (results && results.length > 0 ? results : []).map((r, idx) => {
+    const firstCa = Number(r.firstCa ?? r.ca1 ?? 0);
+    const secondCa = Number(r.secondCa ?? r.ca2 ?? 0);
+    const homework = Number(r.homework ?? 0);
+    const project = Number(r.project ?? 0);
+    const participation = Number(r.participation ?? 0);
+    const exam = Number(r.exam ?? 0);
     
     // Calculate 3rd term total
     const total3rd = Number(r.total ?? (firstCa + secondCa + homework + project + participation + exam));
-    const term2 = Number(r.term2 ?? Math.max(30, total3rd - 5));
-    const term1 = Number(r.term1 ?? Math.max(35, total3rd + 4));
+    const term2 = Number(r.term2 ?? 0);
+    const term1 = Number(r.term1 ?? 0);
     const cumulative = Number((total3rd + term2 + term1).toFixed(1));
     const avgWeighted = Number((cumulative / 3).toFixed(2));
 
-    let grade = 'F9';
-    let remark = 'FAIL';
-    if (avgWeighted >= 75) { grade = 'A1'; remark = 'DISTINCTION'; }
-    else if (avgWeighted >= 70) { grade = 'B2'; remark = 'VERY GOOD'; }
-    else if (avgWeighted >= 65) { grade = 'B3'; remark = 'GOOD'; }
-    else if (avgWeighted >= 60) { grade = 'C4'; remark = 'CREDIT'; }
-    else if (avgWeighted >= 55) { grade = 'C5'; remark = 'CREDIT'; }
-    else if (avgWeighted >= 50) { grade = 'C6'; remark = 'CREDIT'; }
-    else if (avgWeighted >= 45) { grade = 'D7'; remark = 'PASS'; }
-    else if (avgWeighted >= 40) { grade = 'E8'; remark = 'PASS'; }
-    else { grade = 'F9'; remark = 'FAIL'; }
+    let grade = r.grade || 'F9';
+    let remark = r.remark || 'FAIL';
+    if (!r.grade) {
+      if (avgWeighted >= 75) { grade = 'A1'; remark = 'DISTINCTION'; }
+      else if (avgWeighted >= 70) { grade = 'B2'; remark = 'VERY GOOD'; }
+      else if (avgWeighted >= 65) { grade = 'B3'; remark = 'GOOD'; }
+      else if (avgWeighted >= 60) { grade = 'C4'; remark = 'CREDIT'; }
+      else if (avgWeighted >= 55) { grade = 'C5'; remark = 'CREDIT'; }
+      else if (avgWeighted >= 50) { grade = 'C6'; remark = 'CREDIT'; }
+      else if (avgWeighted >= 45) { grade = 'D7'; remark = 'PASS'; }
+      else if (avgWeighted >= 40) { grade = 'E8'; remark = 'PASS'; }
+      else { grade = 'F9'; remark = 'FAIL'; }
+    }
 
     return {
       subject: r.subject,
@@ -83,19 +85,21 @@ export default function OfficialReportCardModal({ student, results = [], session
       cumulative,
       avgWeighted,
       grade,
-      position: r.pos || r.position || `${(idx * 3 + 7) % 40 + 1}th`,
       remark,
+      position: r.pos || r.position || `${idx + 1}th`
     };
   });
 
   const subjectOfferedCount = processedResults.length;
   const markObtainedSum = Number(processedResults.reduce((acc, curr) => acc + curr.total, 0).toFixed(2));
   const markObtainableSum = subjectOfferedCount * 100;
-  const percentageOfMark = Number(((markObtainedSum / markObtainableSum) * 100).toFixed(2));
+  const percentageOfMark = markObtainableSum > 0 ? Number(((markObtainedSum / markObtainableSum) * 100).toFixed(2)) : 0;
 
-  const averageAnnualScore = Number((processedResults.reduce((acc, curr) => acc + curr.avgWeighted, 0) / subjectOfferedCount).toFixed(2));
-  const promotionStatus = averageAnnualScore >= 50 ? 'Promoted' : averageAnnualScore >= 45 ? 'Promoted on Trial' : 'To Repeat';
-  const headOfSchoolRemark = averageAnnualScore >= 70
+  const averageAnnualScore = subjectOfferedCount > 0 ? Number((processedResults.reduce((acc, curr) => acc + curr.avgWeighted, 0) / subjectOfferedCount).toFixed(2)) : 0;
+  const promotionStatus = subjectOfferedCount === 0 ? 'Pending Term Assessment' : averageAnnualScore >= 50 ? 'Promoted' : averageAnnualScore >= 45 ? 'Promoted on Trial' : 'To Repeat';
+  const headOfSchoolRemark = subjectOfferedCount === 0 
+    ? 'ASSESSMENT IN PROGRESS - AWAITING TERMINAL EXAMINATION AND CA SCORES.'
+    : averageAnnualScore >= 70
     ? 'EXCELLENT PERFORMANCE, KEEP UP THE STELLAR STANDARD!'
     : averageAnnualScore >= 50
     ? 'GOOD PERFORMANCE, WITH MORE FOCUS AND CONSISTENCY YOU WILL EXCEL FURTHER.'
@@ -223,18 +227,24 @@ export default function OfficialReportCardModal({ student, results = [], session
                 <span className="text-[11px] text-gray-400 font-medium">Tap any card to view Continuous Assessment scores</span>
               </div>
 
-              {processedResults.map((r) => {
-                const isExpanded = expandedSubject === r.subject;
-                const isPassing = r.avgWeighted >= 40;
-                return (
-                  <div
-                    key={r.subject}
-                    className={`rounded-2xl border transition-all overflow-hidden ${
-                      isExpanded
-                        ? 'border-emerald-500 bg-emerald-50/20 shadow-md'
-                        : 'border-gray-200 bg-white hover:border-emerald-300 shadow-xs'
-                    }`}
-                  >
+              {processedResults.length === 0 ? (
+                <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 text-xs text-gray-500 font-semibold italic space-y-1.5">
+                  <p className="font-bold text-gray-700">No Terminal Scores Recorded Yet</p>
+                  <p className="text-[11px] text-gray-400">Continuous Assessment and Examination scores are currently pending teacher entry.</p>
+                </div>
+              ) : (
+                processedResults.map((r) => {
+                  const isExpanded = expandedSubject === r.subject;
+                  const isPassing = r.avgWeighted >= 40;
+                  return (
+                    <div
+                      key={r.subject}
+                      className={`rounded-2xl border transition-all overflow-hidden ${
+                        isExpanded
+                          ? 'border-emerald-500 bg-emerald-50/20 shadow-md'
+                          : 'border-gray-200 bg-white hover:border-emerald-300 shadow-xs'
+                      }`}
+                    >
                     <button
                       type="button"
                       onClick={() => toggleSubjectExpand(r.subject)}
@@ -325,8 +335,9 @@ export default function OfficialReportCardModal({ student, results = [], session
                     )}
                   </div>
                 );
-              })}
-            </div>
+              })
+            )}
+          </div>
 
             {/* Remarks & Principal Assessment Card */}
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 text-xs">
@@ -501,25 +512,33 @@ export default function OfficialReportCardModal({ student, results = [], session
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-300">
-                {processedResults.map((r, idx) => (
-                  <tr key={idx} className="divide-x divide-gray-300 hover:bg-gray-50/50">
-                    <td className="p-1 px-1.5 font-bold text-gray-900">{r.subject}</td>
-                    <td className="p-1 text-center">{r.firstCa}</td>
-                    <td className="p-1 text-center">{r.secondCa}</td>
-                    <td className="p-1 text-center">{r.homework}</td>
-                    <td className="p-1 text-center">{r.project}</td>
-                    <td className="p-1 text-center">{r.participation}</td>
-                    <td className="p-1 text-center">{r.exam}</td>
-                    <td className="p-1 text-center font-bold bg-gray-50">{r.total}</td>
-                    <td className="p-1 text-center">{r.term2}</td>
-                    <td className="p-1 text-center">{r.term1}</td>
-                    <td className="p-1 text-center font-semibold">{r.cumulative}</td>
-                    <td className="p-1 text-center font-bold">{r.avgWeighted}</td>
-                    <td className="p-1 text-center font-black">{r.grade}</td>
-                    <td className="p-1 text-center">{r.position}</td>
-                    <td className="p-1 text-center font-bold uppercase text-[8.5px]">{r.remark}</td>
+                {processedResults.length === 0 ? (
+                  <tr>
+                    <td colSpan="15" className="p-8 text-center text-xs text-gray-500 italic font-semibold">
+                      Continuous Assessment (CA 1, CA 2) and Examination scores are currently pending teacher entry.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  processedResults.map((r, idx) => (
+                    <tr key={idx} className="divide-x divide-gray-300 hover:bg-gray-50/50">
+                      <td className="p-1 px-1.5 font-bold text-gray-900">{r.subject}</td>
+                      <td className="p-1 text-center">{r.firstCa}</td>
+                      <td className="p-1 text-center">{r.secondCa}</td>
+                      <td className="p-1 text-center">{r.homework}</td>
+                      <td className="p-1 text-center">{r.project}</td>
+                      <td className="p-1 text-center">{r.participation}</td>
+                      <td className="p-1 text-center">{r.exam}</td>
+                      <td className="p-1 text-center font-bold bg-gray-50">{r.total}</td>
+                      <td className="p-1 text-center">{r.term2}</td>
+                      <td className="p-1 text-center">{r.term1}</td>
+                      <td className="p-1 text-center font-semibold">{r.cumulative}</td>
+                      <td className="p-1 text-center font-bold">{r.avgWeighted}</td>
+                      <td className="p-1 text-center font-black">{r.grade}</td>
+                      <td className="p-1 text-center">{r.position}</td>
+                      <td className="p-1 text-center font-bold uppercase text-[8.5px]">{r.remark}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

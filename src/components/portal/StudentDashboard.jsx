@@ -57,56 +57,12 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
 
   // Derive historical / filtered results based on selected session & term
   const displayedResults = useMemo(() => {
-    const isCurrent = selectedSessionArchive === activeSchoolSession;
-    if (isCurrent && studentResults.length > 0) {
-      return studentResults;
-    }
-
-    // For former sessions or fallback, adjust scores to show authentic archive record
-    const baseList = studentResults.length > 0 ? studentResults : [
-      { subject: 'Mathematics', ca1: 17, ca2: 18, exam: 52, total: 87, term1: 82, term2: 84, term3: 87, aggregate300: 253, annualAverage: 84.33, grade: 'A1', remark: 'Distinction', pos: '1st' },
-      { subject: 'English Language', ca1: 16, ca2: 15, exam: 48, total: 79, term1: 75, term2: 78, term3: 79, aggregate300: 232, annualAverage: 77.33, grade: 'A1', remark: 'Distinction', pos: '2nd' },
-      { subject: 'Physics', ca1: 18, ca2: 17, exam: 50, total: 85, term1: 80, term2: 82, term3: 85, aggregate300: 247, annualAverage: 82.33, grade: 'A1', remark: 'Distinction', pos: '1st' },
-      { subject: 'Chemistry', ca1: 15, ca2: 16, exam: 46, total: 77, term1: 72, term2: 74, term3: 77, aggregate300: 223, annualAverage: 74.33, grade: 'B2', remark: 'Very Good', pos: '3rd' },
-      { subject: 'Biology', ca1: 16, ca2: 17, exam: 49, total: 82, term1: 78, term2: 80, term3: 82, aggregate300: 240, annualAverage: 80.00, grade: 'A1', remark: 'Distinction', pos: '2nd' },
-    ];
-
-    if (selectedSessionArchive === '2024/2025') {
-      return baseList.map(r => ({
-        ...r,
-        ca1: Math.max(12, Number(r.ca1) - 1),
-        ca2: Math.max(12, Number(r.ca2) - 1),
-        exam: Math.max(35, Number(r.exam) - 3),
-        total: Math.max(45, Number(r.total) - 5),
-        aggregate300: Math.max(140, Number(r.aggregate300 || 220) - 12),
-        annualAverage: Number(((Number(r.aggregate300 || 220) - 12) / 3).toFixed(2)),
-      }));
-    }
-
-    if (selectedSessionArchive === '2023/2024') {
-      return baseList.map(r => ({
-        ...r,
-        ca1: Math.max(10, Number(r.ca1) - 2),
-        ca2: Math.max(10, Number(r.ca2) - 2),
-        exam: Math.max(30, Number(r.exam) - 5),
-        total: Math.max(40, Number(r.total) - 9),
-        aggregate300: Math.max(130, Number(r.aggregate300 || 220) - 24),
-        annualAverage: Number(((Number(r.aggregate300 || 220) - 24) / 3).toFixed(2)),
-      }));
-    }
-
-    return baseList;
-  }, [selectedSessionArchive, activeSchoolSession, studentResults]);
+    return studentResults;
+  }, [studentResults]);
 
   const displayedClass = useMemo(() => {
-    if (selectedSessionArchive === '2024/2025') {
-      return student.class.replace('SSS 3', 'SSS 2').replace('SSS 2', 'SSS 1').replace('JSS 3', 'JSS 2');
-    }
-    if (selectedSessionArchive === '2023/2024') {
-      return student.class.replace('SSS 3', 'SSS 1').replace('SSS 2', 'JSS 3').replace('JSS 3', 'JSS 1');
-    }
     return student.class;
-  }, [selectedSessionArchive, student.class]);
+  }, [student.class]);
 
   const handlePaySubmit = async (e) => {
     e.preventDefault();
@@ -138,21 +94,22 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     const rawTimetable = Array.isArray(data?.timetable) ? data.timetable : [];
     if (rawTimetable.length === 0) return [];
 
-    const studentClassClean = (student?.class || 'SSS 3').trim();
-    // 1. Direct match (e.g. SSS 3 - Arm A)
+    const studentClassClean = (student?.class || 'SSS 3A').trim();
+    // 1. Direct match (e.g. SSS 3 - Arm A or SSS 3A)
     let matched = rawTimetable.filter(s => s.className === studentClassClean);
     if (matched.length > 0) return matched;
 
-    // 2. Partial match (e.g. SSS 3 in SSS 3 - Arm A)
-    matched = rawTimetable.filter(s => s.className?.includes(studentClassClean) || studentClassClean.includes(s.className));
+    // 2. Arm letter match (e.g. SSS 3A -> SSS 3 - Arm A)
+    const armLetter = studentClassClean.match(/[A-Za-z]$/)?.[0] || 'A';
+    const mainLevel = studentClassClean.replace(/[A-Za-z]$/, '').trim();
+    matched = rawTimetable.filter(s => s.className.includes(mainLevel) && s.className.includes(`Arm ${armLetter.toUpperCase()}`));
     if (matched.length > 0) return matched;
 
-    // 3. Level match
-    const baseLevel = studentClassClean.split(' ')[0] + ' ' + (studentClassClean.split(' ')[1] || '');
-    matched = rawTimetable.filter(s => s.className?.includes(baseLevel));
+    // 3. Partial / Level match
+    matched = rawTimetable.filter(s => s.className?.includes(mainLevel) || mainLevel.includes(s.className));
     if (matched.length > 0) return matched;
 
-    return rawTimetable.slice(0, 35);
+    return rawTimetable.slice(0, 40);
   }, [data?.timetable, student?.class]);
 
   // Filter assignments relevant to this student's class
@@ -351,7 +308,7 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
                 )}
               </div>
               <p className="text-xs text-gray-500">
-                {selectedSessionArchive} Academic Session · Academic Level: <strong className="text-green-primary">{displayedClass}</strong>
+                {selectedSessionArchive.replace(/\s*Academic Session/gi, '')} Academic Session · Academic Level: <strong className="text-green-primary">{displayedClass}</strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -402,38 +359,50 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
             </div>
           </div>
 
-          {/* View Toggle Bar */}
-          <div className="flex justify-between items-center px-1">
-            <span className="text-xs font-black text-[#1B2521] uppercase tracking-wider">
-              Graded Subjects ({displayedResults.length})
-            </span>
-            <div className="bg-gray-100 p-1 rounded-xl flex items-center gap-1 border border-gray-200">
-              <button
-                type="button"
-                onClick={() => setResultViewMode('cards')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  resultViewMode === 'cards'
-                    ? 'bg-[#06452C] text-white shadow-xs'
-                    : 'text-gray-600 hover:text-black'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Card View</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setResultViewMode('table')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
-                  resultViewMode === 'table'
-                    ? 'bg-[#06452C] text-white shadow-xs'
-                    : 'text-gray-600 hover:text-black'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Table View</span>
-              </button>
+          {displayedResults.length === 0 ? (
+            <div className="p-8 sm:p-12 text-center bg-gray-50 rounded-3xl border border-gray-200 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-green-primary flex items-center justify-center mx-auto border border-emerald-200">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h4 className="font-extrabold text-base text-[#1B2521]">No Terminal Scores Recorded Yet</h4>
+              <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+                Continuous Assessment (CA 1, CA 2) and Examination scores for this academic term are currently pending teacher entry. Once your subject teachers input your scores in the teacher portal, your grades and terminal broadsheet will appear here.
+              </p>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* View Toggle Bar */}
+              <div className="flex justify-between items-center px-1">
+                <span className="text-xs font-black text-[#1B2521] uppercase tracking-wider">
+                  Graded Subjects ({displayedResults.length})
+                </span>
+                <div className="bg-gray-100 p-1 rounded-xl flex items-center gap-1 border border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setResultViewMode('cards')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      resultViewMode === 'cards'
+                        ? 'bg-[#06452C] text-white shadow-xs'
+                        : 'text-gray-600 hover:text-black'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Card View</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResultViewMode('table')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                      resultViewMode === 'table'
+                        ? 'bg-[#06452C] text-white shadow-xs'
+                        : 'text-gray-600 hover:text-black'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Table View</span>
+                  </button>
+                </div>
+              </div>
 
           {/* 1. CARDS VIEW (NO HORIZONTAL SCROLLING ON MOBILE) */}
           {resultViewMode === 'cards' && (
@@ -539,8 +508,10 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
               </table>
             </div>
           )}
-        </div>
+        </>
       )}
+    </div>
+  )}
 
       {/* 2. Timetable Tab */}
       {activeTab === 'timetable' && (
