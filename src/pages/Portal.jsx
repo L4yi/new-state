@@ -2,7 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import {
   GraduationCap, BookOpen, CreditCard, Shield, LogOut, ArrowLeft,
   Sparkles, AlertTriangle, KeyRound, User, Lock, CheckCircle2,
-  Loader2, ArrowRight, Briefcase, UserCheck, RefreshCw
+  Loader2, ArrowRight, Briefcase, UserCheck, RefreshCw, Eye, EyeOff
 } from 'lucide-react';
 import StudentDashboard from '../components/portal/StudentDashboard';
 import TeacherDashboard from '../components/portal/TeacherDashboard';
@@ -86,6 +86,7 @@ export default function Portal({ onNavigate }) {
   const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [portalData, setPortalData] = useState(() => {
     const saved = localStorage.getItem('nshs_portal_data');
     if (saved) {
@@ -1057,13 +1058,26 @@ export default function Portal({ onNavigate }) {
                     <Lock className="w-4 h-4 text-emerald-700" />
                   </div>
                   <input
-                    type="text"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder={mainLoginTab === 'student' ? 'e.g. 1234 or 6-character PIN' : '••••••••'}
+                    placeholder={mainLoginTab === 'student' ? 'Enter 6-character Portal PIN' : '••••••••'}
                     value={loginCreds.password}
                     onChange={(e) => setLoginCreds({ ...loginCreds, password: e.target.value })}
-                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all font-mono tracking-wider"
+                    className="w-full pl-10 pr-11 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all font-mono tracking-wider"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-emerald-700 transition-colors cursor-pointer"
+                    title={showPassword ? 'Hide PIN / Password' : 'Show PIN / Password'}
+                    aria-label={showPassword ? 'Hide Password' : 'Show Password'}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4 text-emerald-700" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                    )}
+                  </button>
                 </div>
               </div>
 
