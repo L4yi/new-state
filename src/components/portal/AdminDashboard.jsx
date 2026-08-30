@@ -2968,7 +2968,7 @@ export default function AdminDashboard({
                   </select>
                   <input
                     type="text"
-                    placeholder="e.g. Room 201 (Senior Block)"
+                    placeholder="e.g. SSS 3A Classroom or Physics Lab"
                     value={slotForm.room}
                     onChange={(e) => setSlotForm({ ...slotForm, room: e.target.value })}
                     className="w-full p-3 rounded-xl border border-gray-200 font-bold bg-[#FAFCFA] focus:outline-none focus:border-green-primary"

@@ -48,17 +48,28 @@ export const SSS_SUBJECTS = [
 ];
 
 export const STANDARD_ROOMS = [
-  'Room 101 (Main Block)',
-  'Room 102 (Main Block)',
-  'Room 201 (Science Wing)',
-  'Room 202 (Science Wing)',
+  'SSS 3A Classroom',
+  'SSS 3B Classroom',
+  'SSS 2A Classroom',
+  'SSS 2B Classroom',
+  'SSS 1A Classroom',
+  'SSS 1B Classroom',
+  'JSS 3A Classroom',
+  'JSS 3B Classroom',
+  'JSS 2A Classroom',
+  'JSS 2B Classroom',
+  'JSS 1A Classroom',
+  'JSS 1B Classroom',
   'Physics Laboratory',
   'Chemistry Laboratory',
   'Biology Laboratory',
-  'ICT & AI Computer Center',
-  'Language Laboratory',
-  'School Auditorium',
-  'Sports Field'
+  'Basic Science & Tech Workshop',
+  'Computer / ICT Laboratory',
+  'Home Economics Laboratory',
+  'Technical Drawing Studio',
+  'School Library',
+  'School Assembly Hall',
+  'School Sports Ground'
 ];
 
 // Helper to generate full school timetable default
@@ -119,16 +130,16 @@ export const generateDefaultSchoolTimetable = () => {
         const subject = subjectList[subjIndex];
         const teacher = defaultTeacherMap[subject] || 'Subject Master';
         
-        let room = className.includes('SSS 3') ? 'Room 201 (Senior Block)' :
-                   className.includes('SSS 2') ? 'Room 202 (Senior Block)' :
-                   className.includes('SSS 1') ? 'Room 203 (Senior Block)' :
-                   className.includes('JSS 1') ? 'Room 101 (Junior Block)' :
-                   className.includes('JSS 2') ? 'Room 102 (Junior Block)' : 'Room 103 (Junior Block)';
+        const armLetter = className.includes('Arm B') ? 'B' : 'A';
+        const classParts = className.split(' - ')[0]; // e.g. "SSS 3" or "JSS 1"
+        let room = `${classParts}${armLetter} Classroom`;
 
-        if (subject.includes('Computer')) room = 'ICT & AI Computer Center';
-        if (subject === 'Physics') room = 'Physics Laboratory';
-        if (subject === 'Chemistry') room = 'Chemistry Laboratory';
-        if (subject === 'Biology') room = 'Biology Laboratory';
+        if (subject.includes('Computer')) room = 'Computer / ICT Laboratory';
+        else if (subject === 'Physics') room = 'Physics Laboratory';
+        else if (subject === 'Chemistry') room = 'Chemistry Laboratory';
+        else if (subject === 'Biology') room = 'Biology Laboratory';
+        else if (subject === 'Basic Science' || subject === 'Basic Technology') room = 'Basic Science & Tech Workshop';
+        else if (subject.includes('Physical & Health')) room = 'School Sports Ground';
 
         timetable.push({
           id: `TT-${className.replace(/\s+/g, '')}-${day.substring(0, 3).toUpperCase()}-${pIdx + 1}`,
