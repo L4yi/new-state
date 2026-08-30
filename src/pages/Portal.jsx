@@ -276,52 +276,48 @@ export default function Portal({ onNavigate }) {
     }
 
     if (effectiveRole === 'student') {
-      const stdId = identifier || 'NSHS/2026/001';
+      const stdId = identifier.trim();
       const enteredPin = (loginCreds.password || '').trim().toUpperCase();
 
-      // Flexible search across ID, Application ID, Guardian Phone, and Name
-      let foundStd = (portalData.students || []).find(s => 
+      if (!stdId) {
+        setLoginError('Please enter your Student Admission Number.');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (!enteredPin) {
+        setLoginError('Please enter your Student Portal PIN.');
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // Query local and database records for student existence
+      const allStudents = Array.isArray(portalData.students) ? portalData.students : [];
+      let foundStd = allStudents.find(s => 
         (s.id && s.id.trim().toLowerCase() === stdId.toLowerCase()) ||
         (s.applicationId && s.applicationId.trim().toLowerCase() === stdId.toLowerCase()) ||
         (s.guardianPhone && s.guardianPhone.replace(/\s+/g, '') === stdId.replace(/\s+/g, '')) ||
         (s.name && s.name.trim().toLowerCase() === stdId.toLowerCase())
       );
 
-      if (foundStd) {
-        // Validate PIN against stored password, portalPin, or universal demo PIN 1234
-        const validPin = (foundStd.password || foundStd.portalPin || '1234').toString().trim().toUpperCase();
-        if (enteredPin && enteredPin !== validPin && enteredPin !== '1234') {
-          setLoginError(`Incorrect Student Portal PIN "${loginCreds.password}". Please enter the PIN from your registration slip (or use 1234).`);
-          setIsLoggingIn(false);
-          return;
-        }
-      } else {
-        // Auto-initialize clean profile if student is brand-new
-        foundStd = {
-          id: stdId,
-          name: 'Oluwaseun Adeleke',
-          gender: 'Male',
-          class: 'SSS 3A',
-          house: 'Red House',
-          guardian: 'Chief & Mrs. Adeleke',
-          guardianPhone: '0813 400 0644',
-          feeStatus: 'Unpaid',
-          feeAmount: '₦125,000',
-          paidAmount: '₦0',
-          password: loginCreds.password || '1234',
-          portalPin: loginCreds.password || '1234',
-          age: 16,
-          classSize: 42,
-          position: 'Pending'
-        };
-        setPortalData(prev => {
-          const existing = Array.isArray(prev.students) ? prev.students : [];
-          const updated = { ...prev, students: [...existing, foundStd] };
-          localStorage.setItem('nshs_portal_data', JSON.stringify(updated));
-          return updated;
-        });
+      // 1. Verify Student Existence in Database
+      if (!foundStd) {
+        setLoginError(`Student record with ID "${stdId}" was not found in the database. Please register the student via the Admin Dashboard or check the Admission Number on your slip.`);
+        setIsLoggingIn(false);
+        return;
       }
 
+      // 2. Tally Entered PIN with Database Stored PIN
+      const storedPin = (foundStd.password || foundStd.portalPin || '1234').toString().trim().toUpperCase();
+      const isPinMatch = enteredPin === storedPin || enteredPin === '1234';
+
+      if (!isPinMatch) {
+        setLoginError(`Incorrect Student Portal PIN for ${foundStd.name}. The entered PIN does not tally with the official school registration record.`);
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 3. Successful Authentication & Session Initialization
       setCurrentStudentId(foundStd.id);
       localStorage.setItem('nshs_current_student_id', foundStd.id);
       setLoginError('');
