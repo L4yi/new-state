@@ -546,7 +546,7 @@ export default function OfficialReportCardModal({ student, results = [], session
             <div className="p-1.5 px-2 border-b border-gray-400">
               <strong className="text-gray-900 uppercase">CLASS TEACHER'S REMARK:</strong>{' '}
               <span className="text-gray-700 italic ml-1">
-                {studentName.split(' ')[0]} displays commendable diligence in classroom activities; keep working harder.
+                {student?.classTeacherRemark || student?.teacherRemark || `${studentName.split(' ')[0]} displays commendable diligence in classroom activities; keep working harder.`}
               </span>
             </div>
 

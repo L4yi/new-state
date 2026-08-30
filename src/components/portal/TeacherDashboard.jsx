@@ -4,7 +4,7 @@ import {
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
   Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer,
-  CalendarDays, MapPin
+  CalendarDays, MapPin, Megaphone
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
 
@@ -371,6 +371,23 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   const handleSaveFormTeacherRemark = (e) => {
     e.preventDefault();
     const student = formClassStudents.find(s => s.id === selectedFormStudent);
+    try {
+      const saved = localStorage.getItem('nshs_portal_data');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        parsed.students = (parsed.students || []).map(s => {
+          if (s.id === selectedFormStudent) {
+            return {
+              ...s,
+              classTeacherRemark: formTeacherRemark,
+              affectiveScores
+            };
+          }
+          return s;
+        });
+        localStorage.setItem('nshs_portal_data', JSON.stringify(parsed));
+      }
+    } catch (err) {}
     setFormSavedMsg(`Form Master evaluation and terminal remark saved for ${student?.name || selectedFormStudent}!`);
     setTimeout(() => setFormSavedMsg(''), 4500);
   };
@@ -382,8 +399,22 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     'Brilliant result; recommended for academic prize award.'
   ];
 
+  const announcementsList = Array.isArray(data?.announcements) ? data.announcements : [];
+
   return (
     <div className="space-y-6">
+      {/* School Announcements Banner */}
+      {announcementsList.length > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-2">
+          <div className="flex items-center gap-2 text-green-primary text-xs font-black uppercase tracking-wider">
+            <Megaphone className="w-4 h-4" />
+            <span>School Broadcast Noticeboard</span>
+          </div>
+          <h4 className="font-extrabold text-sm text-[#1B2521]">{announcementsList[0].title}</h4>
+          <p className="text-xs text-gray-700 leading-relaxed">{announcementsList[0].content}</p>
+        </div>
+      )}
+
       {/* Teacher Profile Banner */}
       <div className="p-6 rounded-2xl bg-white border border-gray-100 shadow-sm space-y-5">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-gray-100">

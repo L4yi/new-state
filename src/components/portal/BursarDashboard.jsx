@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   CheckCircle2, XCircle, Clock, CreditCard, Building2, Check, X,
-  ShieldCheck, Loader2, FileText, UserCheck, Search, Filter, AlertCircle
+  ShieldCheck, Loader2, FileText, UserCheck, Search, Filter, AlertCircle, Megaphone
 } from 'lucide-react';
 
 const defaultFeePayments = [
@@ -115,6 +115,18 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs font-bold text-emerald-900 flex items-center gap-2.5 shadow-sm animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 text-green-primary flex-shrink-0" />
           <span>{actionFeedback}</span>
+        </div>
+      )}
+
+      {/* School Announcements Noticeboard */}
+      {Array.isArray(data?.announcements) && data.announcements.length > 0 && (
+        <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 space-y-2">
+          <div className="flex items-center gap-2 text-green-primary text-xs font-black uppercase tracking-wider">
+            <Megaphone className="w-4 h-4" />
+            <span>Official School Broadcast Circular</span>
+          </div>
+          <h4 className="font-extrabold text-sm text-[#1B2521]">{data.announcements[0].title}</h4>
+          <p className="text-xs text-gray-700 leading-relaxed">{data.announcements[0].content}</p>
         </div>
       )}
 
