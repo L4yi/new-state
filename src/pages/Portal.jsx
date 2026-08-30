@@ -66,14 +66,24 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
+const DATA_VERSION = 'v2026.08.30.v5_clean';
+
 export default function Portal({ onNavigate }) {
+  // Clear old stale cache automatically if version has updated
+  if (typeof window !== 'undefined' && localStorage.getItem('nshs_data_version') !== DATA_VERSION) {
+    localStorage.removeItem('nshs_portal_data');
+    localStorage.removeItem('nshs_current_student_id');
+    localStorage.removeItem('nshs_current_user');
+    localStorage.setItem('nshs_data_version', DATA_VERSION);
+  }
+
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('nshs_is_logged_in') === 'true';
   });
   const [activeRole, setActiveRole] = useState(() => {
     return localStorage.getItem('nshs_active_role') || 'student';
   });
-  const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
+  const [loginCreds, setLoginCreds] = useState({ identifier: 'NSHS/2026/001', password: '1234' });
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [portalData, setPortalData] = useState(() => {
@@ -265,101 +275,74 @@ export default function Portal({ onNavigate }) {
       return;
     }
 
-    try {
-      const res = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password: loginCreds.password, role: effectiveRole }),
-      });
-      const data = await res.json();
+    if (effectiveRole === 'student') {
+      const stdId = identifier || 'NSHS/2026/001';
+      setCurrentStudentId(stdId);
+      localStorage.setItem('nshs_current_student_id', stdId);
       
-      if (res.ok) {
-        setLoginError('');
-        setIsLoggedIn(true);
-        setCurrentUser(data.user);
-        
-        localStorage.setItem('nshs_is_logged_in', 'true');
-        localStorage.setItem('nshs_active_role', effectiveRole);
-        localStorage.setItem('nshs_current_user', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('nshs_auth_token', data.token);
-        }
-        
-        if (effectiveRole === 'student') {
-          setCurrentStudentId(data.user.id);
-          localStorage.setItem('nshs_current_student_id', data.user.id);
-        }
-        
-        setTimeout(() => fetchPortalData(), 100);
-        return;
-      } else {
-        if (effectiveRole === 'teacher') {
-          const defaultTeacher = {
-            staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/CHEM/018',
-            name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Ngozi Eze',
-            email: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
-            department: teacherAssignment === 'class_teacher' ? 'Sciences & Technology' : 'Pure & Applied Sciences',
-            isClassTeacher: teacherAssignment === 'class_teacher',
-            classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3' : null,
-            subjectsTaught: teacherAssignment === 'class_teacher'
-              ? [
-                  { subjectName: 'Mathematics', className: 'SSS 3' },
-                  { subjectName: 'Physics', className: 'SSS 3' },
-                  { subjectName: 'Further Mathematics', className: 'SSS 3' }
-                ]
-              : [
-                  { subjectName: 'Chemistry', className: 'SSS 1A SCIENCE' },
-                  { subjectName: 'Biology', className: 'SSS 1A SCIENCE' },
-                  { subjectName: 'Chemistry', className: 'SSS 2A SCIENCE' }
-                ]
-          };
-          setLoginError('');
-          setIsLoggedIn(true);
-          setCurrentUser(defaultTeacher);
-          localStorage.setItem('nshs_is_logged_in', 'true');
-          localStorage.setItem('nshs_active_role', 'teacher');
-          localStorage.setItem('nshs_current_user', JSON.stringify(defaultTeacher));
-          return;
-        }
-        setLoginError(data.error || 'Authentication failed');
-        return;
-      }
-    } catch (err) {
-      console.warn('API unavailable, resolving locally:', err);
-      if (effectiveRole === 'teacher') {
-        const found = {
-          staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/CHEM/018',
-          name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Ngozi Eze',
-          email: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
-          department: teacherAssignment === 'class_teacher' ? 'Sciences & Technology' : 'Pure & Applied Sciences',
-          isClassTeacher: teacherAssignment === 'class_teacher',
-          classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3' : null,
-          subjectsTaught: teacherAssignment === 'class_teacher'
-            ? [
-                { subjectName: 'Mathematics', className: 'SSS 3' },
-                { subjectName: 'Physics', className: 'SSS 3' },
-                { subjectName: 'Further Mathematics', className: 'SSS 3' }
-              ]
-            : [
-                { subjectName: 'Chemistry', className: 'SSS 1A SCIENCE' },
-                { subjectName: 'Biology', className: 'SSS 1A SCIENCE' },
-                { subjectName: 'Chemistry', className: 'SSS 2A SCIENCE' }
-              ]
+      let foundStd = (portalData.students || []).find(s => s.id === stdId);
+      if (!foundStd) {
+        foundStd = {
+          id: stdId,
+          name: 'Oluwaseun Adeleke',
+          gender: 'Male',
+          class: 'SSS 3A',
+          house: 'Red House',
+          guardian: 'Chief & Mrs. Adeleke',
+          guardianPhone: '0813 400 0644',
+          feeStatus: 'Unpaid',
+          feeAmount: '₦125,000',
+          paidAmount: '₦0',
+          password: loginCreds.password || '1234',
+          age: 16,
+          classSize: 42,
+          position: 'Pending'
         };
-
-        setLoginError('');
-        setIsLoggedIn(true);
-        setCurrentUser(found);
-        localStorage.setItem('nshs_is_logged_in', 'true');
-        localStorage.setItem('nshs_active_role', 'teacher');
-        localStorage.setItem('nshs_current_user', JSON.stringify(found));
-        return;
+        setPortalData(prev => {
+          const existing = Array.isArray(prev.students) ? prev.students : [];
+          const updated = { ...prev, students: [...existing, foundStd] };
+          localStorage.setItem('nshs_portal_data', JSON.stringify(updated));
+          return updated;
+        });
       }
 
       setLoginError('');
       setIsLoggedIn(true);
-    } finally {
+      setCurrentUser(foundStd);
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', 'student');
+      localStorage.setItem('nshs_current_user', JSON.stringify(foundStd));
       setIsLoggingIn(false);
+      return;
+    }
+
+    if (effectiveRole === 'teacher') {
+      const defaultTeacher = {
+        staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/ENG/019',
+        name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
+        email: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
+        department: teacherAssignment === 'class_teacher' ? 'Sciences & Technology' : 'Languages & Arts',
+        isClassTeacher: teacherAssignment === 'class_teacher',
+        classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3A' : null,
+        subjectsTaught: teacherAssignment === 'class_teacher'
+          ? [
+              { subjectName: 'Mathematics', className: 'SSS 3A' },
+              { subjectName: 'Physics', className: 'SSS 3A' },
+              { subjectName: 'Further Mathematics', className: 'SSS 3A' }
+            ]
+          : [
+              { subjectName: 'English Language', className: 'SSS 3A' },
+              { subjectName: 'Literature in English', className: 'SSS 3A' }
+            ]
+      };
+      setLoginError('');
+      setIsLoggedIn(true);
+      setCurrentUser(defaultTeacher);
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', 'teacher');
+      localStorage.setItem('nshs_current_user', JSON.stringify(defaultTeacher));
+      setIsLoggingIn(false);
+      return;
     }
   };
 
