@@ -1366,7 +1366,11 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       {showReportModal && (
         <OfficialReportCardModal
           student={reportStudent || formClassStudents.find(s => s.id === selectedFormStudent) || { name: 'Student', class: currentUser?.classAssigned || 'SSS 1B' }}
-          results={[]}
+          results={
+            (data?.results && (data.results[reportStudent?.id] || data.results[selectedFormStudent])) ||
+            (data?.results && data.results['NSHS/2024/001']) ||
+            []
+          }
           sessionInfo={data?.sessionInfo}
           onClose={() => setShowReportModal(false)}
         />

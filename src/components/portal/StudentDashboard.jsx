@@ -3,7 +3,7 @@ import {
   BarChart3, Calendar, FileText, BookOpen, CreditCard, Megaphone,
   Printer, Download, Upload, CheckCircle2, Clock, AlertCircle, Building2, User, Award, Sparkles,
   History, Archive, Filter, ChevronDown, ChevronUp, Loader2, Paperclip, LayoutGrid,
-  CalendarDays, MapPin, X
+  CalendarDays, MapPin, X, ExternalLink
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
 import { printDocument } from '../../utils/printUtils';
@@ -141,6 +141,30 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
     return rawTimetable.slice(0, 35);
   }, [data?.timetable, student?.class]);
 
+  // Filter assignments relevant to this student's class
+  const studentAssignments = useMemo(() => {
+    const rawAssignments = Array.isArray(data?.assignments) ? data.assignments : [];
+    const studentClassClean = (student?.class || 'SSS 3').trim().toLowerCase();
+
+    return rawAssignments.filter(asn => {
+      if (!asn.targetClass || asn.targetClass === 'All Assigned Classes' || asn.targetClass === 'All Classes') return true;
+      const targetClean = asn.targetClass.trim().toLowerCase();
+      return targetClean.includes(studentClassClean) || studentClassClean.includes(targetClean) || targetClean.split(' ')[0] === studentClassClean.split(' ')[0];
+    });
+  }, [data?.assignments, student?.class]);
+
+  // Filter learning materials relevant to this student's class
+  const studentMaterials = useMemo(() => {
+    const rawMaterials = Array.isArray(data?.learningMaterials) ? data.learningMaterials : [];
+    const studentClassClean = (student?.class || 'SSS 3').trim().toLowerCase();
+
+    return rawMaterials.filter(mat => {
+      if (!mat.targetClass || mat.targetClass === 'All Assigned Classes' || mat.targetClass === 'All Classes') return true;
+      const targetClean = mat.targetClass.trim().toLowerCase();
+      return targetClean.includes(studentClassClean) || studentClassClean.includes(targetClean) || targetClean.split(' ')[0] === studentClassClean.split(' ')[0];
+    });
+  }, [data?.learningMaterials, student?.class]);
+
   const navigationItems = [
     {
       id: 'results',
@@ -161,14 +185,14 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       label: 'Digital Assignments',
       desc: 'Homework questions & due dates',
       icon: FileText,
-      badge: data?.assignments?.length ? `${data.assignments.length} Tasks` : null,
+      badge: studentAssignments.length > 0 ? `${studentAssignments.length} Tasks` : null,
     },
     {
       id: 'materials',
       label: 'Learning Materials',
       desc: 'Central lecture notes & PDF guides',
       icon: BookOpen,
-      badge: data?.learningMaterials?.length ? `${data.learningMaterials.length} Files` : null,
+      badge: studentMaterials.length > 0 ? `${studentMaterials.length} Files` : null,
     },
     {
       id: 'fees',
@@ -609,58 +633,167 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
 
       {/* 3. Assignments Tab */}
       {activeTab === 'assignments' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-extrabold text-lg text-[#1B2521]">Homework & Assignments</h3>
-            <p className="text-xs text-gray-500">View active homework below and complete them in your physical notebooks/paper.</p>
-          </div>
-
-          <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium">
-            📝 <strong>Note:</strong> All assignments are to be completed offline on paper/notebooks. No file uploads or digital submissions are required through this portal.
-          </div>
-
-          <div className="space-y-3">
-            {data.assignments.map((asn) => (
-              <div key={asn.id} className="p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-[#FAFCFA]">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold">
-                      {asn.subject}
-                    </span>
-                    <span className="text-xs text-gray-400">Due Date: {asn.dueDate}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-[#1B2521] mt-1">{asn.title}</h4>
-                  <p className="text-xs text-gray-600 mt-1 leading-relaxed">{asn.desc}</p>
-                </div>
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <FileText className="w-4 h-4" />
+                <span>Class Homework & Tasks</span>
               </div>
-            ))}
+              <h3 className="font-extrabold text-lg text-[#1B2521]">Homework & Digital Assignments</h3>
+              <p className="text-xs text-gray-500">
+                Assigned coursework for {student.class || 'your class'}. Complete written tasks in your physical notebooks.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#06452C] font-black text-xs border border-emerald-200">
+              {studentAssignments.length} Active Tasks
+            </span>
           </div>
+
+          <div className="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl text-xs text-[#06452C] font-medium flex items-center gap-2">
+            <span>📝</span>
+            <span>
+              <strong>Submission Guideline:</strong> All assignments are to be completed in standard school notebooks for physical marking by your subject teachers.
+            </span>
+          </div>
+
+          {studentAssignments.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+              <FileText className="w-8 h-8 text-gray-400 mx-auto" />
+              <p className="text-xs font-bold text-gray-600">No homework or assignments currently posted for your class.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {studentAssignments.map((asn) => (
+                <div
+                  key={asn.id || asn._id}
+                  className="p-5 rounded-2xl border border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 transition-all space-y-3 shadow-xs"
+                >
+                  <div className="flex flex-wrap justify-between items-start gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#06452C] text-white font-extrabold text-[10px]">
+                        {asn.subject}
+                      </span>
+                      {asn.targetClass && (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 font-bold text-[10px]">
+                          🎯 {asn.targetClass}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1 bg-gray-100 px-2.5 py-1 rounded-lg">
+                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Due: {asn.dueDate || 'End of Week'}</span>
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-extrabold text-sm text-[#1B2521]">{asn.title}</h4>
+                    <p className="text-xs text-gray-600 mt-1 leading-relaxed whitespace-pre-line">{asn.desc}</p>
+                  </div>
+
+                  {/* Attachment / Web Resource Link */}
+                  {(asn.attachmentName || asn.attachmentUrl || asn.attachmentType !== 'none') && (
+                    <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                      {asn.attachmentType === 'link' || asn.linkUrl ? (
+                        <a
+                          href={asn.attachmentUrl || asn.linkUrl || '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open Resource Link</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => alert(`Downloading attachment: ${asn.attachmentName || 'Assignment_Worksheet.pdf'}`)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#06452C] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Paperclip className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Download: {asn.attachmentName || 'Assignment Document.pdf'}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* 4. Learning Materials Tab */}
       {activeTab === 'materials' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <h3 className="font-extrabold text-lg text-[#1B2521]">Central Learning Materials & PDF Notes</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {data.learningMaterials.map((lm, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-[#FAFCFA] flex flex-col justify-between">
-                <div>
-                  <span className="px-2 py-0.5 rounded bg-green-50 text-green-primary font-bold text-[10px]">
-                    {lm.subject}
-                  </span>
-                  <h4 className="font-bold text-sm text-[#1B2521] mt-2 mb-1">{lm.title}</h4>
-                  <p className="text-xs text-gray-400">{lm.format} · {lm.size}</p>
-                </div>
-                <button
-                  onClick={() => alert(`Downloading ${lm.title}`)}
-                  className="mt-4 w-full py-2 rounded-lg text-xs font-bold text-white bg-green-primary hover:bg-green-dark"
-                >
-                  📥 Download Material
-                </button>
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-green-primary text-xs font-bold uppercase tracking-wider mb-1">
+                <BookOpen className="w-4 h-4" />
+                <span>Central Study Repository</span>
               </div>
-            ))}
+              <h3 className="font-extrabold text-lg text-[#1B2521]">Central Learning Materials & PDF Notes</h3>
+              <p className="text-xs text-gray-500">
+                Official curriculum lecture notes, syllabus schemes, and educational resources uploaded by your subject masters.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#06452C] font-black text-xs border border-emerald-200">
+              {studentMaterials.length} Documents
+            </span>
           </div>
+
+          {studentMaterials.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
+              <BookOpen className="w-8 h-8 text-gray-400 mx-auto" />
+              <p className="text-xs font-bold text-gray-600">No learning materials currently uploaded for your class.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {studentMaterials.map((lm, idx) => (
+                <div
+                  key={lm.id || idx}
+                  className="p-5 rounded-2xl border border-gray-200 bg-[#FAFCFA] hover:border-emerald-300 transition-all flex flex-col justify-between space-y-4 shadow-xs"
+                >
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start gap-1">
+                      <span className="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-900 font-extrabold text-[10px]">
+                        {lm.subject}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-bold">
+                        {lm.format || 'PDF'}
+                      </span>
+                    </div>
+
+                    <h4 className="font-extrabold text-sm text-[#1B2521] pt-1">{lm.title}</h4>
+                    <p className="text-[11px] text-gray-500">
+                      📦 Size: {lm.size || '2.4 MB'} {lm.targetClass ? `· Class: ${lm.targetClass}` : ''}
+                    </p>
+                  </div>
+
+                  {lm.linkUrl || lm.attachmentType === 'link' ? (
+                    <a
+                      href={lm.linkUrl || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-1.5 shadow-sm transition-all text-center"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open Learning Link</span>
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => alert(`Downloading: ${lm.title} (${lm.fileName || 'Notes.pdf'})`)}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-green-primary hover:bg-green-dark flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download Notes ({lm.format || 'PDF'})</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

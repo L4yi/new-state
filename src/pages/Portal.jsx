@@ -489,6 +489,41 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleSaveScore = async (studentId, newScore) => {
+    // 1. Optimistic local update for instant real-time student report card reflection
+    setPortalData((prev) => {
+      const existingResults = prev.results || {};
+      const studentCurrentScores = existingResults[studentId] || [];
+      const scoreTotal = Number(newScore.ca1 || 0) + Number(newScore.ca2 || 0) + Number(newScore.exam || 0);
+      const scoreGrade = scoreTotal >= 75 ? 'A1' : scoreTotal >= 70 ? 'B2' : scoreTotal >= 65 ? 'B3' : scoreTotal >= 60 ? 'C4' : scoreTotal >= 55 ? 'C5' : scoreTotal >= 50 ? 'C6' : scoreTotal >= 45 ? 'D7' : scoreTotal >= 40 ? 'E8' : 'F9';
+      const scoreRemark = scoreTotal >= 75 ? 'Distinction' : scoreTotal >= 70 ? 'Very Good' : scoreTotal >= 65 ? 'Good' : scoreTotal >= 50 ? 'Credit' : scoreTotal >= 40 ? 'Pass' : 'Fail';
+
+      const enrichedScore = {
+        subject: newScore.subject,
+        ca1: Number(newScore.ca1 || 0),
+        ca2: Number(newScore.ca2 || 0),
+        exam: Number(newScore.exam || 0),
+        total: scoreTotal,
+        grade: scoreGrade,
+        remark: scoreRemark,
+        ...newScore
+      };
+
+      const updatedScores = [
+        ...studentCurrentScores.filter(s => s.subject !== newScore.subject),
+        enrichedScore
+      ];
+
+      const nextResults = {
+        ...existingResults,
+        [studentId]: updatedScores
+      };
+
+      const nextState = { ...prev, results: nextResults };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
     try {
       const res = await fetch(`${API_URL}/results`, {
         method: 'POST',
@@ -504,6 +539,16 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleAddAssignment = async (asn) => {
+    // 1. Optimistic local update
+    setPortalData((prev) => {
+      const existingAssignments = Array.isArray(prev.assignments) ? prev.assignments : [];
+      const updatedAssignments = [asn, ...existingAssignments.filter(a => (a.id || a._id) !== (asn.id || asn._id))];
+      const nextState = { ...prev, assignments: updatedAssignments };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
     try {
       const res = await fetch(`${API_URL}/assignments`, {
         method: 'POST',
@@ -519,11 +564,14 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleUploadMaterial = (mat) => {
-    // Keep local for now
-    setPortalData((prev) => ({
-      ...prev,
-      learningMaterials: [mat, ...prev.learningMaterials],
-    }));
+    // Optimistic local update and localStorage persistence
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.learningMaterials) ? prev.learningMaterials : [];
+      const updated = [mat, ...existing.filter(m => (m.id || m._id) !== (mat.id || mat._id))];
+      const nextState = { ...prev, learningMaterials: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
   };
 
   const handleAddAnnouncement = async (anc) => {
