@@ -812,17 +812,6 @@ export default function Portal({ onNavigate }) {
     });
   };
 
-  const handleResetDemoData = () => {
-    if (window.confirm('Reset all portal test data to fresh initial state? All test uploads and scores will be cleared.')) {
-      localStorage.removeItem('nshs_portal_data');
-      localStorage.removeItem('nshs_is_logged_in');
-      localStorage.removeItem('nshs_current_user');
-      localStorage.removeItem('nshs_active_role');
-      localStorage.removeItem('nshs_current_student_id');
-      window.location.reload();
-    }
-  };
-
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -1101,15 +1090,7 @@ export default function Portal({ onNavigate }) {
 
             <div className="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
               <span>Need help? 0813 400 0644</span>
-              <button
-                type="button"
-                onClick={handleResetDemoData}
-                className="text-emerald-700 hover:underline font-bold text-[11px] cursor-pointer flex items-center gap-1"
-                title="Clear all stored test data and start fresh"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>Reset Demo State</span>
-              </button>
+              <span>New State High School</span>
             </div>
           </div>
         ) : (
@@ -1127,15 +1108,6 @@ export default function Portal({ onNavigate }) {
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={handleResetDemoData}
-                  className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-all flex items-center gap-1 cursor-pointer"
-                  title="Reset all test data back to clean fresh state"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Reset Demo</span>
-                </button>
                 <button
                   onClick={handleLogout}
                   className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer"
