@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.30.v7_clean';
+const DATA_VERSION = 'v2026.08.30.v8_strict';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -83,7 +83,7 @@ export default function Portal({ onNavigate }) {
   const [activeRole, setActiveRole] = useState(() => {
     return localStorage.getItem('nshs_active_role') || 'student';
   });
-  const [loginCreds, setLoginCreds] = useState({ identifier: 'NSHS/2026/001', password: '1234' });
+  const [loginCreds, setLoginCreds] = useState({ identifier: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [portalData, setPortalData] = useState(() => {
@@ -124,7 +124,7 @@ export default function Portal({ onNavigate }) {
     setMainLoginTab(tab);
     if (tab === 'student') {
       setActiveRole('student');
-      setLoginCreds({ identifier: 'NSHS/2026/001', password: '1234' });
+      setLoginCreds({ identifier: '', password: '' });
     } else {
       setActiveRole(staffRole);
       if (staffRole === 'teacher') {
@@ -308,8 +308,8 @@ export default function Portal({ onNavigate }) {
       }
 
       // 2. Tally Entered PIN with Database Stored PIN
-      const storedPin = (foundStd.password || foundStd.portalPin || '1234').toString().trim().toUpperCase();
-      const isPinMatch = enteredPin === storedPin || enteredPin === '1234';
+      const storedPin = (foundStd.password || foundStd.portalPin || '').toString().trim().toUpperCase();
+      const isPinMatch = enteredPin === storedPin;
 
       if (!isPinMatch) {
         setLoginError(`Incorrect Student Portal PIN for ${foundStd.name}. The entered PIN does not tally with the official school registration record.`);

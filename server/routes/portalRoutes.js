@@ -319,30 +319,19 @@ router.post('/login', loginLimiter, async (req, res) => {
         ]
       });
 
-      // Default mock fallback student if database is being initialized
-      if (!student && (cleanIdentifier.toUpperCase().includes('FFC') || cleanIdentifier.toUpperCase().includes('NSHS') || cleanIdentifier === '1234' || cleanPassword === '1234')) {
-        student = {
-          id: cleanIdentifier.toUpperCase().startsWith('FFC') || cleanIdentifier.toUpperCase().startsWith('NSHS') ? cleanIdentifier.toUpperCase() : 'NSHS/2026/001',
-          name: 'Adeyeri Muslimah',
-          class: 'SSS 1A SCIENCE',
-          house: 'Emerald Green House',
-          gender: 'Female',
-          feeStatus: 'Approved',
-          guardianName: 'Alhaji & Mrs. Adeyeri',
-          guardianPhone: '08134000644'
-        };
-      }
-
       if (!student) {
         return invalidCredentialsResponse();
       }
 
-      // Check PIN / Password (supporting bcrypt hash and default PIN '1234')
+      // Check PIN / Password strictly against stored database PIN
       let isMatch = false;
       if (student.password && student.password.startsWith('$2')) {
         isMatch = await bcrypt.compare(cleanPassword, student.password);
       } else {
-        isMatch = student.password === cleanPassword || student.portalPin === cleanPassword || cleanPassword === '1234';
+        const storedPwd = (student.password || '').toString().trim().toUpperCase();
+        const storedPin = (student.portalPin || '').toString().trim().toUpperCase();
+        const entered = cleanPassword.toUpperCase();
+        isMatch = entered === storedPwd || entered === storedPin;
       }
 
       if (!isMatch) {
