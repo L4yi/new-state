@@ -3063,6 +3063,7 @@ export default function AdminDashboard({
                       <th className="p-2 border border-gray-400 text-center bg-amber-50 text-[10px] font-bold">Lunch<br/>12:15-01:00</th>
                       <th className="p-2.5 border border-gray-400 text-center">6th Period<br/><span className="text-[10px] font-normal text-gray-600">01:00-01:45</span></th>
                       <th className="p-2.5 border border-gray-400 text-center">7th Period<br/><span className="text-[10px] font-normal text-gray-600">01:45-02:30</span></th>
+                      <th className="p-2.5 border border-gray-400 text-center">8th Period<br/><span className="text-[10px] font-normal text-gray-600">02:30-03:15</span></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3111,7 +3112,7 @@ export default function AdminDashboard({
                           <td className="p-1 border border-gray-400 text-center bg-amber-50/50 text-[9px] font-bold text-amber-900 rotate-180 writing-mode-vertical">
                             Lunch
                           </td>
-                          {['6th Period', '7th Period'].map((pName) => {
+                          {['6th Period', '7th Period', '8th Period'].map((pName) => {
                             const slot = getSlot(pName);
                             return (
                               <td key={pName} className="p-2 border border-gray-400 text-center align-top">

@@ -1,4 +1,4 @@
-﻿// Default comprehensive master timetable data for New State High School
+// Default comprehensive master timetable data for New State High School
 
 export const STANDARD_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -11,7 +11,8 @@ export const STANDARD_PERIODS = [
   { period: '5th Period', time: '11:30 AM - 12:15 PM' },
   { period: 'Lunch Break', time: '12:15 PM - 01:00 PM' },
   { period: '6th Period', time: '01:00 PM - 01:45 PM' },
-  { period: '7th Period', time: '01:45 PM - 02:30 PM' }
+  { period: '7th Period', time: '01:45 PM - 02:30 PM' },
+  { period: '8th Period', time: '02:30 PM - 03:15 PM' }
 ];
 
 export const JSS_SUBJECTS = [
@@ -101,7 +102,7 @@ export const generateDefaultSchoolTimetable = () => {
     const subjectList = isSSS ? SSS_SUBJECTS : JSS_SUBJECTS;
 
     STANDARD_DAYS.forEach((day, dayIdx) => {
-      // 5 academic periods per day (excluding breaks)
+      // 8 academic periods per day (excluding breaks)
       const periodsForDay = [
         { period: '1st Period', time: '08:00 AM - 08:45 AM' },
         { period: '2nd Period', time: '08:45 AM - 09:30 AM' },
@@ -109,7 +110,8 @@ export const generateDefaultSchoolTimetable = () => {
         { period: '4th Period', time: '10:45 AM - 11:30 AM' },
         { period: '5th Period', time: '11:30 AM - 12:15 PM' },
         { period: '6th Period', time: '01:00 PM - 01:45 PM' },
-        { period: '7th Period', time: '01:45 PM - 02:30 PM' }
+        { period: '7th Period', time: '01:45 PM - 02:30 PM' },
+        { period: '8th Period', time: '02:30 PM - 03:15 PM' }
       ];
 
       periodsForDay.forEach((pInfo, pIdx) => {
