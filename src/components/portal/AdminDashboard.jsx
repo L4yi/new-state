@@ -666,8 +666,9 @@ export default function AdminDashboard({
     setRegisteredStudentSlip(null);
   };
 
-  const handleDeclineApplication = (appId) => {
-    if (onUpdateApplication) {
+  const handleDeclineApplication = (app) => {
+    const appId = app?.applicationId || app?.id || app?._id || (typeof app === 'string' ? app : null);
+    if (appId && onUpdateApplication) {
       onUpdateApplication(appId, 'Declined');
     }
   };
@@ -1083,18 +1084,34 @@ export default function AdminDashboard({
                           <span className="text-xs font-bold text-green-primary inline-flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-lg border border-green-200">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Enrolled
                           </span>
+                        ) : app?.status === 'Declined' ? (
+                          <div className="inline-flex gap-2 items-center">
+                            <span className="text-xs font-bold text-red-600 inline-flex items-center gap-1 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
+                              <XCircle className="w-3.5 h-3.5" /> Declined
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleReviewAndEnroll(app)}
+                              className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-[#06452C] font-bold text-[11px] transition-all cursor-pointer"
+                              title="Re-open and enroll applicant"
+                            >
+                              Re-open & Enroll
+                            </button>
+                          </div>
                         ) : (
                           <div className="inline-flex gap-2 items-center">
                             <button
+                              type="button"
                               onClick={() => handleReviewAndEnroll(app)}
-                              className="px-3.5 py-2 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm"
+                              className="px-3.5 py-2 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                             >
                               <span>Review & Enroll</span>
                               <ArrowRight className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => handleDeclineApplication(app?.applicationId || app?.id)}
-                              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all flex items-center justify-center"
+                              type="button"
+                              onClick={() => handleDeclineApplication(app)}
+                              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all flex items-center justify-center cursor-pointer"
                               title="Decline Application"
                             >
                               <XCircle className="w-4 h-4" />

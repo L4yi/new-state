@@ -633,6 +633,24 @@ export default function Portal({ onNavigate }) {
   };
 
   const handleUpdateApplication = async (applicationId, status) => {
+    // 1. Instant synchronous optimistic state & localStorage update
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.applications) ? prev.applications : [];
+      const updated = existing.map((app) => {
+        const matches = (
+          app.applicationId === applicationId ||
+          app.id === applicationId ||
+          app._id === applicationId ||
+          (app.studentName && app.studentName === applicationId)
+        );
+        return matches ? { ...app, status } : app;
+      });
+      const nextState = { ...prev, applications: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to backend API if available
     try {
       const res = await fetch(`${API_URL}/applications/${applicationId}`, {
         method: 'PATCH',
@@ -643,17 +661,8 @@ export default function Portal({ onNavigate }) {
         fetchPortalData();
       }
     } catch (err) {
-      console.error('Failed to update application status:', err);
+      console.error('Failed to update application status on backend:', err);
     }
-
-    // Update local state immediately as well
-    setPortalData((prev) => {
-      const existing = prev.applications || [];
-      const updated = existing.map(app => (app.applicationId === applicationId || app.id === applicationId) ? { ...app, status } : app);
-      const nextState = { ...prev, applications: updated };
-      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
-      return nextState;
-    });
   };
 
   const handleUpdateStaff = async (staffIdOrEmail, updates) => {
