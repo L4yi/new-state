@@ -96,23 +96,12 @@ export default function Footer({ onNavigate }) {
         <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row justify-between items-center text-[13px] opacity-80 gap-4">
           <p>© {new Date().getFullYear()} New State High School. All rights reserved.</p>
           
-          {/* Creator Easter Egg Badge */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowEasterEgg(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 border border-emerald-400/30 text-xs font-mono font-bold transition-all cursor-pointer active:scale-95 group"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
-              <span>Engineered by 𝕃𝟜𝕪𝕚</span>
-            </button>
-          </div>
-
           <div className="flex items-center gap-4 text-xs opacity-60">
-            <button onClick={() => handleNavClick('privacy')} className="hover:underline">Privacy Policy</button>
+            <button onClick={() => handleNavClick('privacy')} className="hover:underline cursor-pointer">Privacy Policy</button>
             <span>•</span>
-            <button onClick={() => handleNavClick('terms')} className="hover:underline">Terms of Admission</button>
+            <button onClick={() => handleNavClick('terms')} className="hover:underline cursor-pointer">Terms of Admission</button>
             <span>•</span>
-            <span>Domine Dirige Nos</span>
+            <span onClick={() => setShowEasterEgg(true)} className="cursor-default select-none">Domine Dirige Nos</span>
           </div>
         </div>
       </div>

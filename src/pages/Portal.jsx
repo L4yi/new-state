@@ -1154,17 +1154,9 @@ export default function Portal({ onNavigate }) {
       </main>
 
       {/* Standalone Portal Footer */}
-      <footer className="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 border-t border-emerald-800/60 flex flex-col sm:flex-row justify-between items-center text-xs text-emerald-200/80 gap-3">
-        <div>© 2026 New State High School · Domine Dirige Nos · Mushin, Lagos State</div>
-        
-        {/* Creator Easter Egg Trigger */}
-        <button
-          onClick={() => setShowEasterEgg(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-100 border border-emerald-400/30 text-[11px] font-mono font-bold transition-all cursor-pointer active:scale-95 group"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:rotate-12 transition-transform" />
-          <span>Engineered by 𝕃𝟜𝕪𝕚</span>
-        </button>
+      <footer className="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 py-4 border-t border-emerald-800/40 flex flex-col sm:flex-row justify-between items-center text-xs text-emerald-200/70 gap-2">
+        <div>© 2026 New State High School · Domine Dirige Nos · Lagos, Nigeria</div>
+        <div className="text-[11px] text-emerald-300/40 font-mono">NSHS Enterprise Portal v2.6</div>
       </footer>
 
       {/* Developer Easter Egg Modal */}
