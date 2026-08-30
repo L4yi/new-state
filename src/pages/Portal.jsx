@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.30.v5_clean';
+const DATA_VERSION = 'v2026.08.30.v7_clean';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -1140,6 +1140,7 @@ export default function Portal({ onNavigate }) {
                     data={portalData}
                     onUploadReceipt={handleUploadReceipt}
                     currentStudentId={currentStudentId}
+                    currentUser={currentUser}
                   />
                 </div>
               )}

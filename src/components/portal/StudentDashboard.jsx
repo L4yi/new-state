@@ -8,8 +8,8 @@ import {
 import OfficialReportCardModal from './OfficialReportCardModal';
 import { printDocument } from '../../utils/printUtils';
 
-export default function StudentDashboard({ data, onUploadReceipt, currentStudentId }) {
-  const activeSchoolSession = data?.sessionInfo?.currentSession || '2025/2026';
+export default function StudentDashboard({ data, onUploadReceipt, currentStudentId, currentUser }) {
+  const activeSchoolSession = data?.sessionInfo?.currentSession || '2026/2027';
   const activeSchoolTerm = data?.sessionInfo?.currentTerm || '3rd Term';
 
   const [activeTab, setActiveTab] = useState('results');
@@ -41,21 +41,46 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState('');
 
-  const students = data?.students || [];
-  const student = students.find((s) => s.id === currentStudentId) || students[0] || {
-    id: currentStudentId || 'NSHS/2026/001',
-    name: 'New Student',
-    class: 'SSS 3A',
-    house: 'Red House',
-    feeStatus: 'Unpaid',
-    guardian: 'Parent / Guardian',
-    feeAmount: '₦125,000',
-    paidAmount: '₦0',
-  };
-  const studentResults = (data?.results && data.results[student.id]) || [];
-  const studentPayments = (data?.feePayments || []).filter((p) => p.studentId === student.id);
+  const students = Array.isArray(data?.students) ? data.students : [];
+  const targetId = (currentStudentId || currentUser?.id || '').trim();
 
-  // Derive historical / filtered results based on selected session & term
+  // Strict binding to currentUser to prevent defaulting to wrong student profiles
+  const student = useMemo(() => {
+    if (currentUser && currentUser.id) {
+      const matchInList = students.find(s => s.id?.trim().toUpperCase() === currentUser.id.trim().toUpperCase());
+      return matchInList ? { ...currentUser, ...matchInList } : currentUser;
+    }
+    if (targetId) {
+      const found = students.find(s => s.id?.trim().toUpperCase() === targetId.toUpperCase());
+      if (found) return found;
+    }
+    return students[0] || {
+      id: targetId || 'NSHS/2026/001',
+      name: 'Student',
+      class: 'SSS 3A',
+      house: 'Red House',
+      feeStatus: 'Unpaid',
+      guardian: 'Parent / Guardian',
+      feeAmount: '₦125,000',
+      paidAmount: '₦0',
+    };
+  }, [students, currentUser, targetId]);
+
+  // Strictly lookup results for this exact student ID only
+  const studentResults = useMemo(() => {
+    if (!data?.results || !student?.id) return [];
+    const idClean = student.id.trim();
+    return data.results[idClean] ||
+           data.results[idClean.toUpperCase()] ||
+           data.results[idClean.toLowerCase()] ||
+           [];
+  }, [data?.results, student?.id]);
+
+  const studentPayments = useMemo(() => {
+    return (data?.feePayments || []).filter((p) => p.studentId === student.id);
+  }, [data?.feePayments, student.id]);
+
+  // Clean empty state for fresh students with zero scores
   const displayedResults = useMemo(() => {
     return studentResults;
   }, [studentResults]);
