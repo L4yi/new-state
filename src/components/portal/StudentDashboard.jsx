@@ -20,6 +20,18 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
   const [selectedTermArchive, setSelectedTermArchive] = useState(activeSchoolTerm);
   const [selectedTimetableDay, setSelectedTimetableDay] = useState('All');
   const [showPrintTimetable, setShowPrintTimetable] = useState(false);
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    if (showPrintTimetable || showReportModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [showPrintTimetable, showReportModal]);
+
   const [paymentForm, setPaymentForm] = useState({
     amount: '125000',
     reference: '',
@@ -971,8 +983,8 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
 
       {/* ================= MODAL: PRINT STUDENT CLASS TIMETABLE ================= */}
       {showPrintTimetable && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static">
-          <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl border border-gray-200 overflow-hidden my-auto print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+        <div className="fixed inset-0 z-[100] bg-black/90 overscroll-contain flex items-start sm:items-center justify-center p-2 sm:p-4 overflow-y-auto print:p-0 print:bg-white print:static">
+          <div className="bg-white rounded-3xl w-full max-w-5xl shadow-2xl border border-gray-200 overflow-hidden my-4 sm:my-6 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
             {/* Header Control Bar */}
             <div className="print:hidden bg-[#06452C] text-white p-4 sm:p-5 flex justify-between items-center border-b border-emerald-800">
               <div className="flex items-center gap-2.5">

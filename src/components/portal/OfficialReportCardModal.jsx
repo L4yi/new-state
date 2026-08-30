@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Printer, X, GraduationCap, Download, Check, ChevronDown, ChevronUp,
   LayoutGrid, FileText, CheckCircle2, Award, Sparkles, BookOpen, BarChart2
@@ -8,6 +8,15 @@ import { printDocument } from '../../utils/printUtils';
 export default function OfficialReportCardModal({ student, results = [], sessionInfo, onClose }) {
   const [viewMode, setViewMode] = useState('cards'); // 'cards' (mobile friendly) | 'paper' (authentic sheet)
   const [expandedSubject, setExpandedSubject] = useState(null);
+
+  // Lock background scroll when modal is mounted
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const studentName = student?.name || 'OLADEJO Abdulmatin Olatubosun';
   const admissionNo = student?.id || 'JSS2A20232024-01';
@@ -101,9 +110,9 @@ export default function OfficialReportCardModal({ student, results = [], session
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
+    <div className="fixed inset-0 z-[100] bg-black/90 overscroll-contain overflow-y-auto flex items-start sm:items-center justify-center p-2 sm:p-4 print:p-0 print:bg-white print:static print:overflow-visible">
       {/* Modal Container */}
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden my-auto border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
+      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-6 border border-gray-300 print:border-0 print:shadow-none print:max-w-none print:w-full print:rounded-none">
         
         {/* Top Control Bar (Hidden during print) */}
         <div className="print:hidden bg-[#06452C] text-white px-4 sm:px-6 py-3.5 flex flex-wrap justify-between items-center border-b border-emerald-800 gap-3">
@@ -425,14 +434,9 @@ export default function OfficialReportCardModal({ student, results = [], session
                 <strong className="text-gray-900 uppercase">TERM:</strong>{' '}
                 <span className="font-bold text-gray-900 uppercase">{termName}</span>
               </div>
-              <div className="col-span-4 p-1.5 px-2 flex justify-between items-center">
-                <div>
-                  <strong className="text-gray-900 uppercase">YEAR:</strong>{' '}
-                  <span className="font-bold text-gray-900">{sessionYear}</span>
-                </div>
-                <div className="px-2 py-0.5 border border-gray-400 rounded-xs text-[9px] font-bold text-gray-700 bg-gray-50 uppercase">
-                  {studentName.split(' ')[0]}
-                </div>
+              <div className="col-span-4 p-1.5 px-2">
+                <strong className="text-gray-900 uppercase">YEAR:</strong>{' '}
+                <span className="font-bold text-gray-900">{sessionYear}</span>
               </div>
             </div>
 
