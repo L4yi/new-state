@@ -277,11 +277,26 @@ export default function Portal({ onNavigate }) {
 
     if (effectiveRole === 'student') {
       const stdId = identifier || 'NSHS/2026/001';
-      setCurrentStudentId(stdId);
-      localStorage.setItem('nshs_current_student_id', stdId);
-      
-      let foundStd = (portalData.students || []).find(s => s.id === stdId);
-      if (!foundStd) {
+      const enteredPin = (loginCreds.password || '').trim().toUpperCase();
+
+      // Flexible search across ID, Application ID, Guardian Phone, and Name
+      let foundStd = (portalData.students || []).find(s => 
+        (s.id && s.id.trim().toLowerCase() === stdId.toLowerCase()) ||
+        (s.applicationId && s.applicationId.trim().toLowerCase() === stdId.toLowerCase()) ||
+        (s.guardianPhone && s.guardianPhone.replace(/\s+/g, '') === stdId.replace(/\s+/g, '')) ||
+        (s.name && s.name.trim().toLowerCase() === stdId.toLowerCase())
+      );
+
+      if (foundStd) {
+        // Validate PIN against stored password, portalPin, or universal demo PIN 1234
+        const validPin = (foundStd.password || foundStd.portalPin || '1234').toString().trim().toUpperCase();
+        if (enteredPin && enteredPin !== validPin && enteredPin !== '1234') {
+          setLoginError(`Incorrect Student Portal PIN "${loginCreds.password}". Please enter the PIN from your registration slip (or use 1234).`);
+          setIsLoggingIn(false);
+          return;
+        }
+      } else {
+        // Auto-initialize clean profile if student is brand-new
         foundStd = {
           id: stdId,
           name: 'Oluwaseun Adeleke',
@@ -294,6 +309,7 @@ export default function Portal({ onNavigate }) {
           feeAmount: '₦125,000',
           paidAmount: '₦0',
           password: loginCreds.password || '1234',
+          portalPin: loginCreds.password || '1234',
           age: 16,
           classSize: 42,
           position: 'Pending'
@@ -306,6 +322,8 @@ export default function Portal({ onNavigate }) {
         });
       }
 
+      setCurrentStudentId(foundStd.id);
+      localStorage.setItem('nshs_current_student_id', foundStd.id);
       setLoginError('');
       setIsLoggedIn(true);
       setCurrentUser(foundStd);
@@ -1036,19 +1054,19 @@ export default function Portal({ onNavigate }) {
 
               <div>
                 <label className="block font-bold text-gray-700 mb-1.5 text-xs">
-                  Password
+                  {mainLoginTab === 'student' ? 'Student Portal PIN / Access Key' : 'Staff Password / Access PIN'}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                     <Lock className="w-4 h-4 text-emerald-700" />
                   </div>
                   <input
-                    type="password"
+                    type="text"
                     required
-                    placeholder="••••••••"
+                    placeholder={mainLoginTab === 'student' ? 'e.g. 1234 or 6-character PIN' : '••••••••'}
                     value={loginCreds.password}
                     onChange={(e) => setLoginCreds({ ...loginCreds, password: e.target.value })}
-                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all"
+                    className="w-full pl-10 pr-3.5 py-3.5 rounded-xl border border-emerald-200/80 focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/20 text-sm font-semibold text-[#1B2521] transition-all font-mono tracking-wider"
                   />
                 </div>
               </div>
