@@ -74,12 +74,10 @@ export default function Admission({ onNavigate }) {
     // Always update local cache so Admin dashboard sees it immediately
     try {
       const savedData = localStorage.getItem('nshs_portal_data');
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        const existing = parsed.applications || [];
-        parsed.applications = [applicationPayload, ...existing.filter(a => a.applicationId !== appId)];
-        localStorage.setItem('nshs_portal_data', JSON.stringify(parsed));
-      }
+      const parsed = savedData ? JSON.parse(savedData) : { applications: [] };
+      const existing = Array.isArray(parsed.applications) ? parsed.applications : [];
+      parsed.applications = [applicationPayload, ...existing.filter(a => a.applicationId !== appId)];
+      localStorage.setItem('nshs_portal_data', JSON.stringify(parsed));
     } catch (e) {}
 
     setIsSubmitting(false);
