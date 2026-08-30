@@ -17,27 +17,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-// 1. Fresh Brand-New Student (Unpaid, No submitted scores, ready for demo)
-const freshStudents = [
-  {
-    id: 'NSHS/2026/001',
-    name: 'Oluwaseun Adeleke',
-    gender: 'Male',
-    class: 'SSS 3A',
-    house: 'Red House',
-    guardian: 'Chief & Mrs. Adeleke',
-    guardianPhone: '0813 400 0644',
-    feeStatus: 'Unpaid',
-    feeAmount: '₦125,000',
-    paidAmount: '₦0',
-    password: '1234',
-    age: 16,
-    classSize: 42,
-    position: 'Pending'
-  }
-];
-
-// 2. Staff Accounts
+// Staff Accounts (Teachers, Admin, and Bursar ONLY)
 const staffData = [
   {
     name: 'Mr. Babatunde Ogunlesi',
@@ -100,17 +80,6 @@ const staffData = [
   }
 ];
 
-// 3. Official Announcements
-const announcementsData = [
-  {
-    announcementId: 'ANN-2026-01',
-    title: 'Welcome to the 2026/2027 Academic Session',
-    author: 'Principal Office',
-    date: new Date().toISOString().split('T')[0],
-    content: 'All students, parents, and academic staff are welcome to the new term. Ensure all academic tasks and fee clearances are concluded through the portal.'
-  }
-];
-
 async function resetAndCleanDB() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
@@ -123,7 +92,7 @@ async function resetAndCleanDB() {
     await mongoose.connect(uri);
     console.log('Connected to MongoDB Atlas successfully.');
 
-    // 1. Wipe previous student activity and collections
+    // 1. Delete ALL student data, scores, assignments, payments, announcements, applications
     await Student.deleteMany({});
     await Result.deleteMany({});
     await Assignment.deleteMany({});
@@ -134,18 +103,18 @@ async function resetAndCleanDB() {
       if (Application) await Application.deleteMany({});
     } catch (e) {}
 
-    console.log('All previous test results, receipts, applications, and student records deleted.');
+    console.log('Cleared all students (0), results (0), assignments (0), payments (0), applications (0).');
 
-    // 2. Insert fresh clean data
-    await Student.insertMany(freshStudents);
+    // 2. Insert ONLY Teachers, Admin, and Bursar staff accounts
     await Staff.insertMany(staffData);
-    await Announcement.insertMany(announcementsData);
 
-    console.log('Fresh clean database initialized:');
-    console.log(' - 1 Fresh Student (Oluwaseun Adeleke - SSS 3A, Unpaid, Zero past scores)');
+    console.log('Database successfully initialized with Staff ONLY:');
+    console.log(' - 0 Students in database');
+    console.log(' - 0 Results/Scores in database');
+    console.log(' - 0 Assignments in database');
+    console.log(' - 0 Fee Receipts in database');
+    console.log(' - 0 Online Applications in database');
     console.log(' - 5 Staff Accounts (Admin, Form Master, Subject Teachers, Bursar)');
-    console.log(' - 0 Fee Receipts (Ready for fresh upload and approval)');
-    console.log(' - 0 Pending Applications (Ready for fresh online applications)');
 
     await mongoose.connection.close();
     console.log('Database reset complete.');

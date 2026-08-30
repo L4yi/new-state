@@ -43,12 +43,14 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
 
   const students = data?.students || [];
   const student = students.find((s) => s.id === currentStudentId) || students[0] || {
-    id: 'NSHS/2024/001',
-    name: 'Student',
-    class: 'SSS 3',
+    id: currentStudentId || 'NSHS/2026/001',
+    name: 'New Student',
+    class: 'SSS 3A',
     house: 'Red House',
-    feeStatus: 'Approved',
-    guardian: 'Parent',
+    feeStatus: 'Unpaid',
+    guardian: 'Parent / Guardian',
+    feeAmount: '₦125,000',
+    paidAmount: '₦0',
   };
   const studentResults = (data?.results && data.results[student.id]) || [];
   const studentPayments = (data?.feePayments || []).filter((p) => p.studentId === student.id);

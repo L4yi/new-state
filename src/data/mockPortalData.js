@@ -1,5 +1,5 @@
 // Production initial data fallback schema for New State High School Portal
-// Clean fresh slate for new student testing & live presentation
+// Clean blank slate for fresh student onboarding & live testing
 import { generateDefaultSchoolTimetable } from './defaultTimetableData';
 
 export const initialPortalData = {
@@ -17,24 +17,7 @@ export const initialPortalData = {
       accountNumber: '1029384756',
     },
   },
-  students: [
-    {
-      id: 'NSHS/2026/001',
-      name: 'Oluwaseun Adeleke',
-      gender: 'Male',
-      class: 'SSS 3A',
-      house: 'Red House',
-      guardian: 'Chief & Mrs. Adeleke',
-      guardianPhone: '0813 400 0644',
-      feeStatus: 'Unpaid',
-      feeAmount: '₦125,000',
-      paidAmount: '₦0',
-      password: '1234',
-      age: 16,
-      classSize: 42,
-      position: 'Pending'
-    }
-  ],
+  students: [],
   results: {},
   timetable: generateDefaultSchoolTimetable(),
   assignments: [],
