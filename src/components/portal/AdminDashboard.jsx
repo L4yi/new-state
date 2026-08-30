@@ -670,6 +670,7 @@ export default function AdminDashboard({
     const appId = app?.applicationId || app?.id || app?._id || (typeof app === 'string' ? app : null);
     if (appId && onUpdateApplication) {
       onUpdateApplication(appId, 'Declined');
+      alertFeedback(`Application for ${app?.studentName || 'Applicant'} has been declined.`);
     }
   };
 
@@ -1111,10 +1112,11 @@ export default function AdminDashboard({
                             <button
                               type="button"
                               onClick={() => handleDeclineApplication(app)}
-                              className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all flex items-center justify-center cursor-pointer"
+                              className="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
                               title="Decline Application"
                             >
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Decline</span>
                             </button>
                           </div>
                         )}

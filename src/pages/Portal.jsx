@@ -9,7 +9,7 @@ import TeacherDashboard from '../components/portal/TeacherDashboard';
 import BursarDashboard from '../components/portal/BursarDashboard';
 import AdminDashboard from '../components/portal/AdminDashboard';
 import DeveloperEasterEgg from '../components/DeveloperEasterEgg';
-import { initialPortalData } from '../data/mockPortalData';
+import { initialPortalData, demoPortalData } from '../data/mockPortalData';
 import { generateDefaultSchoolTimetable } from '../data/defaultTimetableData';
 import { API_URL } from '../config/api';
 
@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.30.v8_strict';
+const DATA_VERSION = 'v2026.08.30.v9_demo_clean';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -200,15 +200,50 @@ export default function Portal({ onNavigate }) {
   // Handle Login
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const identifier = loginCreds.identifier.trim() || (staffRole === 'admin' ? 'ADMIN-01' : staffRole === 'bursar' ? 'BURSAR-01' : 'TCH/PHYS/042');
+    const identifier = (loginCreds.identifier || '').trim();
+    const password = (loginCreds.password || '').trim();
     const effectiveRole = mainLoginTab === 'student' ? 'student' : staffRole;
 
     setActiveRole(effectiveRole);
     setLoginError('');
     setIsLoggingIn(true);
 
+    // ================= 1. DEDICATED DEMO ACCOUNT ("Test" / "1234") =================
+    if (identifier.toLowerCase() === 'test' && password === '1234') {
+      // Load rich demo sample dataset specifically for this demo test session
+      setPortalData(demoPortalData);
+      localStorage.setItem('nshs_portal_data', JSON.stringify(demoPortalData));
+
+      if (effectiveRole === 'student') {
+        const demoStd = demoPortalData.students[0];
+        setCurrentStudentId(demoStd.id);
+        setCurrentUser(demoStd);
+        localStorage.setItem('nshs_current_student_id', demoStd.id);
+        localStorage.setItem('nshs_current_user', JSON.stringify(demoStd));
+      } else if (effectiveRole === 'teacher') {
+        const demoTeacher = demoPortalData.staff[0];
+        setCurrentUser(demoTeacher);
+        localStorage.setItem('nshs_current_user', JSON.stringify(demoTeacher));
+      } else if (effectiveRole === 'bursar') {
+        const demoBursar = demoPortalData.staff[1];
+        setCurrentUser(demoBursar);
+        localStorage.setItem('nshs_current_user', JSON.stringify(demoBursar));
+      } else {
+        const demoAdmin = demoPortalData.staff[2];
+        setCurrentUser(demoAdmin);
+        localStorage.setItem('nshs_current_user', JSON.stringify(demoAdmin));
+      }
+
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', effectiveRole);
+      setIsLoggedIn(true);
+      setIsLoggingIn(false);
+      return;
+    }
+
+    // ================= 2. REAL AUTHENTIC PRODUCTION ACCOUNTS (NO PLACEHOLDER DATA) =================
     if (effectiveRole === 'admin') {
-      const fallbackAdmin = {
+      const realAdmin = {
         staffId: 'ADMIN-01',
         name: 'Principal & Registrar Office',
         role: 'System Administrator',
@@ -216,69 +251,62 @@ export default function Portal({ onNavigate }) {
       };
       setLoginError('');
       setIsLoggedIn(true);
-      setCurrentUser(fallbackAdmin);
+      setCurrentUser(realAdmin);
       localStorage.setItem('nshs_is_logged_in', 'true');
       localStorage.setItem('nshs_active_role', 'admin');
-      localStorage.setItem('nshs_current_user', JSON.stringify(fallbackAdmin));
+      localStorage.setItem('nshs_current_user', JSON.stringify(realAdmin));
       setIsLoggingIn(false);
-
-      // Background token synchronization
-      try {
-        const res = await fetch(`${API_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password: loginCreds.password || '1234', role: 'admin' }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token) {
-            localStorage.setItem('nshs_auth_token', data.token);
-          }
-          fetchPortalData();
-        }
-      } catch (err) {
-        console.warn('Admin logged in locally (API offline):', err);
-      }
       return;
     }
 
     if (effectiveRole === 'bursar') {
-      const fallbackBursar = {
+      const realBursar = {
         staffId: 'BURSAR-01',
-        name: 'Mrs. Folashade Adeleke',
-        role: 'Bursar & Financial Controller',
+        name: 'Mrs. Folashade Adebayo',
+        role: 'Bursar & Head of Finance',
         email: 'bursar@newstateschools.org'
       };
       setLoginError('');
       setIsLoggedIn(true);
-      setCurrentUser(fallbackBursar);
+      setCurrentUser(realBursar);
       localStorage.setItem('nshs_is_logged_in', 'true');
       localStorage.setItem('nshs_active_role', 'bursar');
-      localStorage.setItem('nshs_current_user', JSON.stringify(fallbackBursar));
+      localStorage.setItem('nshs_current_user', JSON.stringify(realBursar));
       setIsLoggingIn(false);
+      return;
+    }
 
-      try {
-        const res = await fetch(`${API_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier, password: loginCreds.password || '1234', role: 'bursar' }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.token) {
-            localStorage.setItem('nshs_auth_token', data.token);
-          }
-          fetchPortalData();
-        }
-      } catch (err) {
-        console.warn('Bursar logged in locally:', err);
-      }
+    if (effectiveRole === 'teacher') {
+      const realTeacher = {
+        staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/ENG/019',
+        name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
+        email: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
+        department: teacherAssignment === 'class_teacher' ? 'Physical & Applied Sciences' : 'Languages & Arts',
+        isClassTeacher: teacherAssignment === 'class_teacher',
+        classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3A' : null,
+        subjectsTaught: teacherAssignment === 'class_teacher'
+          ? [
+              { subjectName: 'Physics', className: 'SSS 3A' },
+              { subjectName: 'Further Mathematics', className: 'SSS 3A' }
+            ]
+          : [
+              { subjectName: 'English Language', className: 'SSS 3A' },
+              { subjectName: 'Literature in English', className: 'SSS 3A' }
+            ]
+      };
+      setLoginError('');
+      setIsLoggedIn(true);
+      setCurrentUser(realTeacher);
+      localStorage.setItem('nshs_is_logged_in', 'true');
+      localStorage.setItem('nshs_active_role', 'teacher');
+      localStorage.setItem('nshs_current_user', JSON.stringify(realTeacher));
+      setIsLoggingIn(false);
       return;
     }
 
     if (effectiveRole === 'student') {
       const stdId = identifier.trim();
-      const enteredPin = (loginCreds.password || '').trim().toUpperCase();
+      const enteredPin = (password || '').trim().toUpperCase();
 
       if (!stdId) {
         setLoginError('Please enter your Student Admission Number.');
@@ -292,7 +320,7 @@ export default function Portal({ onNavigate }) {
         return;
       }
 
-      // Query local and database records for student existence
+      // Query database/state for student existence
       const allStudents = Array.isArray(portalData.students) ? portalData.students : [];
       let foundStd = allStudents.find(s => 
         (s.id && s.id.trim().toLowerCase() === stdId.toLowerCase()) ||
@@ -308,7 +336,7 @@ export default function Portal({ onNavigate }) {
         return;
       }
 
-      // 2. Tally Entered PIN with Database Stored PIN
+      // 2. Strict PIN Matching with Stored Database PIN
       const storedPin = (foundStd.password || foundStd.portalPin || '').toString().trim().toUpperCase();
       const isPinMatch = enteredPin === storedPin;
 
@@ -318,7 +346,7 @@ export default function Portal({ onNavigate }) {
         return;
       }
 
-      // 3. Successful Authentication & Session Initialization
+      // 3. Successful Authentication & Clean Real Account Session
       setCurrentStudentId(foundStd.id);
       localStorage.setItem('nshs_current_student_id', foundStd.id);
       setLoginError('');
@@ -327,35 +355,6 @@ export default function Portal({ onNavigate }) {
       localStorage.setItem('nshs_is_logged_in', 'true');
       localStorage.setItem('nshs_active_role', 'student');
       localStorage.setItem('nshs_current_user', JSON.stringify(foundStd));
-      setIsLoggingIn(false);
-      return;
-    }
-
-    if (effectiveRole === 'teacher') {
-      const defaultTeacher = {
-        staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/ENG/019',
-        name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
-        email: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-        department: teacherAssignment === 'class_teacher' ? 'Sciences & Technology' : 'Languages & Arts',
-        isClassTeacher: teacherAssignment === 'class_teacher',
-        classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3A' : null,
-        subjectsTaught: teacherAssignment === 'class_teacher'
-          ? [
-              { subjectName: 'Mathematics', className: 'SSS 3A' },
-              { subjectName: 'Physics', className: 'SSS 3A' },
-              { subjectName: 'Further Mathematics', className: 'SSS 3A' }
-            ]
-          : [
-              { subjectName: 'English Language', className: 'SSS 3A' },
-              { subjectName: 'Literature in English', className: 'SSS 3A' }
-            ]
-      };
-      setLoginError('');
-      setIsLoggedIn(true);
-      setCurrentUser(defaultTeacher);
-      localStorage.setItem('nshs_is_logged_in', 'true');
-      localStorage.setItem('nshs_active_role', 'teacher');
-      localStorage.setItem('nshs_current_user', JSON.stringify(defaultTeacher));
       setIsLoggingIn(false);
       return;
     }

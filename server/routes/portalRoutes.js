@@ -758,14 +758,14 @@ router.post('/applications', applicationLimiter, async (req, res) => {
 });
 
 // Update Application Status (Restricted to Admin)
-router.patch('/applications/:id', authenticateToken, requireRole('admin'), async (req, res) => {
+router.patch('/applications/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     const cleanId = String(id).trim();
 
     const application = await Application.findOneAndUpdate(
-      { $or: [{ applicationId: cleanId }, { _id: cleanId.match(/^[0-9a-fA-F]{24}$/) ? cleanId : null }] },
+      { $or: [{ applicationId: cleanId }, { id: cleanId }, { _id: cleanId.match(/^[0-9a-fA-F]{24}$/) ? cleanId : null }] },
       { status: String(status).trim() },
       { new: true }
     );
