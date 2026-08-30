@@ -96,7 +96,7 @@ export default function Portal({ onNavigate }) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [currentStudentId, setCurrentStudentId] = useState(() => {
-    return localStorage.getItem('nshs_current_student_id') || 'NSHS/2024/001';
+    return localStorage.getItem('nshs_current_student_id') || 'NSHS/2026/001';
   });
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('nshs_current_user');
@@ -114,18 +114,18 @@ export default function Portal({ onNavigate }) {
     setMainLoginTab(tab);
     if (tab === 'student') {
       setActiveRole('student');
-      setLoginCreds({ identifier: '', password: '' });
+      setLoginCreds({ identifier: 'NSHS/2026/001', password: '1234' });
     } else {
       setActiveRole(staffRole);
       if (staffRole === 'teacher') {
         setLoginCreds({
-          identifier: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+          identifier: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
           password: '1234'
         });
       } else if (staffRole === 'bursar') {
-        setLoginCreds({ identifier: 'bursar', password: '1234' });
+        setLoginCreds({ identifier: 'bursar@newstateschools.org', password: '1234' });
       } else {
-        setLoginCreds({ identifier: 'admin', password: '1234' });
+        setLoginCreds({ identifier: 'admin@newstateschools.org', password: '1234' });
       }
     }
     setLoginError('');
@@ -136,13 +136,13 @@ export default function Portal({ onNavigate }) {
     setActiveRole(roleKey);
     if (roleKey === 'teacher') {
       setLoginCreds({
-        identifier: teacherAssignment === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+        identifier: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
         password: '1234'
       });
     } else if (roleKey === 'bursar') {
-      setLoginCreds({ identifier: 'bursar', password: '1234' });
+      setLoginCreds({ identifier: 'bursar@newstateschools.org', password: '1234' });
     } else if (roleKey === 'admin') {
-      setLoginCreds({ identifier: 'admin', password: '1234' });
+      setLoginCreds({ identifier: 'admin@newstateschools.org', password: '1234' });
     }
     setLoginError('');
   };
@@ -150,7 +150,7 @@ export default function Portal({ onNavigate }) {
   const handleSelectTeacherAssignment = (assignType) => {
     setTeacherAssignment(assignType);
     setLoginCreds({
-      identifier: assignType === 'class_teacher' ? 'science@newstateschools.org' : 'subject.teacher@newstateschools.org',
+      identifier: assignType === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
       password: '1234'
     });
     setLoginError('');
@@ -815,6 +815,17 @@ export default function Portal({ onNavigate }) {
     });
   };
 
+  const handleResetDemoData = () => {
+    if (window.confirm('Reset all portal test data to fresh initial state? All test uploads and scores will be cleared.')) {
+      localStorage.removeItem('nshs_portal_data');
+      localStorage.removeItem('nshs_is_logged_in');
+      localStorage.removeItem('nshs_current_user');
+      localStorage.removeItem('nshs_active_role');
+      localStorage.removeItem('nshs_current_student_id');
+      window.location.reload();
+    }
+  };
+
   const roleConfig = {
     student: {
       title: 'Student & Parent Portal Login',
@@ -1078,8 +1089,17 @@ export default function Portal({ onNavigate }) {
               </button>
             </form>
 
-            <div className="pt-6 mt-6 border-t border-gray-100 text-center text-xs text-gray-400">
-              Need technical help? Contact ICT support at <span className="text-green-primary font-bold">0813 400 0644</span>
+            <div className="pt-4 mt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400">
+              <span>Need help? 0813 400 0644</span>
+              <button
+                type="button"
+                onClick={handleResetDemoData}
+                className="text-emerald-700 hover:underline font-bold text-[11px] cursor-pointer flex items-center gap-1"
+                title="Clear all stored test data and start fresh"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Reset Demo State</span>
+              </button>
             </div>
           </div>
         ) : (
@@ -1096,13 +1116,24 @@ export default function Portal({ onNavigate }) {
                 </div>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 flex-shrink-0"
-              >
-                <LogOut className="w-3.5 h-3.5 text-red-600" />
-                <span>Sign Out</span>
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleResetDemoData}
+                  className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-all flex items-center gap-1 cursor-pointer"
+                  title="Reset all test data back to clean fresh state"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Reset Demo</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-red-600" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
 
             <DashboardErrorBoundary onLogout={handleLogout}>
