@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.30.v9_demo_clean';
+const DATA_VERSION = 'v2026.08.30.v10_clean_auth';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -120,50 +120,28 @@ export default function Portal({ onNavigate }) {
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
 
-  // Update activeRole whenever mainLoginTab or staffRole changes
+  // Update activeRole whenever mainLoginTab or staffRole changes (form fields stay clean)
   const handleSelectMainTab = (tab) => {
     setMainLoginTab(tab);
     if (tab === 'student') {
       setActiveRole('student');
-      setLoginCreds({ identifier: '', password: '' });
     } else {
       setActiveRole(staffRole);
-      if (staffRole === 'teacher') {
-        setLoginCreds({
-          identifier: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-          password: '1234'
-        });
-      } else if (staffRole === 'bursar') {
-        setLoginCreds({ identifier: 'bursar@newstateschools.org', password: '1234' });
-      } else {
-        setLoginCreds({ identifier: 'admin@newstateschools.org', password: '1234' });
-      }
     }
+    setLoginCreds({ identifier: '', password: '' });
     setLoginError('');
   };
 
   const handleSelectStaffRole = (roleKey) => {
     setStaffRole(roleKey);
     setActiveRole(roleKey);
-    if (roleKey === 'teacher') {
-      setLoginCreds({
-        identifier: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-        password: '1234'
-      });
-    } else if (roleKey === 'bursar') {
-      setLoginCreds({ identifier: 'bursar@newstateschools.org', password: '1234' });
-    } else if (roleKey === 'admin') {
-      setLoginCreds({ identifier: 'admin@newstateschools.org', password: '1234' });
-    }
+    setLoginCreds({ identifier: '', password: '' });
     setLoginError('');
   };
 
   const handleSelectTeacherAssignment = (assignType) => {
     setTeacherAssignment(assignType);
-    setLoginCreds({
-      identifier: assignType === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-      password: '1234'
-    });
+    setLoginCreds({ identifier: '', password: '' });
     setLoginError('');
   };
 
@@ -331,7 +309,7 @@ export default function Portal({ onNavigate }) {
 
       // 1. Verify Student Existence in Database
       if (!foundStd) {
-        setLoginError(`Student record with ID "${stdId}" was not found in the database. Please register the student via the Admin Dashboard or check the Admission Number on your slip.`);
+        setLoginError(`Student record with Admission Number "${stdId}" was not found. Please check the Admission Number on your admission slip or contact the school administrative office.`);
         setIsLoggingIn(false);
         return;
       }
@@ -341,7 +319,7 @@ export default function Portal({ onNavigate }) {
       const isPinMatch = enteredPin === storedPin;
 
       if (!isPinMatch) {
-        setLoginError(`Incorrect Student Portal PIN for ${foundStd.name}. The entered PIN does not tally with the official school registration record.`);
+        setLoginError(`Incorrect Student Portal PIN for ${foundStd.name}. Please check the 6-character PIN on your admission slip or contact the school administration.`);
         setIsLoggingIn(false);
         return;
       }

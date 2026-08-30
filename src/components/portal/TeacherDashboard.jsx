@@ -4,9 +4,24 @@ import {
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
   Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer,
-  CalendarDays, MapPin, Megaphone
+  CalendarDays, MapPin, Megaphone, AlertTriangle
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
+
+// Helper for flexible, whitespace/hyphen-agnostic class matching (handles 'SSS 3A', 'SSS 3 - Arm A', 'SSS 3', etc.)
+const normalizeClassName = (str) => (str || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const isClassMatch = (class1, class2) => {
+  if (!class1 || !class2) return false;
+  const c1 = normalizeClassName(class1);
+  const c2 = normalizeClassName(class2);
+  if (c1 === c2) return true;
+  if (c1.includes(c2) || c2.includes(c1)) return true;
+  const clean1 = c1.replace(/arm/g, '');
+  const clean2 = c2.replace(/arm/g, '');
+  if (clean1 === clean2 || clean1.includes(clean2) || clean2.includes(clean1)) return true;
+  return false;
+};
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
   const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass', 'timetable'
@@ -39,21 +54,13 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
   // 2. Filter students this teacher has access to see/grade
   const allowedStudents = useMemo(() => {
-    const allStudents = data?.students || [];
+    const allStudents = Array.isArray(data?.students) ? data.students : [];
     if (!currentUser) return allStudents;
 
     return allStudents.filter(student => {
       // Check if teacher teaches any subject in this student's class, or is their form master
-      const isFormMaster = currentUser.classAssigned && (
-        student.class === currentUser.classAssigned ||
-        student.class?.includes(currentUser.classAssigned) ||
-        currentUser.classAssigned?.includes(student.class)
-      );
-      const teachesInClass = teacherSubjectsTaught.some(s =>
-        student.class === s.className ||
-        student.class?.includes(s.className) ||
-        s.className?.includes(student.class)
-      );
+      const isFormMaster = currentUser.classAssigned && isClassMatch(student.class, currentUser.classAssigned);
+      const teachesInClass = teacherSubjectsTaught.some(s => isClassMatch(student.class, s.className));
       return isFormMaster || teachesInClass;
     });
   }, [data?.students, currentUser, teacherSubjectsTaught]);
@@ -61,20 +68,14 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   // Students filtered by the active Class Toggle
   const classFilteredStudents = useMemo(() => {
     if (selectedClassFilter === 'All') return allowedStudents;
-    return allowedStudents.filter(s =>
-      s.class === selectedClassFilter ||
-      s.class?.includes(selectedClassFilter) ||
-      selectedClassFilter.includes(s.class)
-    );
+    return allowedStudents.filter(s => isClassMatch(s.class, selectedClassFilter));
   }, [allowedStudents, selectedClassFilter]);
 
   // Form Class specific students
   const formClassStudents = useMemo(() => {
     if (!currentUser?.classAssigned) return [];
-    return (data?.students || []).filter(s =>
-      s.class === currentUser.classAssigned ||
-      s.class?.includes(currentUser.classAssigned) ||
-      currentUser.classAssigned.includes(s.class)
+    return (Array.isArray(data?.students) ? data.students : []).filter(s =>
+      isClassMatch(s.class, currentUser.classAssigned)
     );
   }, [data?.students, currentUser]);
 
@@ -118,7 +119,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   }, [formClassStudents, selectedFormStudent]);
 
   // 3. STRICT SUBJECT LOCK: Determine subjects STRICTLY connected to this teacher's ID
-  const studentObj = (data?.students || []).find(s => s.id === selectedStudent);
+  const studentObj = (Array.isArray(data?.students) ? data.students : []).find(s => s.id === selectedStudent);
 
   const teacherDistinctSubjects = useMemo(() => {
     return Array.from(new Set(teacherSubjectsTaught.map(s => s.subjectName).filter(Boolean)));
@@ -130,11 +131,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     // If a student is selected, find the exact subjects this teacher teaches in THIS student's class
     if (studentObj) {
       const matchSubjects = teacherSubjectsTaught
-        .filter(s =>
-          studentObj.class === s.className ||
-          studentObj.class?.includes(s.className) ||
-          s.className?.includes(studentObj.class)
-        )
+        .filter(s => isClassMatch(studentObj.class, s.className))
         .map(s => s.subjectName);
 
       if (matchSubjects.length > 0) {
@@ -145,11 +142,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     // If a class filter is active, return subjects taught in that class
     if (selectedClassFilter !== 'All') {
       const matchedByClass = teacherSubjectsTaught
-        .filter(s =>
-          selectedClassFilter === s.className ||
-          selectedClassFilter.includes(s.className) ||
-          s.className?.includes(selectedClassFilter)
-        )
+        .filter(s => isClassMatch(selectedClassFilter, s.className))
         .map(s => s.subjectName);
 
       if (matchedByClass.length > 0) {
@@ -166,7 +159,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     if (rawTimetable.length === 0) return [];
 
     const teacherName = currentUser?.name?.toLowerCase() || '';
-    const assignedClasses = distinctClasses.map(c => c.toLowerCase());
+    const assignedClasses = distinctClasses;
     const assignedSubjects = teacherDistinctSubjects.map(s => s.toLowerCase());
 
     // 1. Direct teacher name match
@@ -181,7 +174,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
     // 2. Class + Subject match
     matched = rawTimetable.filter(s =>
-      assignedClasses.some(c => s.className?.toLowerCase().includes(c) || c.includes(s.className?.toLowerCase())) &&
+      assignedClasses.some(c => isClassMatch(s.className, c)) &&
       assignedSubjects.some(sub => s.subject?.toLowerCase().includes(sub) || sub.includes(s.subject?.toLowerCase()))
     );
 
@@ -189,7 +182,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
     // 3. Fallback to assigned class
     return rawTimetable.filter(s =>
-      assignedClasses.some(c => s.className?.toLowerCase().includes(c))
+      assignedClasses.some(c => isClassMatch(s.className, c))
     );
   }, [data?.timetable, currentUser, distinctClasses, teacherDistinctSubjects]);
 
@@ -248,6 +241,9 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
   const handleScoreSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedStudent) {
+      return;
+    }
     setIsSavingScore(true);
     const ca1Num = parseInt(scores.ca1) || 0;
     const ca2Num = parseInt(scores.ca2) || 0;
@@ -370,6 +366,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
   const handleSaveFormTeacherRemark = (e) => {
     e.preventDefault();
+    if (!selectedFormStudent) return;
     const student = formClassStudents.find(s => s.id === selectedFormStudent);
     try {
       const saved = localStorage.getItem('nshs_portal_data');
@@ -603,6 +600,18 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 </div>
               )}
 
+              {classFilteredStudents.length === 0 && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-2.5 shadow-xs">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-black block text-amber-950 mb-0.5">No Registered Students in Class</span>
+                    <p className="text-amber-800 leading-relaxed">
+                      There are currently no students registered in {selectedClassFilter === 'All' ? 'any of your assigned classes' : selectedClassFilter}. Please switch to another class above, or register students via the school administration.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
                 <div>
                   <div className="flex justify-between items-center mb-1">
@@ -614,13 +623,21 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   <select
                     value={selectedStudent}
                     onChange={(e) => setSelectedStudent(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                    disabled={classFilteredStudents.length === 0}
+                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
-                    {classFilteredStudents.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.class} · {s.id})
-                      </option>
-                    ))}
+                    {classFilteredStudents.length === 0 ? (
+                      <option value="">-- No registered students in this class --</option>
+                    ) : (
+                      <>
+                        <option value="">-- Select a Student --</option>
+                        {classFilteredStudents.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name} ({s.class} · {s.id})
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -756,13 +773,22 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
                 <button
                   type="submit"
-                  disabled={isSavingScore}
-                  className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-green-primary hover:bg-green-dark transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer active:scale-[0.99]"
+                  disabled={isSavingScore || !selectedStudent}
+                  className={`w-full py-3.5 rounded-xl font-black text-xs text-white transition-all shadow-md flex items-center justify-center gap-2 ${
+                    !selectedStudent || isSavingScore
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
+                      : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99]'
+                  }`}
                 >
                   {isSavingScore ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
                       <span>Collating & Saving 3rd Term Scores...</span>
+                    </>
+                  ) : !selectedStudent ? (
+                    <>
+                      <AlertTriangle className="w-4 h-4 text-gray-400" />
+                      <span>Select a Student to Save Score</span>
                     </>
                   ) : (
                     <>
@@ -1278,19 +1304,31 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <button
                   type="submit"
-                  className="sm:w-2/3 py-3.5 rounded-2xl font-black text-xs text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  disabled={!selectedFormStudent || formClassStudents.length === 0}
+                  className={`sm:w-2/3 py-3.5 rounded-2xl font-black text-xs text-white transition-all shadow-md flex items-center justify-center gap-2 ${
+                    !selectedFormStudent || formClassStudents.length === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
+                      : 'bg-[#06452C] hover:bg-[#0B5D3B] cursor-pointer active:scale-[0.99]'
+                  }`}
                 >
                   <Check className="w-4 h-4" />
                   <span>Save Form Master's Remark & Behavioral Ratings →</span>
                 </button>
                 <button
                   type="button"
+                  disabled={!selectedFormStudent || formClassStudents.length === 0}
                   onClick={() => {
                     const currentFormStudentObj = formClassStudents.find(s => s.id === selectedFormStudent) || formClassStudents[0];
-                    setReportStudent(currentFormStudentObj);
-                    setShowReportModal(true);
+                    if (currentFormStudentObj) {
+                      setReportStudent(currentFormStudentObj);
+                      setShowReportModal(true);
+                    }
                   }}
-                  className="sm:w-1/3 py-3.5 rounded-2xl font-black text-xs text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                  className={`sm:w-1/3 py-3.5 rounded-2xl font-black text-xs transition-all shadow-sm flex items-center justify-center gap-2 ${
+                    !selectedFormStudent || formClassStudents.length === 0
+                      ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                      : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 cursor-pointer active:scale-[0.99]'
+                  }`}
                 >
                   <Printer className="w-4 h-4" />
                   <span>View / Print Report Sheet</span>
