@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.31.v11_clean_roles';
+const DATA_VERSION = 'v2026.08.31.v12_senior_arms';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -256,21 +256,49 @@ export default function Portal({ onNavigate }) {
     }
 
     if (effectiveRole === 'teacher') {
+      const isClass = teacherAssignment === 'class_teacher';
       const realTeacher = {
-        staffId: teacherAssignment === 'class_teacher' ? 'TCH/PHYS/042' : 'TCH/ENG/019',
-        name: teacherAssignment === 'class_teacher' ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
-        email: teacherAssignment === 'class_teacher' ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-        department: teacherAssignment === 'class_teacher' ? 'Physical & Applied Sciences' : 'Languages & Arts',
-        isClassTeacher: teacherAssignment === 'class_teacher',
-        classAssigned: teacherAssignment === 'class_teacher' ? 'SSS 3A' : null,
-        subjectsTaught: teacherAssignment === 'class_teacher'
+        staffId: isClass ? 'TCH/PHYS/042' : 'TCH/ENG/019',
+        name: isClass ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
+        email: isClass ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
+        department: isClass ? 'Physical & Applied Sciences' : 'Languages & Arts',
+        isClassTeacher: isClass,
+        classAssigned: isClass ? 'SSS 3A' : null,
+        subjectsTaught: isClass
           ? [
+              // General Mathematics across ALL Senior Secondary Classes (SSS 1, 2, 3 - Arms A, B, C)
+              { subjectName: 'Mathematics', className: 'SSS 3A' },
+              { subjectName: 'Mathematics', className: 'SSS 3B' },
+              { subjectName: 'Mathematics', className: 'SSS 3C' },
+              { subjectName: 'Mathematics', className: 'SSS 2A' },
+              { subjectName: 'Mathematics', className: 'SSS 2B' },
+              { subjectName: 'Mathematics', className: 'SSS 2C' },
+              { subjectName: 'Mathematics', className: 'SSS 1A' },
+              { subjectName: 'Mathematics', className: 'SSS 1B' },
+              { subjectName: 'Mathematics', className: 'SSS 1C' },
+              // Science Specialist Subjects (Arm A)
               { subjectName: 'Physics', className: 'SSS 3A' },
-              { subjectName: 'Further Mathematics', className: 'SSS 3A' }
+              { subjectName: 'Physics', className: 'SSS 2A' },
+              { subjectName: 'Physics', className: 'SSS 1A' },
+              { subjectName: 'Further Mathematics', className: 'SSS 3A' },
+              { subjectName: 'Further Mathematics', className: 'SSS 2A' },
+              { subjectName: 'Further Mathematics', className: 'SSS 1A' }
             ]
           : [
+              // English Language across ALL Senior Secondary Classes (SSS 1, 2, 3 - Arms A, B, C)
               { subjectName: 'English Language', className: 'SSS 3A' },
-              { subjectName: 'Literature in English', className: 'SSS 3A' }
+              { subjectName: 'English Language', className: 'SSS 3B' },
+              { subjectName: 'English Language', className: 'SSS 3C' },
+              { subjectName: 'English Language', className: 'SSS 2A' },
+              { subjectName: 'English Language', className: 'SSS 2B' },
+              { subjectName: 'English Language', className: 'SSS 2C' },
+              { subjectName: 'English Language', className: 'SSS 1A' },
+              { subjectName: 'English Language', className: 'SSS 1B' },
+              { subjectName: 'English Language', className: 'SSS 1C' },
+              // Arts Specialist Elective (Arm B)
+              { subjectName: 'Literature in English', className: 'SSS 3B' },
+              { subjectName: 'Literature in English', className: 'SSS 2B' },
+              { subjectName: 'Literature in English', className: 'SSS 1B' }
             ]
       };
       setLoginError('');

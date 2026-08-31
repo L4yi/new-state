@@ -9,19 +9,32 @@ import {
 import OfficialReportCardModal from './OfficialReportCardModal';
 import SuccessModal from './SuccessModal';
 
-// Helper for flexible, whitespace/hyphen-agnostic class matching (handles 'SSS 3A', 'SSS 3 - Arm A', 'SSS 3', etc.)
+// Helper for flexible, whitespace/hyphen-agnostic class matching (handles 'SSS 3A', 'SSS 3 - Arm A', 'SSS 3A (Science)', etc.)
 const normalizeClassName = (str) => (str || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const isClassMatch = (class1, class2) => {
   if (!class1 || !class2) return false;
-  const c1 = normalizeClassName(class1);
-  const c2 = normalizeClassName(class2);
+  const c1 = normalizeClassName(class1).replace(/(science|arts|art|commerce|commercial|arm)/g, '');
+  const c2 = normalizeClassName(class2).replace(/(science|arts|art|commerce|commercial|arm)/g, '');
   if (c1 === c2) return true;
   if (c1.includes(c2) || c2.includes(c1)) return true;
-  const clean1 = c1.replace(/arm/g, '');
-  const clean2 = c2.replace(/arm/g, '');
-  if (clean1 === clean2 || clean1.includes(clean2) || clean2.includes(clean1)) return true;
   return false;
+};
+
+// Formats Senior Secondary Arms with clear track labels (A = Science, B = Arts, C = Commerce)
+const formatSeniorClass = (className) => {
+  if (!className) return '';
+  const c = className.toString().trim();
+  if (/sss\s*3\s*[-–]?\s*(arm\s*)?a\b/i.test(c) || c === 'SSS 3A') return 'SSS 3A (Science)';
+  if (/sss\s*3\s*[-–]?\s*(arm\s*)?b\b/i.test(c) || c === 'SSS 3B') return 'SSS 3B (Arts)';
+  if (/sss\s*3\s*[-–]?\s*(arm\s*)?c\b/i.test(c) || c === 'SSS 3C') return 'SSS 3C (Commerce)';
+  if (/sss\s*2\s*[-–]?\s*(arm\s*)?a\b/i.test(c) || c === 'SSS 2A') return 'SSS 2A (Science)';
+  if (/sss\s*2\s*[-–]?\s*(arm\s*)?b\b/i.test(c) || c === 'SSS 2B') return 'SSS 2B (Arts)';
+  if (/sss\s*2\s*[-–]?\s*(arm\s*)?c\b/i.test(c) || c === 'SSS 2C') return 'SSS 2C (Commerce)';
+  if (/sss\s*1\s*[-–]?\s*(arm\s*)?a\b/i.test(c) || c === 'SSS 1A') return 'SSS 1A (Science)';
+  if (/sss\s*1\s*[-–]?\s*(arm\s*)?b\b/i.test(c) || c === 'SSS 1B') return 'SSS 1B (Arts)';
+  if (/sss\s*1\s*[-–]?\s*(arm\s*)?c\b/i.test(c) || c === 'SSS 1C') return 'SSS 1C (Commerce)';
+  return c;
 };
 
 export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
@@ -637,8 +650,8 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                           : 'text-emerald-200 hover:text-white hover:bg-emerald-800/60'
                       }`}
                     >
-                      <BookOpen className="w-3.5 h-3.5" />
-                      <span>{cls}</span>
+                      <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>{formatSeniorClass(cls)}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
                         selectedClassFilter === cls ? 'bg-emerald-950/30 text-emerald-950' : 'bg-emerald-800 text-emerald-300'
                       }`}>
@@ -734,7 +747,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                         <option value="">-- Select a Student ({searchableStudents.length} available) --</option>
                         {searchableStudents.map((s) => (
                           <option key={s.id} value={s.id}>
-                            {s.name} ({s.class} · {s.id})
+                            {s.name} ({formatSeniorClass(s.class)} · {s.id})
                           </option>
                         ))}
                       </>
