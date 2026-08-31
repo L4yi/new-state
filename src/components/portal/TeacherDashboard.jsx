@@ -37,8 +37,11 @@ const formatSeniorClass = (className) => {
   return c;
 };
 
-export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial }) {
-  const [activeTab, setActiveTab] = useState('scores'); // 'scores', 'assignments', 'formclass', 'timetable'
+export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial, onSaveAttendance }) {
+  const isClassTeacher = Boolean(currentUser?.classAssigned);
+
+  // Tab state: Class teachers only access 'scores' & 'formclass'. Subject teachers access 'scores', 'attendance', 'assignments', 'timetable'.
+  const [activeTab, setActiveTab] = useState(() => (isClassTeacher ? 'scores' : 'scores'));
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportStudent, setReportStudent] = useState(null);
   const [selectedTeacherTimetableDay, setSelectedTeacherTimetableDay] = useState('All');
@@ -50,7 +53,21 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     type: 'success',
   });
 
-  const isClassTeacher = Boolean(currentUser?.classAssigned);
+  // Attendance Register state for Subject Teachers
+  const [attendanceDate, setAttendanceDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [attendancePeriod, setAttendancePeriod] = useState('Period 1 (8:00 - 8:45 AM)');
+  const [attendanceSubject, setAttendanceSubject] = useState('');
+  const [attendanceClass, setAttendanceClass] = useState('');
+  const [attendanceRoster, setAttendanceRoster] = useState({});
+  const [isSavingAttendance, setIsSavingAttendance] = useState(false);
+  const [attendanceSearchTerm, setAttendanceSearchTerm] = useState('');
+
+  // Lock Class Teacher to their 2 valid tabs ('scores' and 'formclass')
+  useEffect(() => {
+    if (isClassTeacher && !['scores', 'formclass'].includes(activeTab)) {
+      setActiveTab('scores');
+    }
+  }, [isClassTeacher, activeTab]);
 
   // 1. Extract all classes and subjects taught by this teacher from their profile
   const teacherSubjectsTaught = useMemo(() => {
@@ -286,6 +303,117 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       setSelectedSubject('');
     }
   }, [availableSubjects, selectedSubject]);
+
+  // Sync attendanceClass & attendanceSubject
+  useEffect(() => {
+    if (distinctClasses.length > 0 && (!attendanceClass || !distinctClasses.includes(attendanceClass))) {
+      setAttendanceClass(distinctClasses[0]);
+    }
+  }, [distinctClasses, attendanceClass]);
+
+  useEffect(() => {
+    if (teacherDistinctSubjects.length > 0 && (!attendanceSubject || !teacherDistinctSubjects.includes(attendanceSubject))) {
+      setAttendanceSubject(teacherDistinctSubjects[0]);
+    }
+  }, [teacherDistinctSubjects, attendanceSubject]);
+
+  // Students for the attendance register
+  const attendanceStudents = useMemo(() => {
+    const allStudents = Array.isArray(data?.students) ? data.students : [];
+    if (!attendanceClass || attendanceClass === 'All') return allStudents;
+    return allStudents.filter(s => isClassMatch(s.class, attendanceClass));
+  }, [data?.students, attendanceClass]);
+
+  const filteredAttendanceStudents = useMemo(() => {
+    if (!attendanceSearchTerm.trim()) return attendanceStudents;
+    const q = attendanceSearchTerm.trim().toLowerCase();
+    return attendanceStudents.filter(s =>
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.id && s.id.toLowerCase().includes(q))
+    );
+  }, [attendanceStudents, attendanceSearchTerm]);
+
+  const handleSetStudentAttendanceStatus = (studentId, status) => {
+    setAttendanceRoster(prev => ({
+      ...prev,
+      [studentId]: {
+        ...(prev[studentId] || {}),
+        status,
+      }
+    }));
+  };
+
+  const handleSetStudentAttendanceRemark = (studentId, remarks) => {
+    setAttendanceRoster(prev => ({
+      ...prev,
+      [studentId]: {
+        ...(prev[studentId] || {}),
+        remarks,
+      }
+    }));
+  };
+
+  const handleMarkAllAttendance = (status = 'Present') => {
+    const updated = {};
+    attendanceStudents.forEach(s => {
+      updated[s.id] = {
+        status,
+        remarks: attendanceRoster[s.id]?.remarks || '',
+      };
+    });
+    setAttendanceRoster(prev => ({ ...prev, ...updated }));
+  };
+
+  const handleSaveAttendanceRegister = async (e) => {
+    if (e) e.preventDefault();
+    setIsSavingAttendance(true);
+    const records = attendanceStudents.map(s => ({
+      studentId: s.id,
+      studentName: s.name,
+      class: s.class,
+      status: attendanceRoster[s.id]?.status || 'Present',
+      remarks: attendanceRoster[s.id]?.remarks || '',
+    }));
+
+    const attendanceRecord = {
+      id: `ATT-${Date.now()}`,
+      date: attendanceDate,
+      period: attendancePeriod,
+      className: attendanceClass,
+      subject: attendanceSubject,
+      teacherId: currentUser?.staffId || currentUser?.id || 'TCH',
+      teacherName: currentUser?.name || 'Subject Teacher',
+      submittedAt: new Date().toISOString(),
+      records,
+      presentCount: records.filter(r => r.status === 'Present').length,
+      absentCount: records.filter(r => r.status === 'Absent').length,
+      lateCount: records.filter(r => r.status === 'Late').length,
+      excusedCount: records.filter(r => r.status === 'Excused').length,
+      totalCount: records.length,
+    };
+
+    if (onSaveAttendance) {
+      await onSaveAttendance(attendanceRecord);
+    } else {
+      try {
+        const stored = localStorage.getItem('nshs_portal_data');
+        const parsed = stored ? JSON.parse(stored) : {};
+        const existingAtt = Array.isArray(parsed.attendance) ? parsed.attendance : [];
+        parsed.attendance = [attendanceRecord, ...existingAtt];
+        localStorage.setItem('nshs_portal_data', JSON.stringify(parsed));
+      } catch (err) {
+        console.warn('Attendance local save error:', err);
+      }
+    }
+
+    setIsSavingAttendance(false);
+    setModalFeedback({
+      isOpen: true,
+      title: 'Class Attendance Register Saved!',
+      message: `Successfully recorded ${attendancePeriod} attendance for ${attendanceClass} (${attendanceSubject}) on ${attendanceDate}. ${attendanceRecord.presentCount} Present, ${attendanceRecord.absentCount} Absent, ${attendanceRecord.lateCount} Late.`,
+      type: 'success',
+    });
+  };
 
   // New Assignment Form State with Class Selector & PDF / Link upload
   const [newAsn, setNewAsn] = useState({
@@ -590,55 +718,95 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         )}
 
         {/* Tab Switcher Grid */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClassTeacher ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-2.5`}>
-          <button
-            onClick={() => setActiveTab('scores')}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
-              activeTab === 'scores'
-                ? 'bg-green-primary text-white border-green-primary shadow-md'
-                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
-            }`}
-          >
-            <Calculator className="w-4 h-4 flex-shrink-0" />
-            <span>{isClassTeacher ? '3rd Term Scores & Collation' : 'Subject Scores Entry'}</span>
-          </button>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isClassTeacher ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} gap-2.5`}>
+          {isClassTeacher ? (
+            <>
+              {/* 1. Class Teacher Scores Collation */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('scores')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'scores'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+                }`}
+              >
+                <Calculator className="w-4 h-4 flex-shrink-0" />
+                <span>Collate Results & Broadsheet</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('assignments')}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
-              activeTab === 'assignments'
-                ? 'bg-green-primary text-white border-green-primary shadow-md'
-                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
-            }`}
-          >
-            <FilePlus className="w-4 h-4 flex-shrink-0" />
-            <span>Assignments & Lecture Notes</span>
-          </button>
+              {/* 2. Class Teacher Behaviour & Conduct Evaluation */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('formclass')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'formclass'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-emerald-50/70 text-[#06452C] hover:bg-emerald-100/80 border-emerald-300'
+                }`}
+              >
+                <Award className="w-4 h-4 flex-shrink-0" />
+                <span>Evaluate Behaviour & Conduct</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 1. Subject Scores Entry */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('scores')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'scores'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+                }`}
+              >
+                <Calculator className="w-4 h-4 flex-shrink-0" />
+                <span>Subject Scores Entry</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('timetable')}
-            className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
-              activeTab === 'timetable'
-                ? 'bg-green-primary text-white border-green-primary shadow-md'
-                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
-            }`}
-          >
-            <CalendarDays className="w-4 h-4 flex-shrink-0" />
-            <span>Teaching Schedule ({teacherTimetable.length})</span>
-          </button>
+              {/* 2. Class Attendance Register */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('attendance')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'attendance'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span>Class Attendance Register</span>
+              </button>
 
-          {isClassTeacher && (
-            <button
-              onClick={() => setActiveTab('formclass')}
-              className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border ${
-                activeTab === 'formclass'
-                  ? 'bg-green-primary text-white border-green-primary shadow-md'
-                  : 'bg-emerald-50/70 text-[#06452C] hover:bg-emerald-100/80 border-emerald-300'
-              }`}
-            >
-              <Users className="w-4 h-4 flex-shrink-0" />
-              <span>Class Teacher Evaluation</span>
-            </button>
+              {/* 3. Assignments & Lecture Notes */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('assignments')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'assignments'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+                }`}
+              >
+                <FilePlus className="w-4 h-4 flex-shrink-0" />
+                <span>Assignments & Lecture Notes</span>
+              </button>
+
+              {/* 4. Teaching Timetable */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('timetable')}
+                className={`p-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 border cursor-pointer ${
+                  activeTab === 'timetable'
+                    ? 'bg-green-primary text-white border-green-primary shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+                }`}
+              >
+                <CalendarDays className="w-4 h-4 flex-shrink-0" />
+                <span>Teaching Schedule ({teacherTimetable.length})</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -1166,8 +1334,238 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         </div>
       )}
 
-      {/* ================= TAB 2: ASSIGNMENTS & STUDY MATERIALS ================= */}
-      {activeTab === 'assignments' && (
+      {/* ================= TAB 2: SUBJECT TEACHER ATTENDANCE REGISTER ================= */}
+      {activeTab === 'attendance' && !isClassTeacher && (
+        <div className="space-y-6">
+          {/* Header Controls & Filter */}
+          <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] font-black uppercase border border-emerald-200">
+                    Subject Attendance Register
+                  </span>
+                  <h3 className="font-extrabold text-base sm:text-lg text-[#1B2521]">
+                    Class & Period Attendance Tracker
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Record real-time attendance for your subject periods. Mark students Present, Absent, Late, or Excused.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleMarkAllAttendance('Present')}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-green-primary text-xs font-black border border-emerald-200 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Mark All Present</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Attendance Parameters Grid: Class, Subject, Date, Period */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Target Class *</label>
+                <select
+                  value={attendanceClass}
+                  onChange={(e) => setAttendanceClass(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-gray-200 font-extrabold text-[#06452C] bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                >
+                  {distinctClasses.map((cls) => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Subject *</label>
+                <select
+                  value={attendanceSubject}
+                  onChange={(e) => setAttendanceSubject(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-gray-200 font-extrabold text-[#06452C] bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                >
+                  {teacherDistinctSubjects.map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Date *</label>
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={(e) => setAttendanceDate(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-gray-200 font-bold text-gray-800 bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Period *</label>
+                <select
+                  value={attendancePeriod}
+                  onChange={(e) => setAttendancePeriod(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-gray-200 font-bold text-gray-800 bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                >
+                  <option value="Period 1 (8:00 - 8:45 AM)">Period 1 (8:00 - 8:45 AM)</option>
+                  <option value="Period 2 (8:45 - 9:30 AM)">Period 2 (8:45 - 9:30 AM)</option>
+                  <option value="Period 3 (9:30 - 10:15 AM)">Period 3 (9:30 - 10:15 AM)</option>
+                  <option value="Period 4 (10:45 - 11:30 AM)">Period 4 (10:45 - 11:30 AM)</option>
+                  <option value="Period 5 (11:30 - 12:15 PM)">Period 5 (11:30 - 12:15 PM)</option>
+                  <option value="Period 6 (12:15 - 1:00 PM)">Period 6 (12:15 - 1:00 PM)</option>
+                  <option value="Period 7 (1:30 - 2:15 PM)">Period 7 (1:30 - 2:15 PM)</option>
+                  <option value="Period 8 (2:15 - 3:00 PM)">Period 8 (2:15 - 3:00 PM)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Attendance Metric Badges */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-100">
+              <div className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-center">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Present</span>
+                <span className="text-base font-black text-green-primary">
+                  {attendanceStudents.filter(s => (attendanceRoster[s.id]?.status || 'Present') === 'Present').length}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-rose-50/80 border border-rose-200 text-center">
+                <span className="text-[10px] font-bold text-rose-800 uppercase block">Absent</span>
+                <span className="text-base font-black text-rose-600">
+                  {attendanceStudents.filter(s => attendanceRoster[s.id]?.status === 'Absent').length}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-center">
+                <span className="text-[10px] font-bold text-amber-800 uppercase block">Late</span>
+                <span className="text-base font-black text-amber-600">
+                  {attendanceStudents.filter(s => attendanceRoster[s.id]?.status === 'Late').length}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-blue-50/80 border border-blue-200 text-center">
+                <span className="text-[10px] font-bold text-blue-800 uppercase block">Excused</span>
+                <span className="text-base font-black text-blue-600">
+                  {attendanceStudents.filter(s => attendanceRoster[s.id]?.status === 'Excused').length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Student Roster Attendance Table */}
+          <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h4 className="font-extrabold text-sm text-[#1B2521] flex items-center gap-2">
+                <Users className="w-4 h-4 text-green-primary" />
+                <span>Class Roster — {attendanceClass} ({filteredAttendanceStudents.length} Students)</span>
+              </h4>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search student by name or ID..."
+                  value={attendanceSearchTerm}
+                  onChange={(e) => setAttendanceSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-gray-200/80">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                    <th className="p-3.5 whitespace-nowrap">#</th>
+                    <th className="p-3.5">Student Details</th>
+                    <th className="p-3.5 whitespace-nowrap">Attendance Status</th>
+                    <th className="p-3.5">Teacher Remark / Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredAttendanceStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="p-8 text-center text-gray-400 italic">
+                        No students found for this class.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAttendanceStudents.map((student, idx) => {
+                      const currentStatus = attendanceRoster[student.id]?.status || 'Present';
+                      const currentRemark = attendanceRoster[student.id]?.remarks || '';
+
+                      return (
+                        <tr key={student.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="p-3.5 text-gray-400 font-mono text-[11px]">{idx + 1}</td>
+                          <td className="p-3.5">
+                            <div className="font-extrabold text-[#1B2521] text-xs">{student.name}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{student.id} · {student.class}</div>
+                          </td>
+                          <td className="p-3.5 whitespace-nowrap">
+                            <div className="inline-flex gap-1.5">
+                              {[
+                                { key: 'Present', label: 'P - Present', activeCls: 'bg-emerald-600 text-white font-black shadow-xs', inactiveCls: 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100' },
+                                { key: 'Absent', label: 'A - Absent', activeCls: 'bg-rose-600 text-white font-black shadow-xs', inactiveCls: 'bg-rose-50 text-rose-800 hover:bg-rose-100' },
+                                { key: 'Late', label: 'L - Late', activeCls: 'bg-amber-500 text-white font-black shadow-xs', inactiveCls: 'bg-amber-50 text-amber-800 hover:bg-amber-100' },
+                                { key: 'Excused', label: 'E - Excused', activeCls: 'bg-blue-600 text-white font-black shadow-xs', inactiveCls: 'bg-blue-50 text-blue-800 hover:bg-blue-100' },
+                              ].map((option) => (
+                                <button
+                                  key={option.key}
+                                  type="button"
+                                  onClick={() => handleSetStudentAttendanceStatus(student.id, option.key)}
+                                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                                    currentStatus === option.key ? option.activeCls : option.inactiveCls
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="p-3.5">
+                            <input
+                              type="text"
+                              placeholder="Optional note (e.g. arrived 10m late)..."
+                              value={currentRemark}
+                              onChange={(e) => handleSetStudentAttendanceRemark(student.id, e.target.value)}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-[11px] font-medium bg-[#FAFCFA] focus:outline-none focus:border-green-primary"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Save Attendance Submit Button */}
+            <div className="pt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={handleSaveAttendanceRegister}
+                disabled={isSavingAttendance || filteredAttendanceStudents.length === 0}
+                className="px-6 py-3 rounded-2xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs transition-all shadow-md flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingAttendance ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Saving Register...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Save Period Attendance Register →</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 3: ASSIGNMENTS & STUDY MATERIALS (SUBJECT TEACHERS ONLY) ================= */}
+      {activeTab === 'assignments' && !isClassTeacher && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Post Homework */}
           <div className="lg:col-span-7 bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
@@ -1674,8 +2072,8 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         </div>
       )}
 
-      {/* ================= TAB 4: TEACHING SCHEDULE / TIMETABLE ================= */}
-      {activeTab === 'timetable' && (
+      {/* ================= TAB 4: TEACHING SCHEDULE / TIMETABLE (SUBJECT TEACHERS ONLY) ================= */}
+      {activeTab === 'timetable' && !isClassTeacher && (
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-100 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
             <div>

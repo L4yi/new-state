@@ -603,6 +603,28 @@ export default function Portal({ onNavigate }) {
     });
   };
 
+  const handleSaveAttendance = async (attendanceRecord) => {
+    // 1. Optimistic instant local update and localStorage sync
+    setPortalData((prev) => {
+      const existing = Array.isArray(prev.attendance) ? prev.attendance : [];
+      const updated = [attendanceRecord, ...existing.filter(a => a.id !== attendanceRecord.id)];
+      const nextState = { ...prev, attendance: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to MongoDB API if available
+    try {
+      await fetch(`${API_URL}/attendance`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(attendanceRecord),
+      });
+    } catch (err) {
+      console.warn('Attendance record saved locally in portal storage:', err);
+    }
+  };
+
   const handleAddAnnouncement = async (anc) => {
     // 1. Optimistic instant local update
     setPortalData((prev) => {
@@ -1204,6 +1226,7 @@ export default function Portal({ onNavigate }) {
                   onSaveScore={handleSaveScore}
                   onAddAssignment={handleAddAssignment}
                   onUploadMaterial={handleUploadMaterial}
+                  onSaveAttendance={handleSaveAttendance}
                 />
               )}
 

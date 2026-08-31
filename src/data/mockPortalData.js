@@ -746,5 +746,6 @@ export const demoPortalData = {
       submittedAt: '2026-08-30T09:00:00Z',
       dateFormatted: '30 Aug 2026'
     }
-  ]
+  ],
+  attendance: []
 };
