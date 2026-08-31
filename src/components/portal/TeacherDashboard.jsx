@@ -118,6 +118,24 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     }
   }, [formClassStudents, selectedFormStudent]);
 
+  // Auto-populate existing scores if student already has recorded scores in this subject
+  useEffect(() => {
+    if (selectedStudent && selectedSubject && data?.results && data.results[selectedStudent]) {
+      const existing = (data.results[selectedStudent] || []).find(
+        r => r.subject?.toLowerCase() === selectedSubject.toLowerCase()
+      );
+      if (existing) {
+        setScores({
+          ca1: existing.ca1 !== undefined ? String(existing.ca1) : '',
+          ca2: existing.ca2 !== undefined ? String(existing.ca2) : '',
+          exam: existing.exam !== undefined ? String(existing.exam) : '',
+          term1: existing.term1 !== undefined ? String(existing.term1) : '62',
+          term2: existing.term2 !== undefined ? String(existing.term2) : '66',
+        });
+      }
+    }
+  }, [selectedStudent, selectedSubject, data?.results]);
+
   // 3. STRICT SUBJECT LOCK: Determine subjects STRICTLY connected to this teacher's ID
   const studentObj = (Array.isArray(data?.students) ? data.students : []).find(s => s.id === selectedStudent);
 
@@ -826,32 +844,41 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   );
                 })()}
 
-                <button
-                  type="submit"
-                  disabled={isSavingScore || !selectedStudent}
-                  className={`w-full py-4 rounded-2xl font-black text-xs text-white transition-all shadow-md flex items-center justify-center gap-2 ${
-                    !selectedStudent || isSavingScore
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
-                      : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99] hover:shadow-lg'
-                  }`}
-                >
-                  {isSavingScore ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Collating & Saving 3rd Term Scores...</span>
-                    </>
-                  ) : !selectedStudent ? (
-                    <>
-                      <AlertTriangle className="w-4 h-4 text-gray-400" />
-                      <span>Select a Student to Save Score</span>
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Save 3rd Term Score & Collate for {studentObj?.name || 'Student'} →</span>
-                    </>
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isSavingScore || !selectedStudent}
+                    className={`w-full py-4 px-4 rounded-2xl font-black text-xs sm:text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 ${
+                      !selectedStudent || isSavingScore
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
+                        : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99] hover:shadow-lg'
+                    }`}
+                  >
+                    {isSavingScore ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white flex-shrink-0" />
+                        <span>Collating & Saving 3rd Term Scores...</span>
+                      </>
+                    ) : !selectedStudent ? (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span>Select a Student to Save Score</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-200 flex-shrink-0" />
+                        <span>Save & Collate 3rd Term Score</span>
+                        <ArrowRight className="w-4 h-4 text-white flex-shrink-0" />
+                      </>
+                    )}
+                  </button>
+
+                  {selectedStudent && studentObj && (
+                    <p className="text-[11px] text-center text-gray-500 font-medium truncate px-1">
+                      Recording score for <strong className="text-[#1B2521]">{studentObj.name}</strong> ({studentObj.class}) · <span className="text-green-primary font-bold">{selectedSubject}</span>
+                    </p>
                   )}
-                </button>
+                </div>
               </form>
             </div>
 
