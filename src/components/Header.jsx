@@ -16,6 +16,7 @@ const navItems = [
     label: 'WAEC JAMB SUCCESS',
     subItems: [
       { label: 'Overview', page: 'exam-success' },
+      { label: 'JAMB Score Predictor (Mock)', page: 'jamb-score-predictor' },
       { label: 'Candidate Login', page: 'candidate-login' },
       { label: 'Get Access Plan', page: 'buy-plan' },
     ],

@@ -83,6 +83,7 @@ const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfAdmission = lazyWithRetry(() => import('./pages/TermsOfAdmission'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const Portal = lazyWithRetry(() => import('./pages/Portal'));
+const JambPredictor = lazyWithRetry(() => import('./pages/JambPredictor'));
 const GenericPage = lazyWithRetry(() => import('./pages/GenericPage'));
 
 const pageSEO = {
@@ -157,13 +158,22 @@ const pageSEO = {
   gallery: {
     title: 'Campus Life Photo & Video Gallery | New State High School',
     description: 'Photographic highlights of cultural days, science exhibitions, sports competitions, and student milestones.'
+  },
+  'jamb-score-predictor': {
+    title: 'Free JAMB Score Predictor & 50-Question Hyper-Mock CBT | New State High School Lagos',
+    description: 'Calculate your UTME trajectory with our free 50-question 35-minute timed hyper-mock simulator across Nigerian JAMB subjects.'
+  },
+  'jamb-predictor': {
+    title: 'Free JAMB Score Predictor & 50-Question Hyper-Mock CBT | New State High School Lagos',
+    description: 'Calculate your UTME trajectory with our free 50-question 35-minute timed hyper-mock simulator across Nigerian JAMB subjects.'
   }
 };
 
 const validPages = [
   'home', 'about', 'academics', 'admission', 'contact', 'portal',
   'exam-success', 'candidate-login', 'buy-plan', 'ai-coding',
-  'teachers-apply', 'alumni', 'privacy', 'terms', 'facilities', 'news', 'gallery', '404'
+  'teachers-apply', 'alumni', 'privacy', 'terms', 'facilities', 'news', 'gallery',
+  'jamb-score-predictor', 'jamb-predictor', '404'
 ];
 
 const getPageFromUrl = () => {
@@ -218,6 +228,7 @@ export default function App() {
     if (currentPage === 'exam-success') return <ExamSuccess onNavigate={navigateTo} />;
     if (currentPage === 'candidate-login') return <CandidateLogin onNavigate={navigateTo} />;
     if (currentPage === 'buy-plan') return <BuyPlan onNavigate={navigateTo} />;
+    if (currentPage === 'jamb-score-predictor' || currentPage === 'jamb-predictor') return <JambPredictor onNavigate={navigateTo} />;
     if (currentPage === 'ai-coding') return <AiCoding onNavigate={navigateTo} />;
     if (currentPage === 'teachers-apply') return <TeachersApply onNavigate={navigateTo} />;
     if (currentPage === 'alumni') return <AlumniTestimonials onNavigate={navigateTo} />;

@@ -55,6 +55,7 @@ export default function Footer({ onNavigate }) {
               <li><button onClick={() => handleNavClick('about')} className="hover:text-green-light transition-colors">About NSHS</button></li>
               <li><button onClick={() => handleNavClick('academics')} className="hover:text-green-light transition-colors">Academics Curriculum</button></li>
               <li><button onClick={() => handleNavClick('admission')} className="hover:text-green-light transition-colors">Admission Process</button></li>
+              <li><button onClick={() => handleNavClick('jamb-score-predictor')} className="hover:text-green-light transition-colors font-bold text-amber-300">JAMB Score Predictor</button></li>
               <li><button onClick={() => handleNavClick('facilities')} className="hover:text-green-light transition-colors">Facilities & Labs</button></li>
               <li><button onClick={() => handleNavClick('gallery')} className="hover:text-green-light transition-colors">School Gallery</button></li>
             </ul>
