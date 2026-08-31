@@ -69,7 +69,6 @@ export default function Footer({ onNavigate }) {
               <li><button onClick={() => handleNavClick('contact')} className="hover:text-green-light transition-colors">Contact & Directions</button></li>
               <li><button onClick={() => handleNavClick('portal')} className="hover:text-green-light transition-colors">Student & Parent Portal</button></li>
               <li><button onClick={() => handleNavClick('exam-success')} className="hover:text-green-light transition-colors">WAEC & JAMB Success</button></li>
-              <li><button onClick={() => handleNavClick('faq')} className="hover:text-green-light transition-colors font-bold text-amber-300">FAQ & Help Center</button></li>
               <li><button onClick={() => handleNavClick('privacy')} className="hover:text-green-light transition-colors">Privacy & Data Policy</button></li>
               <li><button onClick={() => handleNavClick('terms')} className="hover:text-green-light transition-colors">Terms of Admission</button></li>
             </ul>
