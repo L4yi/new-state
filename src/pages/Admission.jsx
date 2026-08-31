@@ -287,6 +287,7 @@ export default function Admission({ onNavigate }) {
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                       >
                         <option value="">Select Class</option>
+                        <option value="Creche / Primary">Creche / Nursery / Basic 1-5</option>
                         <option value="JSS 1">JSS 1</option>
                         <option value="JSS 2">JSS 2 (Transfer)</option>
                         <option value="JSS 3">JSS 3 (Transfer)</option>
@@ -294,7 +295,6 @@ export default function Admission({ onNavigate }) {
                         <option value="SSS 1 (Commercial)">SSS 1 (Commercial Track)</option>
                         <option value="SSS 1 (Arts)">SSS 1 (Arts Track)</option>
                         <option value="SSS 2">SSS 2 (Transfer)</option>
-                        <option value="Creche / Primary">Creche / Nursery / Basic 1-5</option>
                       </select>
                     </div>
                   </div>

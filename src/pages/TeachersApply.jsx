@@ -210,7 +210,7 @@ export default function TeachersApply({ onNavigate }) {
                 <label className="block text-xs font-bold text-[#1B2521] mb-2">
                   Years of teaching experience *
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-[#FAFCFA] p-4 rounded-xl border border-gray-100">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-3 bg-[#FAFCFA] p-4 rounded-xl border border-gray-100">
                   {experienceOptions.map((exp, idx) => (
                     <label key={idx} className="flex items-center gap-2 text-xs font-medium text-[#1B2521] cursor-pointer">
                       <input
@@ -219,9 +219,9 @@ export default function TeachersApply({ onNavigate }) {
                         required
                         checked={formData.experience === exp}
                         onChange={() => setFormData({ ...formData, experience: exp })}
-                        className="w-4 h-4 text-green-primary accent-green-primary"
+                        className="w-4 h-4 text-green-primary accent-green-primary flex-shrink-0"
                       />
-                      <span>{exp}</span>
+                      <span className="whitespace-nowrap">{exp}</span>
                     </label>
                   ))}
                 </div>
@@ -241,9 +241,9 @@ export default function TeachersApply({ onNavigate }) {
                         required
                         checked={formData.hasCertificates === ans}
                         onChange={() => setFormData({ ...formData, hasCertificates: ans })}
-                        className="w-4 h-4 text-green-primary accent-green-primary"
+                        className="w-4 h-4 text-green-primary accent-green-primary flex-shrink-0"
                       />
-                      <span>{ans}</span>
+                      <span className="whitespace-nowrap">{ans}</span>
                     </label>
                   ))}
                 </div>
@@ -254,7 +254,7 @@ export default function TeachersApply({ onNavigate }) {
                 <label className="block text-xs font-bold text-[#1B2521] mb-2">
                   When can you start? *
                 </label>
-                <div className="grid grid-cols-3 gap-2 bg-[#FAFCFA] p-4 rounded-xl border border-gray-100">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 bg-[#FAFCFA] p-4 rounded-xl border border-gray-100">
                   {startDateOptions.map((st, idx) => (
                     <label key={idx} className="flex items-center gap-2 text-xs font-medium text-[#1B2521] cursor-pointer">
                       <input
@@ -263,9 +263,9 @@ export default function TeachersApply({ onNavigate }) {
                         required
                         checked={formData.startDate === st}
                         onChange={() => setFormData({ ...formData, startDate: st })}
-                        className="w-4 h-4 text-green-primary accent-green-primary"
+                        className="w-4 h-4 text-green-primary accent-green-primary flex-shrink-0"
                       />
-                      <span>{st}</span>
+                      <span className="whitespace-nowrap">{st}</span>
                     </label>
                   ))}
                 </div>
