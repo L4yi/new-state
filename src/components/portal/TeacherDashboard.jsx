@@ -131,8 +131,37 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     cooperation: 5,
   });
   const [formSavedMsg, setFormSavedMsg] = useState('');
+  const [scoreTabMode, setScoreTabMode] = useState('entry'); // 'entry' | 'saved'
+  const [savedScoresSearch, setSavedScoresSearch] = useState('');
 
-  // Sync selectedStudent when searchableStudents changes
+  // Compute live list of recorded scores for active class and subject
+  const recordedClassScores = useMemo(() => {
+    const resultsMap = data?.results || {};
+    return classFilteredStudents.map(student => {
+      const studentResults = resultsMap[student.id] || [];
+      const match = selectedSubject
+        ? studentResults.find(r => r.subject?.toLowerCase() === selectedSubject.toLowerCase())
+        : studentResults[0];
+
+      return {
+        student,
+        score: match || null,
+        hasScore: !!match,
+      };
+    });
+  }, [classFilteredStudents, data?.results, selectedSubject]);
+
+  const gradedCount = recordedClassScores.filter(s => s.hasScore).length;
+
+  const filteredSavedScores = useMemo(() => {
+    if (!savedScoresSearch.trim()) return recordedClassScores;
+    const q = savedScoresSearch.trim().toLowerCase();
+    return recordedClassScores.filter(item =>
+      item.student.name?.toLowerCase().includes(q) ||
+      item.student.id?.toLowerCase().includes(q) ||
+      item.student.class?.toLowerCase().includes(q)
+    );
+  }, [recordedClassScores, savedScoresSearch]);
   useEffect(() => {
     if (searchableStudents.length > 0) {
       if (!searchableStudents.some(s => s.id === selectedStudent)) {
@@ -690,8 +719,44 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             </div>
           )}
 
+          {/* Scores Sub-View Mode Switcher: Form vs Saved Class Scores */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:p-3 rounded-2xl border border-gray-100 shadow-xs">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setScoreTabMode('entry')}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  scoreTabMode === 'entry'
+                    ? 'bg-[#06452C] text-white shadow-md'
+                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 border border-gray-200/80'
+                }`}
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Score Entry Form</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScoreTabMode('saved')}
+                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  scoreTabMode === 'saved'
+                    ? 'bg-[#06452C] text-white shadow-md'
+                    : 'bg-emerald-50 text-[#06452C] hover:bg-emerald-100 border border-emerald-300'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Saved Class Scores ({gradedCount}/{classFilteredStudents.length})</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200/60">
+              <span>Active Subject:</span>
+              <span className="text-[#06452C] font-extrabold">{selectedSubject || 'None'}</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-7 bg-white p-4 sm:p-7 rounded-3xl border border-gray-100 shadow-md space-y-5">
+            <div className={`${scoreTabMode === 'saved' ? 'hidden' : 'lg:col-span-7'} bg-white p-4 sm:p-7 rounded-3xl border border-gray-100 shadow-md space-y-5`}>
               <div className="border-b border-gray-100 pb-3.5 flex justify-between items-start">
                 <div>
                   <h3 className="font-extrabold text-lg sm:text-xl text-[#1B2521] tracking-tight">Continuous Assessment & Exam Score Entry</h3>
@@ -970,31 +1035,131 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               </form>
             </div>
 
-            <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-              <div className="border-b border-gray-100 pb-3">
-                <h3 className="font-extrabold text-lg text-[#1B2521]">Teacher ID Subject Allocation</h3>
-                <p className="text-xs text-gray-500">Subjects registered to your teacher account</p>
+            {/* Right Column / Live Saved Class Scores & Results Register */}
+            <div className={`${scoreTabMode === 'entry' ? 'hidden lg:block lg:col-span-5' : 'lg:col-span-12'} bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-md space-y-4`}>
+              <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <h3 className="font-extrabold text-base sm:text-lg text-[#1B2521] flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-green-primary" />
+                    <span>Saved Scores: {selectedSubject || 'Subject'}</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 font-medium">
+                    {selectedClassFilter === 'All' ? 'All Assigned Classes' : formatSeniorClass(selectedClassFilter)}
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded-xl bg-emerald-50 text-[#06452C] font-black text-xs border border-emerald-200 shadow-2xs">
+                  {gradedCount} of {classFilteredStudents.length} Recorded ({Math.round((gradedCount / Math.max(1, classFilteredStudents.length)) * 100)}%)
+                </span>
               </div>
 
-              <div className="space-y-2.5 text-xs">
-                {teacherSubjectsTaught.map((st, i) => (
-                  <div key={i} className="flex justify-between items-center p-3 rounded-xl bg-[#FAFCFA] border border-gray-200">
-                    <div>
-                      <span className="font-bold text-[#1B2521] block">{st.subjectName}</span>
-                      <span className="text-[10px] text-gray-400">{st.className}</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-[#06452C] font-mono text-[10px] font-black border border-emerald-200">
-                      Authorised
-                    </span>
+              {/* Quick Search within saved scores */}
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Filter saved scores by student name or admission ID..."
+                  value={savedScoresSearch}
+                  onChange={(e) => setSavedScoresSearch(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
+                />
+                {savedScoresSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setSavedScoresSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Live Saved Score Cards / List */}
+              <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
+                {filteredSavedScores.length === 0 ? (
+                  <div className="p-8 text-center text-gray-400 text-xs bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
+                    <AlertTriangle className="w-6 h-6 text-gray-400 mx-auto" />
+                    <p className="font-bold">No students found matching "{savedScoresSearch}"</p>
                   </div>
-                ))}
+                ) : (
+                  filteredSavedScores.map(({ student, score, hasScore }) => {
+                    const isCurrentlySelected = selectedStudent === student.id;
+                    return (
+                      <div
+                        key={student.id}
+                        className={`p-3.5 rounded-2xl border transition-all ${
+                          isCurrentlySelected
+                            ? 'bg-emerald-50/90 border-emerald-300 ring-2 ring-emerald-400/30 shadow-xs'
+                            : 'bg-[#FAFCFA] hover:bg-white hover:shadow-xs border-gray-200/80'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-xs sm:text-sm text-[#1B2521] truncate">
+                              {student.name}
+                            </h4>
+                            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium">
+                              {formatSeniorClass(student.class)} · <span className="font-mono">{student.id}</span>
+                            </p>
+                          </div>
+
+                          {hasScore ? (
+                            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-[#06452C] font-black text-[10px] sm:text-xs border border-emerald-300 flex-shrink-0 shadow-2xs">
+                              {score.grade || 'A1'} · {score.total || ((parseInt(score.ca1) || 0) + (parseInt(score.ca2) || 0) + (parseInt(score.exam) || 0))}/100
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 font-bold text-[10px] border border-gray-200 flex-shrink-0">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+
+                        {hasScore ? (
+                          <div className="mt-2.5 pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <div className="text-gray-600 flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold">
+                              <span>CA1: <strong className="text-gray-900">{score.ca1 || 0}</strong>/20</span>
+                              <span>CA2: <strong className="text-gray-900">{score.ca2 || 0}</strong>/20</span>
+                              <span>Exam: <strong className="text-green-primary">{score.exam || 0}</strong>/60</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStudent(student.id);
+                                setScoreTabMode('entry');
+                                setScores({
+                                  ca1: score.ca1 !== undefined ? String(score.ca1) : '',
+                                  ca2: score.ca2 !== undefined ? String(score.ca2) : '',
+                                  exam: score.exam !== undefined ? String(score.exam) : '',
+                                });
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-black text-[10px] transition-all cursor-pointer shadow-2xs"
+                            >
+                              Edit Score
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400 italic">No score submitted yet</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedStudent(student.id);
+                                setScoreTabMode('entry');
+                              }}
+                              className="px-3 py-1 rounded-lg bg-green-primary text-white text-[10px] font-bold hover:bg-green-dark transition-all cursor-pointer shadow-2xs"
+                            >
+                              Enter Score
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
-              <div className="pt-2 border-t border-gray-100 space-y-1.5 text-[11px] text-gray-500">
-                <div className="font-bold text-gray-700">Security & Integrity Rule:</div>
-                <p>
-                  To prevent unauthorized score tampering, teachers can only input grades for the exact subjects linked to their ID. Other subject scores are managed by their respective teachers.
-                </p>
+              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+                <span className="font-bold text-gray-700">Live Auto-Sync Active</span>
+                <span className="text-emerald-700 font-mono text-[10px]">Instant Broadsheet Feed</span>
               </div>
             </div>
           </div>
