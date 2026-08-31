@@ -2074,7 +2074,7 @@ export default function AdminDashboard({
                 </span>
               </div>
               <p className="text-xs text-gray-500">
-                Designate Subject Teachers and assign Form Masters (Class Teachers) to respective class arms.
+                Designate Subject Teachers and assign Class Teachers to respective class arms.
               </p>
             </div>
 
@@ -2115,7 +2115,7 @@ export default function AdminDashboard({
                   <th className="py-3.5 px-4">Teacher Full Name</th>
                   <th className="py-3.5 px-4 whitespace-nowrap">Department</th>
                   <th className="py-3.5 px-4">Subjects Taught</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Class Teacher Assignment (Form Master)</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Class Teacher Assignment</th>
                   <th className="py-3.5 px-4 text-right whitespace-nowrap">Access Status</th>
                 </tr>
               </thead>
@@ -2257,7 +2257,7 @@ export default function AdminDashboard({
                   </div>
 
                   <div>
-                    <label className="block font-bold text-gray-700 mb-1">Assign as Class Teacher (Form Master)?</label>
+                    <label className="block font-bold text-gray-700 mb-1">Assign as Class Teacher?</label>
                     <select
                       value={newStaffForm.classAssigned}
                       onChange={(e) => setNewStaffForm({ ...newStaffForm, classAssigned: e.target.value })}

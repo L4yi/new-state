@@ -58,10 +58,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     if (!currentUser) return allStudents;
 
     return allStudents.filter(student => {
-      // Check if teacher teaches any subject in this student's class, or is their form master
-      const isFormMaster = currentUser.classAssigned && isClassMatch(student.class, currentUser.classAssigned);
+      // Check if teacher teaches any subject in this student's class, or is their class teacher
+      const isClassTeacher = currentUser.classAssigned && isClassMatch(student.class, currentUser.classAssigned);
       const teachesInClass = teacherSubjectsTaught.some(s => isClassMatch(student.class, s.className));
-      return isFormMaster || teachesInClass;
+      return isClassTeacher || teachesInClass;
     });
   }, [data?.students, currentUser, teacherSubjectsTaught]);
 
@@ -71,7 +71,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     return allowedStudents.filter(s => isClassMatch(s.class, selectedClassFilter));
   }, [allowedStudents, selectedClassFilter]);
 
-  // Form Class specific students
+  // Class specific students for assigned class
   const formClassStudents = useMemo(() => {
     if (!currentUser?.classAssigned) return [];
     return (Array.isArray(data?.students) ? data.students : []).filter(s =>
@@ -86,7 +86,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   const [savedMsg, setSavedMsg] = useState('');
   const [isSavingScore, setIsSavingScore] = useState(false);
 
-  // Form Master remarks & ratings state
+  // Class Teacher remarks & ratings state
   const [selectedFormStudent, setSelectedFormStudent] = useState('');
   const [formTeacherRemark, setFormTeacherRemark] = useState('Outstanding academic performance; keep up the diligence.');
   const [affectiveScores, setAffectiveScores] = useState({
@@ -385,7 +385,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         localStorage.setItem('nshs_portal_data', JSON.stringify(parsed));
       }
     } catch (err) {}
-    setFormSavedMsg(`Form Master evaluation and terminal remark saved for ${student?.name || selectedFormStudent}!`);
+    setFormSavedMsg(`Class Teacher evaluation and terminal remark saved for ${student?.name || selectedFormStudent}!`);
     setTimeout(() => setFormSavedMsg(''), 4500);
   };
 
@@ -427,12 +427,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               {isClassTeacher ? (
                 <span className="px-3 py-1 rounded-lg bg-[#06452C] text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
                   <Users className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Class Teacher (Form Master): {currentUser.classAssigned}</span>
+                  <span>Class Teacher: {currentUser.classAssigned}</span>
                 </span>
               ) : (
                 <span className="px-3 py-1 rounded-lg bg-emerald-50 text-[#06452C] border border-emerald-300 text-xs font-extrabold flex items-center gap-1.5 shadow-xs">
                   <BookOpen className="w-3.5 h-3.5 text-[#06452C]" />
-                  <span>Subject Specialist Teacher (Non-Form Master)</span>
+                  <span>Subject Teacher (Specialist)</span>
                 </span>
               )}
 
@@ -447,23 +447,23 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
           <div className="flex items-center gap-2 bg-emerald-50/80 px-3.5 py-2 rounded-xl border border-emerald-200 text-xs font-bold text-[#06452C] flex-shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-            <span>{isClassTeacher ? `Form Class: ${currentUser.classAssigned}` : 'Subject Teacher Workspace'}</span>
+            <span>{isClassTeacher ? `Assigned Class: ${currentUser.classAssigned}` : 'Subject Teacher Workspace'}</span>
           </div>
         </div>
 
         {/* Role-Specific Workspace Notice */}
         {isClassTeacher ? (
-          <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-xs text-[#06452C] flex items-center gap-2 font-medium">
+          <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs text-[#06452C] flex items-center gap-2 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
             <span>
-              <strong>Form Master Clearance:</strong> You have full administrative rights for <strong>{currentUser.classAssigned}</strong> character evaluation, termly remarks, and promotional broadsheets.
+              <strong>Class Teacher Clearance:</strong> You have full administrative rights for <strong>{currentUser.classAssigned}</strong> conduct evaluation, terminal remarks, and promotional broadsheets.
             </span>
           </div>
         ) : (
-          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 flex items-center gap-2 font-medium">
+          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700 flex items-center gap-2 font-medium">
             <BookOpen className="w-4 h-4 text-emerald-700 flex-shrink-0" />
             <span>
-              <strong>Subject Specialist Mode:</strong> Your grading workspace is strictly focused on Continuous Assessment & Exam collation for your assigned subjects (<strong>{teacherDistinctSubjects.join(', ')}</strong>).
+              <strong>Subject Teacher Mode:</strong> Your grading workspace is strictly focused on Continuous Assessment & Exam score entry for your assigned subjects (<strong>{teacherDistinctSubjects.join(', ')}</strong>). Class broadsheet collation and terminal remarks are managed by the respective Class Teacher.
             </span>
           </div>
         )}
@@ -516,7 +516,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               }`}
             >
               <Users className="w-4 h-4 flex-shrink-0" />
-              <span>Form Master Evaluation</span>
+              <span>Class Teacher Evaluation</span>
             </button>
           )}
         </div>
@@ -524,56 +524,61 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
       {/* ================= TAB 1: SUBJECT SCORE ENTRY ================= */}
       {activeTab === 'scores' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           
           {/* ================= INTERACTIVE CLASS TOGGLE / WORKSPACE SWITCHER ================= */}
           {distinctClasses.length > 0 && (
-            <div className="p-4 rounded-2xl bg-emerald-950 text-white border border-emerald-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-emerald-400" />
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                  <Layers className="w-5 h-5 text-emerald-300" />
+                </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block">
-                    Class Workspace Toggle
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
+                    Class Workspace Filter
                   </span>
-                  <p className="text-xs text-emerald-100">
-                    Switch between your classes to filter students and lock score entry:
+                  <p className="text-xs text-emerald-100 font-medium">
+                    Filter student roster and lock score entry by class:
                   </p>
                 </div>
               </div>
 
               {/* Class Toggle Buttons */}
-              <div className="flex flex-wrap gap-1.5 p-1 bg-emerald-900/90 rounded-xl border border-emerald-700/50 w-full sm:w-auto">
+              <div className="flex flex-wrap gap-1.5 p-1.5 bg-emerald-900/80 rounded-2xl border border-emerald-700/50 w-full sm:w-auto shadow-inner">
                 <button
                   type="button"
                   onClick={() => setSelectedClassFilter('All')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                     selectedClassFilter === 'All'
-                      ? 'bg-emerald-400 text-emerald-950 shadow-md'
-                      : 'text-emerald-200 hover:text-white hover:bg-emerald-800/50'
+                      ? 'bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
+                      : 'text-emerald-200 hover:text-white hover:bg-emerald-800/60'
                   }`}
                 >
-                  All Classes ({allowedStudents.length})
+                  <span>All Classes</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                    selectedClassFilter === 'All' ? 'bg-emerald-950/30 text-emerald-950' : 'bg-emerald-800 text-emerald-300'
+                  }`}>
+                    {allowedStudents.length}
+                  </span>
                 </button>
 
                 {distinctClasses.map((cls) => {
-                  const countInClass = allowedStudents.filter(s =>
-                    s.class === cls || s.class?.includes(cls) || cls.includes(s.class)
-                  ).length;
+                  const countInClass = allowedStudents.filter(s => isClassMatch(s.class, cls)).length;
                   return (
                     <button
                       key={cls}
                       type="button"
                       onClick={() => setSelectedClassFilter(cls)}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                         selectedClassFilter === cls
-                          ? 'bg-emerald-400 text-emerald-950 shadow-md'
-                          : 'text-emerald-200 hover:text-white hover:bg-emerald-800/50'
+                          ? 'bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
+                          : 'text-emerald-200 hover:text-white hover:bg-emerald-800/60'
                       }`}
                     >
-                      <BookOpen className="w-3 h-3" />
+                      <BookOpen className="w-3.5 h-3.5" />
                       <span>{cls}</span>
-                      <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                        selectedClassFilter === cls ? 'bg-emerald-900/40 text-emerald-950 font-black' : 'bg-emerald-800 text-emerald-300'
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                        selectedClassFilter === cls ? 'bg-emerald-950/30 text-emerald-950' : 'bg-emerald-800 text-emerald-300'
                       }`}>
                         {countInClass}
                       </span>
@@ -585,27 +590,32 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-7 bg-white p-3.5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-              <div className="border-b border-gray-100 pb-3">
-                <h3 className="font-extrabold text-lg text-[#1B2521]">Continuous Assessment & Exam Score Entry</h3>
-                <p className="text-xs text-gray-500">
-                  Subject dropdown is strictly locked to subjects linked to your Teacher ID.
-                </p>
+            <div className="lg:col-span-7 bg-white p-4 sm:p-7 rounded-3xl border border-gray-100 shadow-md space-y-5">
+              <div className="border-b border-gray-100 pb-3.5 flex justify-between items-start">
+                <div>
+                  <h3 className="font-extrabold text-lg sm:text-xl text-[#1B2521] tracking-tight">Continuous Assessment & Exam Score Entry</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Subject dropdown is strictly locked to subjects linked to your Teacher ID.
+                  </p>
+                </div>
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-[#06452C] font-black text-[10px] border border-emerald-200/80 uppercase tracking-wider hidden sm:inline-block">
+                  Verified Engine
+                </span>
               </div>
 
               {savedMsg && (
-                <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-primary" />
+                <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2 shadow-xs animate-fadeIn">
+                  <CheckCircle2 className="w-4 h-4 text-green-primary flex-shrink-0" />
                   <span>{savedMsg}</span>
                 </div>
               )}
 
               {classFilteredStudents.length === 0 && (
-                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-2.5 shadow-xs">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-3 shadow-xs">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-black block text-amber-950 mb-0.5">No Registered Students in Class</span>
-                    <p className="text-amber-800 leading-relaxed">
+                    <span className="font-black block text-amber-950 text-xs mb-0.5">No Registered Students in Class</span>
+                    <p className="text-amber-800 leading-relaxed text-[11px]">
                       There are currently no students registered in {selectedClassFilter === 'All' ? 'any of your assigned classes' : selectedClassFilter}. Please switch to another class above, or register students via the school administration.
                     </p>
                   </div>
@@ -614,9 +624,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
               <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
                 <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="font-bold text-gray-700">Select Student</label>
-                    <span className="text-[10px] text-gray-400 font-medium">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="font-extrabold text-gray-800 text-xs flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Select Student</span>
+                    </label>
+                    <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-md">
                       Showing {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
                     </span>
                   </div>
@@ -624,7 +637,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                     value={selectedStudent}
                     onChange={(e) => setSelectedStudent(e.target.value)}
                     disabled={classFilteredStudents.length === 0}
-                    className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="w-full p-3.5 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-bold text-[#1B2521] transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
                     {classFilteredStudents.length === 0 ? (
                       <option value="">-- No registered students in this class --</option>
@@ -643,8 +656,11 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
 
                 {/* STRICT SUBJECT DROPDOWN (ONLY TEACHER'S ASSIGNED SUBJECTS) */}
                 <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="font-bold text-gray-700">Select Subject (Locked to Your Assigned Subjects)</label>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="font-extrabold text-gray-800 text-xs flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Select Subject (Locked to Assigned Subjects)</span>
+                    </label>
                     <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       ✓ ID Connected Only
                     </span>
@@ -652,7 +668,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   <select
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full p-3 rounded-xl border-2 border-emerald-300 text-sm focus:outline-none focus:border-green-primary bg-emerald-50/40 font-bold text-[#06452C]"
+                    className="w-full p-3.5 rounded-2xl border-2 border-emerald-300 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/40 font-bold text-[#06452C] transition-all"
                   >
                     {availableSubjects.map((sub) => (
                       <option key={sub} value={sub}>
@@ -662,71 +678,91 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   </select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">3rd CA 1 (20)</label>
+                {/* 3-Part Continuous Assessment Inputs */}
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 pt-1">
+                  <div className="p-2.5 rounded-2xl bg-[#FAFCFA] border border-gray-200/80 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="font-extrabold text-gray-700 text-[11px]">3rd CA 1</label>
+                      <span className="text-[9px] text-gray-400 font-bold">Max 20</span>
+                    </div>
                     <input
                       type="number"
                       max="20"
                       min="0"
                       required
+                      placeholder="0-20"
                       value={scores.ca1}
                       onChange={(e) => setScores({ ...scores, ca1: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-center"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-center text-[#1B2521]"
                     />
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">3rd CA 2 (20)</label>
+                  <div className="p-2.5 rounded-2xl bg-[#FAFCFA] border border-gray-200/80 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="font-extrabold text-gray-700 text-[11px]">3rd CA 2</label>
+                      <span className="text-[9px] text-gray-400 font-bold">Max 20</span>
+                    </div>
                     <input
                       type="number"
                       max="20"
                       min="0"
                       required
+                      placeholder="0-20"
                       value={scores.ca2}
                       onChange={(e) => setScores({ ...scores, ca2: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-center"
+                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-center text-[#1B2521]"
                     />
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">3rd Exam (60)</label>
+                  <div className="p-2.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="font-extrabold text-green-primary text-[11px]">3rd Exam</label>
+                      <span className="text-[9px] text-emerald-600 font-bold">Max 60</span>
+                    </div>
                     <input
                       type="number"
                       max="60"
                       min="0"
                       required
+                      placeholder="0-60"
                       value={scores.exam}
                       onChange={(e) => setScores({ ...scores, exam: e.target.value })}
-                      className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-green-primary text-center"
+                      className="w-full p-2.5 rounded-xl border border-emerald-300 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-green-primary text-center"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">1st Term Total (100)</label>
-                    <input
-                      type="number"
-                      max="100"
-                      min="0"
-                      value={scores.term1 !== undefined ? scores.term1 : '62'}
-                      placeholder="e.g. 62"
-                      onChange={(e) => setScores({ ...scores, term1: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-center"
-                    />
+                {/* 1st & 2nd Term Carryover Inputs */}
+                <div className="p-3.5 rounded-2xl bg-gray-50/80 border border-gray-200/80 space-y-2">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    <span>Termly Cumulative Carryover Scores</span>
+                    <span className="text-emerald-700 font-extrabold">Annual Synthesis</span>
                   </div>
-                  <div>
-                    <label className="block font-bold text-gray-700 mb-1 text-[11px]">2nd Term Total (100)</label>
-                    <input
-                      type="number"
-                      max="100"
-                      min="0"
-                      value={scores.term2 !== undefined ? scores.term2 : '66'}
-                      placeholder="e.g. 66"
-                      onChange={(e) => setScores({ ...scores, term2: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-center"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1 text-[11px]">1st Term Total (100)</label>
+                      <input
+                        type="number"
+                        max="100"
+                        min="0"
+                        value={scores.term1 !== undefined ? scores.term1 : '62'}
+                        placeholder="e.g. 62"
+                        onChange={(e) => setScores({ ...scores, term1: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-bold text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-gray-700 mb-1 text-[11px]">2nd Term Total (100)</label>
+                      <input
+                        type="number"
+                        max="100"
+                        min="0"
+                        value={scores.term2 !== undefined ? scores.term2 : '66'}
+                        placeholder="e.g. 66"
+                        onChange={(e) => setScores({ ...scores, term2: e.target.value })}
+                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-bold text-center"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -739,33 +775,52 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   const avg = (agg / 3).toFixed(2);
                   const gr = calculateGrade(avg);
                   const verdict = avg >= 50 ? 'Promoted' : avg >= 45 ? 'Promoted on Trial' : 'To Repeat';
+                  
+                  // Color-coded WAEC grade badge styling
+                  const gradeBadgeClass = gr === 'A1' 
+                    ? 'bg-emerald-400 text-emerald-950 font-black ring-2 ring-emerald-300/50'
+                    : gr === 'B2' || gr === 'B3'
+                    ? 'bg-emerald-500 text-white font-black'
+                    : gr.startsWith('C')
+                    ? 'bg-sky-500 text-white font-black'
+                    : gr.startsWith('D') || gr.startsWith('E')
+                    ? 'bg-amber-500 text-amber-950 font-black'
+                    : 'bg-rose-500 text-white font-black';
+
+                  const verdictClass = avg >= 50 
+                    ? 'text-emerald-300 font-black' 
+                    : avg >= 45 
+                    ? 'text-amber-300 font-black' 
+                    : 'text-rose-300 font-black';
+
                   return (
-                    <div className="p-3.5 rounded-xl bg-[#06452C] text-white space-y-2 text-xs shadow-sm">
-                      <div className="flex justify-between items-center border-b border-emerald-800 pb-2">
-                        <span className="font-black text-emerald-300 uppercase tracking-wider text-[10px]">
-                          3rd Term Promotional Collation
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-[#06452C] to-[#0A5637] text-white space-y-3 text-xs shadow-md border border-emerald-700/60">
+                      <div className="flex justify-between items-center border-b border-emerald-800/80 pb-2.5">
+                        <span className="font-black text-emerald-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+                          <span>3rd Term Promotional Collation</span>
                         </span>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500 text-white font-black text-[10px]">
+                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] shadow-xs ${gradeBadgeClass}`}>
                           WAEC {gr}
                         </span>
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
-                        <div className="p-1.5 rounded bg-emerald-900/60 border border-emerald-700/50">
-                          <span className="text-emerald-300 block text-[9px]">3rd Term Score</span>
-                          <span className="font-black text-sm">{t3}/100</span>
+                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
+                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">3rd Term Score</span>
+                          <span className="font-black text-base mt-0.5 block">{t3}/100</span>
                         </div>
-                        <div className="p-1.5 rounded bg-emerald-900/60 border border-emerald-700/50">
-                          <span className="text-emerald-300 block text-[9px]">Cumulative (300)</span>
-                          <span className="font-black text-sm">{agg}/300</span>
+                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
+                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">Cumulative</span>
+                          <span className="font-black text-base mt-0.5 block">{agg}/300</span>
                         </div>
-                        <div className="p-1.5 rounded bg-emerald-900/60 border border-emerald-700/50">
-                          <span className="text-emerald-300 block text-[9px]">Annual Average</span>
-                          <span className="font-black text-sm text-[#FDE68A]">{avg}%</span>
+                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
+                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">Annual Average</span>
+                          <span className="font-black text-base text-[#FDE68A] mt-0.5 block">{avg}%</span>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-emerald-200 pt-1">
-                        <span>Status: <strong className={avg >= 50 ? 'text-emerald-300' : 'text-amber-300'}>{verdict}</strong></span>
-                        <span className="text-[9px] text-emerald-300/80">3-Term Avg Formula Active</span>
+                      <div className="flex justify-between items-center text-[10px] text-emerald-200/90 pt-1 border-t border-emerald-800/40">
+                        <span>Collation Status: <strong className={verdictClass}>{verdict}</strong></span>
+                        <span className="text-[9px] text-emerald-300/70 font-mono">3-Term Formula Active</span>
                       </div>
                     </div>
                   );
@@ -774,10 +829,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 <button
                   type="submit"
                   disabled={isSavingScore || !selectedStudent}
-                  className={`w-full py-3.5 rounded-xl font-black text-xs text-white transition-all shadow-md flex items-center justify-center gap-2 ${
+                  className={`w-full py-4 rounded-2xl font-black text-xs text-white transition-all shadow-md flex items-center justify-center gap-2 ${
                     !selectedStudent || isSavingScore
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
-                      : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99]'
+                      : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99] hover:shadow-lg'
                   }`}
                 >
                   {isSavingScore ? (
@@ -1134,7 +1189,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         </div>
       )}
 
-      {/* ================= TAB 3: CLASS TEACHER / FORM MASTER MASTER DOSSIER ================= */}
+      {/* ================= TAB 3: CLASS TEACHER MASTER DOSSIER & BROADSHEET ================= */}
       {activeTab === 'formclass' && isClassTeacher && (
         <div className="space-y-6">
           {/* Class Overview Header */}
@@ -1142,7 +1197,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full bg-[#06452C] text-white text-[10px] font-black uppercase">
-                  Form Master Portal
+                  Class Teacher Portal
                 </span>
                 <h3 className="font-extrabold text-lg text-[#1B2521]">{currentUser.classAssigned} Broadsheet & Assessment</h3>
               </div>
@@ -1152,7 +1207,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             </div>
           </div>
 
-          {/* Form Master Broadsheet Summary */}
+          {/* Class Teacher Broadsheet Summary */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h4 className="font-extrabold text-sm text-[#06452C] uppercase tracking-wider flex items-center gap-2">
               <Award className="w-4 h-4" />
@@ -1227,12 +1282,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
             </div>
           </div>
 
-          {/* Form Teacher Remark & Affective Traits Rating Box */}
+          {/* Class Teacher Remark & Affective Traits Rating Box */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <div className="border-b border-gray-100 pb-3">
               <h4 className="font-extrabold text-sm text-[#06452C] uppercase tracking-wider flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Form Master's Terminal Report Sign-Off & Behavioral Ratings</span>
+                <span>Class Teacher Terminal Report Sign-Off & Behavioral Ratings</span>
               </h4>
               <p className="text-xs text-gray-500">
                 Evaluating: <strong className="text-[#1B2521]">{formClassStudents.find(s => s.id === selectedFormStudent)?.name || selectedFormStudent}</strong>
@@ -1272,10 +1327,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 </div>
               </div>
 
-              {/* Form Teacher Remark */}
+              {/* Class Teacher Remark */}
               <div>
                 <label className="block font-bold text-gray-700 mb-1">
-                  Official Form Teacher's Terminal Remark (Appears on Student Report Sheet)
+                  Official Class Teacher's Terminal Remark (Appears on Student Report Sheet)
                 </label>
                 <textarea
                   rows="3"
@@ -1312,7 +1367,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   }`}
                 >
                   <Check className="w-4 h-4" />
-                  <span>Save Form Master's Remark & Behavioral Ratings →</span>
+                  <span>Save Class Teacher's Remark & Behavioral Ratings →</span>
                 </button>
                 <button
                   type="button"

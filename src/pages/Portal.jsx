@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.30.v10_clean_auth';
+const DATA_VERSION = 'v2026.08.31.v11_clean_roles';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -199,15 +199,16 @@ export default function Portal({ onNavigate }) {
         localStorage.setItem('nshs_current_student_id', demoStd.id);
         localStorage.setItem('nshs_current_user', JSON.stringify(demoStd));
       } else if (effectiveRole === 'teacher') {
-        const demoTeacher = demoPortalData.staff[0];
+        const isSubj = teacherAssignment === 'subject_teacher';
+        const demoTeacher = isSubj ? demoPortalData.staff[1] : demoPortalData.staff[0];
         setCurrentUser(demoTeacher);
         localStorage.setItem('nshs_current_user', JSON.stringify(demoTeacher));
       } else if (effectiveRole === 'bursar') {
-        const demoBursar = demoPortalData.staff[1];
+        const demoBursar = demoPortalData.staff[2];
         setCurrentUser(demoBursar);
         localStorage.setItem('nshs_current_user', JSON.stringify(demoBursar));
       } else {
-        const demoAdmin = demoPortalData.staff[2];
+        const demoAdmin = demoPortalData.staff[3];
         setCurrentUser(demoAdmin);
         localStorage.setItem('nshs_current_user', JSON.stringify(demoAdmin));
       }
@@ -802,9 +803,9 @@ export default function Portal({ onNavigate }) {
       badge: 'Teacher / Staff',
     },
     class_teacher: {
-      title: 'Class Teacher (Form Master) Login',
+      title: 'Class Teacher Portal Login',
       placeholder: 'Teacher ID or Email address',
-      badge: 'Form Master',
+      badge: 'Class Teacher',
     },
     subject_teacher: {
       title: 'Subject Teacher Portal Login',

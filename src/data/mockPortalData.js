@@ -95,7 +95,7 @@ export const initialPortalData = {
     {
       name: 'Mr. Babatunde Ogunlesi',
       staffId: 'TCH/PHYS/042',
-      role: 'Senior Science Master & Form Master',
+      role: 'Senior Science Master & Class Teacher',
       department: 'Physical & Applied Sciences',
       email: 'babatunde.ogunlesi@newstateschools.org',
       password: '1234',
@@ -287,9 +287,9 @@ export const demoPortalData = {
   ],
   staff: [
     {
-      name: 'Mr. Babatunde Ogunlesi (Demo Teacher)',
-      staffId: 'Test',
-      role: 'Senior Science Master & Form Master',
+      name: 'Mr. Babatunde Ogunlesi (Demo Class Teacher)',
+      staffId: 'Test-Class',
+      role: 'Senior Science Master & Class Teacher',
       department: 'Physical & Applied Sciences',
       email: 'babatunde.ogunlesi@newstateschools.org',
       password: '1234',
@@ -302,8 +302,22 @@ export const demoPortalData = {
       ]
     },
     {
+      name: 'Mrs. Folashade Adeleke (Demo Subject Teacher)',
+      staffId: 'Test-Subj',
+      role: 'Language & Humanities Lead · Subject Teacher',
+      department: 'Languages & Arts',
+      email: 'folashade.adeleke@newstateschools.org',
+      password: '1234',
+      isClassTeacher: false,
+      classAssigned: null,
+      subjectsTaught: [
+        { subjectName: 'English Language', className: 'SSS 3A' },
+        { subjectName: 'Literature in English', className: 'SSS 3A' }
+      ]
+    },
+    {
       name: 'Mrs. Folashade Adebayo (Demo Bursar)',
-      staffId: 'Test',
+      staffId: 'Test-Bursar',
       role: 'Bursar & Head of Finance',
       department: 'Bursary & Accounts',
       email: 'bursar@newstateschools.org',
@@ -314,7 +328,7 @@ export const demoPortalData = {
     },
     {
       name: 'Dr. O. A. Adeleke (Demo Principal)',
-      staffId: 'Test',
+      staffId: 'Test-Admin',
       role: 'Principal & Head of School',
       department: 'School Administration',
       email: 'admin@newstateschools.org',
