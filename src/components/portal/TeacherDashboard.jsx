@@ -37,7 +37,15 @@ const formatSeniorClass = (className) => {
   return c;
 };
 
-export default function TeacherDashboard({ data, currentUser, onSaveScore, onAddAssignment, onUploadMaterial, onSaveAttendance }) {
+export default function TeacherDashboard({
+  data,
+  currentUser,
+  onSaveScore,
+  onAddAssignment,
+  onUploadMaterial,
+  onSaveAttendance,
+  onSavePastTermScores,
+}) {
   const isClassTeacher = Boolean(currentUser?.classAssigned);
 
   // Tab state: Class teachers only access 'scores' & 'formclass'. Subject teachers access 'scores', 'attendance', 'assignments', 'timetable'.
@@ -52,6 +60,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     message: '',
     type: 'success',
   });
+
+  // 3rd Term Promotional Collation Modal State (Option 1)
+  const [collatePastModalStudent, setCollatePastModalStudent] = useState(null);
+  const [collatePastScores, setCollatePastScores] = useState({});
 
   // Attendance Register state for Subject Teachers
   const [attendanceDate, setAttendanceDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -411,6 +423,165 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       isOpen: true,
       title: 'Class Attendance Register Saved!',
       message: `Successfully recorded ${attendancePeriod} attendance for ${attendanceClass} (${attendanceSubject}) on ${attendanceDate}. ${attendanceRecord.presentCount} Present, ${attendanceRecord.absentCount} Absent, ${attendanceRecord.lateCount} Late.`,
+      type: 'success',
+    });
+  };
+
+  // Dynamic 3rd Term detection
+  const currentSessionTerm = data?.sessionInfo?.currentTerm || '3rd Term';
+  const isThirdTerm = currentSessionTerm.toLowerCase().includes('3') || currentSessionTerm.toLowerCase().includes('third');
+
+  // Subjects offered in this specific form class
+  const classOfferedSubjects = useMemo(() => {
+    const isJunior = (currentUser?.classAssigned || '').toLowerCase().includes('jss');
+    const defaultJunior = [
+      'Mathematics',
+      'English Language',
+      'Basic Science',
+      'Basic Technology',
+      'Social Studies',
+      'Civic Education',
+      'Computer Studies',
+      'Agricultural Science'
+    ];
+    const defaultSenior = [
+      'Mathematics',
+      'English Language',
+      'Physics',
+      'Chemistry',
+      'Biology',
+      'Economics',
+      'Civic Education',
+      'Computer Studies'
+    ];
+    return isJunior ? defaultJunior : defaultSenior;
+  }, [currentUser?.classAssigned]);
+
+  // Subject Specialist Submission Progress Tracker
+  const subjectSubmissionStats = useMemo(() => {
+    if (!formClassStudents.length) return [];
+    return classOfferedSubjects.map((subj) => {
+      const recordedCount = formClassStudents.filter((student) => {
+        const studentResults = data?.results?.[student.id] || [];
+        return studentResults.some((r) => r.subject?.toLowerCase() === subj.toLowerCase() && (r.total !== undefined || r.exam !== undefined));
+      }).length;
+      const totalCount = formClassStudents.length;
+      const percent = totalCount > 0 ? Math.round((recordedCount / totalCount) * 100) : 0;
+      return {
+        subject: subj,
+        recordedCount,
+        totalCount,
+        percent,
+        status: percent === 100 ? 'Completed' : percent > 0 ? 'In Progress' : 'Pending',
+      };
+    });
+  }, [formClassStudents, classOfferedSubjects, data?.results]);
+
+  // Master Broadsheet Data Matrix
+  const broadsheetData = useMemo(() => {
+    return formClassStudents.map((student) => {
+      const studentResults = data?.results?.[student.id] || [];
+
+      const subjectScores = classOfferedSubjects.map((subj) => {
+        const found = studentResults.find(r => r.subject?.toLowerCase() === subj.toLowerCase());
+        const term1 = found?.term1 !== undefined && found.term1 !== '' ? Number(found.term1) : 60;
+        const term2 = found?.term2 !== undefined && found.term2 !== '' ? Number(found.term2) : 65;
+        const term3 = found?.total !== undefined ? Number(found.total) : (found ? (Number(found.ca1 || 0) + Number(found.ca2 || 0) + Number(found.exam || 0)) : 0);
+        const hasScore = Boolean(found && (found.total || found.exam || found.ca1 || found.ca2));
+        const cumAvg = Number(((term1 + term2 + term3) / 3).toFixed(1));
+        const grade = found?.grade || (cumAvg >= 75 ? 'A1' : cumAvg >= 70 ? 'B2' : cumAvg >= 65 ? 'B3' : cumAvg >= 60 ? 'C4' : cumAvg >= 55 ? 'C5' : cumAvg >= 50 ? 'C6' : cumAvg >= 45 ? 'D7' : cumAvg >= 40 ? 'E8' : 'F9');
+
+        return {
+          subject: subj,
+          term1,
+          term2,
+          term3,
+          cumAvg,
+          grade,
+          hasScore,
+          raw: found,
+        };
+      });
+
+      const term3Total = subjectScores.reduce((acc, curr) => acc + (curr.hasScore ? curr.term3 : 0), 0);
+      const term3Avg = classOfferedSubjects.length > 0 ? Number((term3Total / classOfferedSubjects.length).toFixed(1)) : 0;
+
+      const annualTotal = subjectScores.reduce((acc, curr) => acc + (curr.term1 + curr.term2 + curr.term3), 0);
+      const annualAvg = classOfferedSubjects.length > 0 ? Number((subjectScores.reduce((acc, curr) => acc + curr.cumAvg, 0) / classOfferedSubjects.length).toFixed(1)) : 0;
+
+      const promotionStatus = annualAvg >= 50 ? 'Promoted' : annualAvg >= 45 ? 'Promoted on Trial' : 'To Repeat';
+
+      return {
+        student,
+        subjectScores,
+        term3Total,
+        term3Avg,
+        annualTotal,
+        annualAvg,
+        promotionStatus,
+      };
+    });
+  }, [formClassStudents, classOfferedSubjects, data?.results]);
+
+  // Ranked Broadsheet Rows
+  const rankedBroadsheet = useMemo(() => {
+    const sorted = [...broadsheetData].sort((a, b) => (isThirdTerm ? b.annualAvg - a.annualAvg : b.term3Avg - a.term3Avg));
+    return sorted.map((row, index) => {
+      const rank = index + 1;
+      const suffix = (rank % 10 === 1 && rank !== 11) ? 'st' : (rank % 10 === 2 && rank !== 12) ? 'nd' : (rank % 10 === 3 && rank !== 13) ? 'rd' : 'th';
+      return {
+        ...row,
+        rank: `${rank}${suffix}`,
+      };
+    });
+  }, [broadsheetData, isThirdTerm]);
+
+  // Filtered Broadsheet by Student Search
+  const filteredBroadsheet = useMemo(() => {
+    if (!studentSearchTerm.trim()) return rankedBroadsheet;
+    const q = studentSearchTerm.trim().toLowerCase();
+    return rankedBroadsheet.filter(r =>
+      r.student.name.toLowerCase().includes(q) ||
+      r.student.id.toLowerCase().includes(q)
+    );
+  }, [rankedBroadsheet, studentSearchTerm]);
+
+  // Open Collate Past Terms Modal (Option 1)
+  const handleOpenCollatePastModal = (student) => {
+    setCollatePastModalStudent(student);
+    const studentResults = data?.results?.[student.id] || [];
+    const initialPast = {};
+    classOfferedSubjects.forEach(subj => {
+      const match = studentResults.find(r => r.subject?.toLowerCase() === subj.toLowerCase());
+      initialPast[subj] = {
+        term1: match?.term1 !== undefined ? match.term1 : 60,
+        term2: match?.term2 !== undefined ? match.term2 : 65,
+      };
+    });
+    setCollatePastScores(initialPast);
+  };
+
+  // Save Collate Past Terms Form
+  const handleSaveCollatePastScores = (e) => {
+    if (e) e.preventDefault();
+    if (!collatePastModalStudent) return;
+
+    if (onSavePastTermScores) {
+      Object.keys(collatePastScores).forEach(subj => {
+        const entry = collatePastScores[subj];
+        onSavePastTermScores(collatePastModalStudent.id, subj, {
+          term1: entry.term1,
+          term2: entry.term2,
+        });
+      });
+    }
+
+    const sName = collatePastModalStudent.name;
+    setCollatePastModalStudent(null);
+    setModalFeedback({
+      isOpen: true,
+      title: 'Past Terms Collation Saved!',
+      message: `Successfully saved 1st & 2nd Term baseline scores for ${sName}. Broadsheet rankings and annual cumulative averages have been recomputed.`,
       type: 'success',
     });
   };
@@ -811,546 +982,633 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         </div>
       </div>
 
-      {/* ================= TAB 1: SUBJECT SCORE ENTRY ================= */}
+      {/* ================= TAB 1: SCORES & BROADSHEET ================= */}
       {activeTab === 'scores' && (
-        <div className="space-y-5">
-          
-          {/* ================= DEDICATED CLASS & SUBJECT WORKSPACE DROPDOWNS ================= */}
+        <div className="space-y-6">
           {isClassTeacher ? (
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
-                  <Users className="w-5 h-5 text-emerald-300" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
-                    Class Form Master Collation
-                  </span>
-                  <h3 className="text-base font-extrabold text-white">
-                    {currentUser.classAssigned} Results Collation & Broadsheet
-                  </h3>
-                </div>
-              </div>
-
-              <span className="px-3 py-1 rounded-full bg-emerald-900/90 text-emerald-200 font-black text-xs border border-emerald-700/60">
-                {formClassStudents.length} Students in Form Class
-              </span>
-            </div>
-          ) : distinctClasses.length > 0 && (
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md space-y-3.5">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
-                    <Layers className="w-4 h-4 text-emerald-300" />
+            /* ========================================================================= */
+            /* ================= CLASS TEACHER / FORM MASTER WORKSPACE ================= */
+            /* ========================================================================= */
+            <div className="space-y-6">
+              {/* 1. Header Banner */}
+              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <Award className="w-6 h-6 text-emerald-300" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
-                      Subject Grading Workspace Selector
-                    </span>
-                    <p className="text-xs text-emerald-100 font-medium">
-                      Select the class arm and subject you want to record scores for:
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">
+                        Class Form Master Collation
+                      </span>
+                      {isThirdTerm ? (
+                        <span className="px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 font-black text-[9px] uppercase tracking-wider shadow-xs">
+                          3rd Term Promotional Collation Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-700 text-emerald-100 font-bold text-[9px] uppercase tracking-wider">
+                          {currentSessionTerm} Assessment Mode
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-black text-white mt-0.5">
+                      {currentUser.classAssigned} Master Results Broadsheet
+                    </h3>
+                    <p className="text-xs text-emerald-100/90 mt-0.5">
+                      Class Population: <strong>{formClassStudents.length} Students</strong> · {isThirdTerm ? 'Annual Cumulative Collation & Promotional Decision Engine' : 'Terminal Results Collation'}
                     </p>
                   </div>
                 </div>
 
-                <span className="px-2.5 py-1 rounded-xl bg-emerald-900/90 text-emerald-200 font-black text-[10px] border border-emerald-700/60">
-                  {classFilteredStudents.length} Students in Roster
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-3.5 py-1.5 rounded-xl bg-emerald-900/90 text-emerald-200 font-black text-xs border border-emerald-700/60 shadow-inner">
+                    {data?.sessionInfo?.academicYear || '2025/2026'} Session
+                  </span>
+                </div>
               </div>
 
-              {/* Class & Subject Dropdowns Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                {/* 1. Target Class Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Select Class / Arm:</span>
-                  </label>
-                  <select
-                    value={selectedClassFilter}
-                    onChange={(e) => setSelectedClassFilter(e.target.value)}
-                    className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
-                  >
-                    <option value="All" className="bg-[#06452C] text-white">
-                      -- All Assigned Classes ({allowedStudents.length} Students) --
-                    </option>
-                    {distinctClasses.map((cls) => {
-                      const countInClass = allowedStudents.filter(s => isClassMatch(s.class, cls)).length;
-                      return (
-                        <option key={cls} value={cls} className="bg-[#06452C] text-white font-bold">
-                          {formatSeniorClass(cls)} ({countInClass} Students)
-                        </option>
-                      );
-                    })}
-                  </select>
+              {/* 2. Subject Specialist Submission Progress Tracker */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-gray-100 pb-3">
+                  <div>
+                    <h4 className="font-extrabold text-sm text-[#1B2521] flex items-center gap-2">
+                      <ListChecks className="w-4 h-4 text-green-primary" />
+                      <span>Subject Specialist Submission Tracker ({currentUser.classAssigned})</span>
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Live status feed of subject teachers submitting continuous assessment and examination scores for your class.
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-200">
+                    {classOfferedSubjects.length} Core Subjects
+                  </span>
                 </div>
 
-                {/* 2. Target Subject Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Select Subject to Grade:</span>
-                  </label>
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {subjectSubmissionStats.map((stat) => (
+                    <div
+                      key={stat.subject}
+                      className="p-3.5 rounded-2xl border border-gray-200/90 bg-[#FAFCFA] hover:border-emerald-300 transition-all space-y-2 shadow-2xs"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="font-extrabold text-xs text-[#1B2521] truncate max-w-[140px]" title={stat.subject}>
+                          {stat.subject}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${
+                            stat.status === 'Completed'
+                              ? 'bg-emerald-100 text-emerald-900'
+                              : stat.status === 'In Progress'
+                              ? 'bg-amber-100 text-amber-900'
+                              : 'bg-rose-50 text-rose-800'
+                          }`}
+                        >
+                          {stat.status}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${
+                              stat.percent === 100 ? 'bg-emerald-600' : stat.percent > 0 ? 'bg-amber-500' : 'bg-gray-300'
+                            }`}
+                            style={{ width: `${stat.percent}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-gray-500 font-bold">
+                          <span>{stat.recordedCount} of {stat.totalCount} Graded</span>
+                          <span>{stat.percent}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. 3rd Term Promotional Summary Bar (Dynamically shown in 3rd Term) */}
+              {isThirdTerm && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-center">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase block">Class Population</span>
+                    <span className="text-xl font-black text-[#1B2521]">{rankedBroadsheet.length}</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 shadow-sm text-center">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase block">Promoted (≥50%)</span>
+                    <span className="text-xl font-black text-green-primary">
+                      {rankedBroadsheet.filter(r => r.promotionStatus === 'Promoted').length}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-emerald-200 shadow-sm text-center">
+                    <span className="text-[10px] font-bold text-amber-800 uppercase block">On Trial (45–49%)</span>
+                    <span className="text-xl font-black text-amber-600">
+                      {rankedBroadsheet.filter(r => r.promotionStatus === 'Promoted on Trial').length}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-rose-50/80 border border-emerald-200 shadow-sm text-center">
+                    <span className="text-[10px] font-bold text-rose-800 uppercase block">To Repeat (&lt;45%)</span>
+                    <span className="text-xl font-black text-rose-600">
+                      {rankedBroadsheet.filter(r => r.promotionStatus === 'To Repeat').length}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Master Broadsheet Grid */}
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-3.5">
+                  <div>
+                    <h4 className="font-extrabold text-base text-[#1B2521] flex items-center gap-2">
+                      <FileSpreadsheet className="w-5 h-5 text-green-primary" />
+                      <span>{currentUser.classAssigned} Master Broadsheet Ledger</span>
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {isThirdTerm
+                        ? '3-Term Cumulative Broadsheet with Annual Weighted Averages and Promotion Decisions.'
+                        : 'Single Term Broadsheet summary with class rankings.'}
+                    </p>
+                  </div>
+
+                  <div className="relative w-full sm:w-72">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search student by name or ID..."
+                      value={studentSearchTerm}
+                      onChange={(e) => setStudentSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                    />
+                  </div>
+                </div>
+
+                {/* Broadsheet Scrollable Table */}
+                <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                        <th className="p-3.5 whitespace-nowrap text-center">Rank</th>
+                        <th className="p-3.5 whitespace-nowrap sticky left-0 bg-gray-50 z-10 shadow-xs">Student Details</th>
+                        {classOfferedSubjects.map((subj) => (
+                          <th key={subj} className="p-3.5 whitespace-nowrap text-center font-bold" title={subj}>
+                            <div>{subj}</div>
+                            {isThirdTerm && (
+                              <div className="text-[9px] text-gray-400 font-normal normal-case">T1 · T2 · T3 (Avg)</div>
+                            )}
+                          </th>
+                        ))}
+                        <th className="p-3.5 whitespace-nowrap text-center">
+                          {isThirdTerm ? 'Annual Total (/2400)' : 'Term Total'}
+                        </th>
+                        <th className="p-3.5 whitespace-nowrap text-center">
+                          {isThirdTerm ? 'Annual Avg (%)' : 'Term Avg (%)'}
+                        </th>
+                        {isThirdTerm && (
+                          <th className="p-3.5 whitespace-nowrap text-center">Promotion Status</th>
+                        )}
+                        <th className="p-3.5 whitespace-nowrap text-right sticky right-0 bg-gray-50 z-10 shadow-xs">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredBroadsheet.length === 0 ? (
+                        <tr>
+                          <td colSpan={classOfferedSubjects.length + 5} className="p-8 text-center text-gray-400 italic">
+                            No students found matching your search in {currentUser.classAssigned}.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredBroadsheet.map((row) => {
+                          const { student, subjectScores, term3Total, term3Avg, annualTotal, annualAvg, promotionStatus, rank } = row;
+
+                          return (
+                            <tr key={student.id} className="hover:bg-emerald-50/30 transition-colors">
+                              {/* Rank */}
+                              <td className="p-3.5 text-center font-black text-[#06452C] whitespace-nowrap">
+                                <span className={`inline-block px-2 py-0.5 rounded-lg text-xs ${
+                                  rank === '1st' ? 'bg-amber-100 text-amber-950 font-black' :
+                                  rank === '2nd' ? 'bg-gray-200 text-gray-800 font-black' :
+                                  rank === '3rd' ? 'bg-orange-100 text-orange-950 font-black' : 'text-gray-700'
+                                }`}>
+                                  {rank}
+                                </span>
+                              </td>
+
+                              {/* Student Name */}
+                              <td className="p-3.5 whitespace-nowrap sticky left-0 bg-white z-10 shadow-xs">
+                                <div className="font-extrabold text-[#1B2521] text-xs">{student.name}</div>
+                                <div className="text-[10px] text-gray-400 font-mono">{student.id}</div>
+                              </td>
+
+                              {/* Subject Scores Columns */}
+                              {subjectScores.map((scoreObj) => (
+                                <td key={scoreObj.subject} className="p-3 whitespace-nowrap text-center">
+                                  {isThirdTerm ? (
+                                    <div className="text-[11px]">
+                                      <span className="text-gray-500 font-mono text-[10px]">
+                                        {scoreObj.term1}·{scoreObj.term2}·{scoreObj.hasScore ? scoreObj.term3 : '—'}
+                                      </span>
+                                      <div className="font-extrabold text-[#06452C] text-xs">
+                                        {scoreObj.cumAvg}% <span className="text-[10px] text-gray-500 font-bold">({scoreObj.grade})</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs">
+                                      {scoreObj.hasScore ? (
+                                        <span className="font-extrabold text-[#1B2521]">
+                                          {scoreObj.term3} <strong className="text-green-primary text-[10px]">({scoreObj.grade})</strong>
+                                        </span>
+                                      ) : (
+                                        <span className="text-gray-300 font-mono text-xs">—</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              ))}
+
+                              {/* Total Score */}
+                              <td className="p-3.5 whitespace-nowrap text-center font-black text-xs text-[#1B2521]">
+                                {isThirdTerm ? annualTotal : term3Total}
+                              </td>
+
+                              {/* Average % */}
+                              <td className="p-3.5 whitespace-nowrap text-center font-black text-xs">
+                                <span className={`${(isThirdTerm ? annualAvg : term3Avg) >= 50 ? 'text-green-primary' : 'text-rose-600'}`}>
+                                  {isThirdTerm ? annualAvg : term3Avg}%
+                                </span>
+                              </td>
+
+                              {/* 3rd Term Promotion Status Badge */}
+                              {isThirdTerm && (
+                                <td className="p-3.5 whitespace-nowrap text-center">
+                                  <span
+                                    className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                                      promotionStatus === 'Promoted'
+                                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                        : promotionStatus === 'Promoted on Trial'
+                                        ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                                        : 'bg-rose-100 text-rose-950 border border-rose-300'
+                                    }`}
+                                  >
+                                    {promotionStatus}
+                                  </span>
+                                </td>
+                              )}
+
+                              {/* Row Actions */}
+                              <td className="p-3.5 whitespace-nowrap text-right sticky right-0 bg-white z-10 shadow-xs">
+                                <div className="inline-flex items-center gap-1.5">
+                                  {isThirdTerm && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenCollatePastModal(student)}
+                                      className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-950 font-black text-[10px] border border-amber-200 transition-all cursor-pointer"
+                                      title="Input or adjust 1st and 2nd term baseline scores"
+                                    >
+                                      Collate Past Terms
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setReportStudent(student);
+                                      setShowReportModal(true);
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-green-primary font-black text-[10px] border border-emerald-200 transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <Printer className="w-3 h-3" />
+                                    <span>Report</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Subject Integrity Footnote */}
+                <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-[11px] text-[#06452C] flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+                  <span>
+                    <strong>Academic Integrity Notice:</strong> 3rd term continuous assessment & exam scores are recorded strictly by Subject Specialists. In 3rd Term mode, Form Masters have administrative authority to collate past 1st/2nd term baseline records and evaluate terminal conduct.
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ========================================================================= */
+            /* ================= SUBJECT TEACHER (SPECIALIST) WORKSPACE ================ */
+            /* ========================================================================= */
+            <div className="space-y-5">
+              {/* Workspace Selector */}
+              {distinctClasses.length > 0 && (
+                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md space-y-3.5">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                        <Layers className="w-4 h-4 text-emerald-300" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
+                          Subject Grading Workspace Selector
+                        </span>
+                        <p className="text-xs text-emerald-100 font-medium">
+                          Select the class arm and subject you want to record scores for:
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="px-2.5 py-1 rounded-xl bg-emerald-900/90 text-emerald-200 font-black text-[10px] border border-emerald-700/60">
+                      {classFilteredStudents.length} Students in Roster
+                    </span>
+                  </div>
+
+                  {/* Class & Subject Dropdowns Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {/* 1. Target Class Dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Select Class / Arm:</span>
+                      </label>
+                      <select
+                        value={selectedClassFilter}
+                        onChange={(e) => setSelectedClassFilter(e.target.value)}
+                        className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
+                      >
+                        <option value="All" className="bg-[#06452C] text-white">
+                          -- All Assigned Classes ({allowedStudents.length} Students) --
+                        </option>
+                        {distinctClasses.map((cls) => {
+                          const countInClass = allowedStudents.filter(s => isClassMatch(s.class, cls)).length;
+                          return (
+                            <option key={cls} value={cls} className="bg-[#06452C] text-white font-bold">
+                              {formatSeniorClass(cls)} ({countInClass} Students)
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    {/* 2. Target Subject Dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Select Subject to Grade:</span>
+                      </label>
+                      <select
+                        value={selectedSubject}
+                        onChange={(e) => setSelectedSubject(e.target.value)}
+                        className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
+                      >
+                        {availableSubjects.map((sub) => (
+                          <option key={sub} value={sub} className="bg-[#06452C] text-white font-bold">
+                            {sub} {selectedClassFilter !== 'All' ? `(${selectedClassFilter})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mode Switcher: Form vs Saved */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:p-3 rounded-2xl border border-gray-100 shadow-xs">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setScoreTabMode('entry')}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      scoreTabMode === 'entry'
+                        ? 'bg-[#06452C] text-white shadow-md'
+                        : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 border border-gray-200/80'
+                    }`}
                   >
-                    {availableSubjects.map((sub) => (
-                      <option key={sub} value={sub} className="bg-[#06452C] text-white font-bold">
-                        {sub} {selectedClassFilter !== 'All' ? `(${selectedClassFilter})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    <Calculator className="w-3.5 h-3.5" />
+                    <span>Score Entry Form</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setScoreTabMode('saved')}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      scoreTabMode === 'saved'
+                        ? 'bg-[#06452C] text-white shadow-md'
+                        : 'bg-emerald-50 text-[#06452C] hover:bg-emerald-100 border border-emerald-300'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Saved Class Scores ({gradedCount}/{classFilteredStudents.length})</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200/60">
+                  <span>Active Subject:</span>
+                  <span className="text-[#06452C] font-extrabold">{selectedSubject || 'None'}</span>
+                </div>
+              </div>
+
+              {/* Score Entry Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className={`${scoreTabMode === 'saved' ? 'hidden' : 'lg:col-span-7'} bg-white p-4 sm:p-7 rounded-3xl border border-gray-100 shadow-md space-y-5`}>
+                  <div className="border-b border-gray-100 pb-3.5 flex justify-between items-start">
+                    <div>
+                      <h3 className="font-extrabold text-lg sm:text-xl text-[#1B2521] tracking-tight">Continuous Assessment & Exam Score Entry</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Subject dropdown is strictly locked to subjects linked to your Teacher ID.
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-[#06452C] font-black text-[10px] border border-emerald-200/80 uppercase tracking-wider hidden sm:inline-block">
+                      Verified Engine
+                    </span>
+                  </div>
+
+                  {savedMsg && (
+                    <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2 shadow-xs animate-fadeIn">
+                      <CheckCircle2 className="w-4 h-4 text-green-primary flex-shrink-0" />
+                      <span>{savedMsg}</span>
+                    </div>
+                  )}
+
+                  {classFilteredStudents.length === 0 && (
+                    <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-3 shadow-xs">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-black block text-amber-950 text-xs mb-0.5">No Registered Students in Class</span>
+                        <p className="text-amber-800 leading-relaxed text-[11px]">
+                          There are currently no students registered in {selectedClassFilter === 'All' ? 'any of your assigned classes' : selectedClassFilter}. Please switch to another class above.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <label className="font-extrabold text-gray-800 text-xs flex items-center gap-1.5">
+                          <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Select Student</span>
+                        </label>
+                        <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-md">
+                          Showing {searchableStudents.length} of {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
+                        </span>
+                      </div>
+
+                      {/* Real-time Student Search Filter */}
+                      <div className="relative mb-2">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder="Search student by name, admission no, or class..."
+                          value={studentSearchTerm}
+                          onChange={(e) => setStudentSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-medium text-[#1B2521] placeholder-gray-400 transition-all"
+                        />
+                        {studentSearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setStudentSearchTerm('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Filtered Student Dropdown */}
+                      <select
+                        value={selectedStudent}
+                        onChange={(e) => setSelectedStudent(e.target.value)}
+                        disabled={searchableStudents.length === 0}
+                        className="w-full p-3.5 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-bold text-[#1B2521] transition-all disabled:bg-gray-100 disabled:text-gray-400"
+                      >
+                        {searchableStudents.length === 0 ? (
+                          <option value="">
+                            {studentSearchTerm ? `-- No student matches "${studentSearchTerm}" --` : '-- No registered students in this class --'}
+                          </option>
+                        ) : (
+                          <>
+                            <option value="">-- Select a Student ({searchableStudents.length} available) --</option>
+                            {searchableStudents.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name} ({formatSeniorClass(s.class)} · {s.id})
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    {/* Score Fields Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1.5">
+                          1st CA Score (Max 20) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="20"
+                          step="0.5"
+                          required
+                          value={scores.ca1}
+                          onChange={(e) => setScores({ ...scores, ca1: e.target.value })}
+                          className="w-full p-3 rounded-xl border border-gray-200 text-sm font-extrabold focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                          placeholder="e.g. 18"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1.5">
+                          2nd CA Score (Max 20) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="20"
+                          step="0.5"
+                          required
+                          value={scores.ca2}
+                          onChange={(e) => setScores({ ...scores, ca2: e.target.value })}
+                          className="w-full p-3 rounded-xl border border-gray-200 text-sm font-extrabold focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                          placeholder="e.g. 19"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1.5">
+                          Terminal Exam (Max 60) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="60"
+                          step="0.5"
+                          required
+                          value={scores.exam}
+                          onChange={(e) => setScores({ ...scores, exam: e.target.value })}
+                          className="w-full p-3 rounded-xl border border-gray-200 text-sm font-extrabold focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
+                          placeholder="e.g. 52"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingScore || !selectedStudent || !selectedSubject}
+                      className="w-full py-4 rounded-2xl font-black text-sm text-white bg-[#06452C] hover:bg-[#0B5D3B] transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSavingScore ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Saving Score to Database...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>Save & Sync Student Score →</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Right Summary Column */}
+                <div className={`${scoreTabMode === 'entry' ? 'hidden lg:block' : ''} lg:col-span-5 space-y-4`}>
+                  <div className="bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3.5">
+                    <h4 className="font-extrabold text-sm text-[#1B2521] flex items-center justify-between">
+                      <span>Saved Scores Summary</span>
+                      <span className="text-xs text-green-primary font-mono">{gradedCount}/{classFilteredStudents.length} Graded</span>
+                    </h4>
+
+                    <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                      {filteredSavedScores.map(({ student, score, hasScore }) => (
+                        <div
+                          key={student.id}
+                          className="p-3 rounded-xl border border-gray-100 bg-[#FAFCFA] hover:border-emerald-200 transition-all flex items-center justify-between text-xs"
+                        >
+                          <div>
+                            <span className="font-extrabold text-[#1B2521] block">{student.name}</span>
+                            <span className="text-[10px] text-gray-400 font-mono">{student.id} · {student.class}</span>
+                          </div>
+                          {hasScore ? (
+                            <div className="text-right">
+                              <span className="font-black text-green-primary block text-sm">{score.total}/100</span>
+                              <span className="text-[10px] text-gray-500 font-bold">Grade: {score.grade || 'Credit'}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-gray-400 italic">No score yet</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Scores Sub-View Mode Switcher: Form vs Saved Class Scores */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:p-3 rounded-2xl border border-gray-100 shadow-xs">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setScoreTabMode('entry')}
-                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  scoreTabMode === 'entry'
-                    ? 'bg-[#06452C] text-white shadow-md'
-                    : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 border border-gray-200/80'
-                }`}
-              >
-                <Calculator className="w-3.5 h-3.5" />
-                <span>Score Entry Form</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setScoreTabMode('saved')}
-                className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  scoreTabMode === 'saved'
-                    ? 'bg-[#06452C] text-white shadow-md'
-                    : 'bg-emerald-50 text-[#06452C] hover:bg-emerald-100 border border-emerald-300'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Saved Class Scores ({gradedCount}/{classFilteredStudents.length})</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200/60">
-              <span>Active Subject:</span>
-              <span className="text-[#06452C] font-extrabold">{selectedSubject || 'None'}</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className={`${scoreTabMode === 'saved' ? 'hidden' : 'lg:col-span-7'} bg-white p-4 sm:p-7 rounded-3xl border border-gray-100 shadow-md space-y-5`}>
-              <div className="border-b border-gray-100 pb-3.5 flex justify-between items-start">
-                <div>
-                  <h3 className="font-extrabold text-lg sm:text-xl text-[#1B2521] tracking-tight">Continuous Assessment & Exam Score Entry</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Subject dropdown is strictly locked to subjects linked to your Teacher ID.
-                  </p>
-                </div>
-                <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-[#06452C] font-black text-[10px] border border-emerald-200/80 uppercase tracking-wider hidden sm:inline-block">
-                  Verified Engine
-                </span>
-              </div>
-
-              {savedMsg && (
-                <div className="p-3.5 rounded-2xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2 shadow-xs animate-fadeIn">
-                  <CheckCircle2 className="w-4 h-4 text-green-primary flex-shrink-0" />
-                  <span>{savedMsg}</span>
-                </div>
-              )}
-
-              {classFilteredStudents.length === 0 && (
-                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs font-medium flex items-start gap-3 shadow-xs">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-black block text-amber-950 text-xs mb-0.5">No Registered Students in Class</span>
-                    <p className="text-amber-800 leading-relaxed text-[11px]">
-                      There are currently no students registered in {selectedClassFilter === 'All' ? 'any of your assigned classes' : selectedClassFilter}. Please switch to another class above, or register students via the school administration.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <form onSubmit={handleScoreSubmit} className="space-y-4 text-xs">
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="font-extrabold text-gray-800 text-xs flex items-center gap-1.5">
-                      <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Select Student</span>
-                    </label>
-                    <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-md">
-                      Showing {searchableStudents.length} of {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
-                    </span>
-                  </div>
-
-                  {/* Real-time Student Search Filter */}
-                  <div className="relative mb-2">
-                    <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Search student by name, admission no, or class..."
-                      value={studentSearchTerm}
-                      onChange={(e) => setStudentSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-medium text-[#1B2521] placeholder-gray-400 transition-all"
-                    />
-                    {studentSearchTerm && (
-                      <button
-                        type="button"
-                        onClick={() => setStudentSearchTerm('')}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
-                        aria-label="Clear search filter"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Filtered Student Dropdown */}
-                  <select
-                    value={selectedStudent}
-                    onChange={(e) => setSelectedStudent(e.target.value)}
-                    disabled={searchableStudents.length === 0}
-                    className="w-full p-3.5 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-bold text-[#1B2521] transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    {searchableStudents.length === 0 ? (
-                      <option value="">
-                        {studentSearchTerm ? `-- No student matches "${studentSearchTerm}" --` : '-- No registered students in this class --'}
-                      </option>
-                    ) : (
-                      <>
-                        <option value="">-- Select a Student ({searchableStudents.length} available) --</option>
-                        {searchableStudents.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} ({formatSeniorClass(s.class)} · {s.id})
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </select>
-
-                  {studentSearchTerm && searchableStudents.length === 0 && (
-                    <div className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 shadow-xs">
-                      <span>No student found matching "<strong>{studentSearchTerm}</strong>"</span>
-                      <button
-                        type="button"
-                        onClick={() => setStudentSearchTerm('')}
-                        className="text-amber-800 font-bold underline hover:text-amber-950 cursor-pointer ml-2"
-                      >
-                        Clear search
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* STRICT SUBJECT DROPDOWN (ONLY TEACHER'S ASSIGNED SUBJECTS) */}
-                <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="font-extrabold text-gray-800 text-xs flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-700" />
-                      <span>Select Subject (Locked to Assigned Subjects)</span>
-                    </label>
-                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      ✓ ID Connected Only
-                    </span>
-                  </div>
-                  <select
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    className="w-full p-3.5 rounded-2xl border-2 border-emerald-300 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-emerald-50/40 font-bold text-[#06452C] transition-all"
-                  >
-                    {availableSubjects.map((sub) => (
-                      <option key={sub} value={sub}>
-                        {sub}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 3-Part Continuous Assessment Inputs */}
-                <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 pt-1">
-                  <div className="p-2.5 rounded-2xl bg-[#FAFCFA] border border-gray-200/80 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="font-extrabold text-gray-700 text-[11px]">3rd CA 1</label>
-                      <span className="text-[9px] text-gray-400 font-bold">Max 20</span>
-                    </div>
-                    <input
-                      type="number"
-                      max="20"
-                      min="0"
-                      required
-                      placeholder="0-20"
-                      value={scores.ca1}
-                      onChange={(e) => setScores({ ...scores, ca1: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-center text-[#1B2521]"
-                    />
-                  </div>
-
-                  <div className="p-2.5 rounded-2xl bg-[#FAFCFA] border border-gray-200/80 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="font-extrabold text-gray-700 text-[11px]">3rd CA 2</label>
-                      <span className="text-[9px] text-gray-400 font-bold">Max 20</span>
-                    </div>
-                    <input
-                      type="number"
-                      max="20"
-                      min="0"
-                      required
-                      placeholder="0-20"
-                      value={scores.ca2}
-                      onChange={(e) => setScores({ ...scores, ca2: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-center text-[#1B2521]"
-                    />
-                  </div>
-
-                  <div className="p-2.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="font-extrabold text-green-primary text-[11px]">3rd Exam</label>
-                      <span className="text-[9px] text-emerald-600 font-bold">Max 60</span>
-                    </div>
-                    <input
-                      type="number"
-                      max="60"
-                      min="0"
-                      required
-                      placeholder="0-60"
-                      value={scores.exam}
-                      onChange={(e) => setScores({ ...scores, exam: e.target.value })}
-                      className="w-full p-2.5 rounded-xl border border-emerald-300 text-sm focus:outline-none focus:border-green-primary bg-white font-black text-green-primary text-center"
-                    />
-                  </div>
-                </div>
-
-                {/* Clean Score Summary Preview with Pass / Repeat Verdict */}
-                {(() => {
-                  const hasScores = scores.ca1 !== '' || scores.ca2 !== '' || scores.exam !== '';
-                  const ca1Num = parseInt(scores.ca1) || 0;
-                  const ca2Num = parseInt(scores.ca2) || 0;
-                  const examNum = parseInt(scores.exam) || 0;
-                  const totalScore = ca1Num + ca2Num + examNum;
-
-                  const verdict = !hasScores
-                    ? 'Awaiting Input'
-                    : totalScore >= 50
-                    ? 'Passed (Promoted)'
-                    : totalScore >= 40
-                    ? 'Pass on Trial'
-                    : 'To Repeat';
-
-                  const verdictBadge = !hasScores
-                    ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700/50'
-                    : totalScore >= 50
-                    ? 'bg-emerald-400 text-emerald-950 border-emerald-300 font-black'
-                    : totalScore >= 40
-                    ? 'bg-amber-400 text-amber-950 border-amber-300 font-black'
-                    : 'bg-rose-500 text-white border-rose-400 font-black';
-
-                  return (
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-[#06452C] via-[#085235] to-[#06452C] text-white shadow-md border border-emerald-700/60 space-y-2.5">
-                      <div className="flex justify-between items-center border-b border-emerald-800/80 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                          <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest leading-tight">
-                            Academic Performance Synthesis
-                          </span>
-                        </div>
-                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black border shadow-2xs ${verdictBadge}`}>
-                          {verdict}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] text-emerald-200/80 font-bold block uppercase tracking-wider">
-                            Score Breakdown
-                          </span>
-                          <span className="text-xs text-emerald-100 font-medium">
-                            CA 1 ({ca1Num}/20) + CA 2 ({ca2Num}/20) + Exam ({examNum}/60)
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xl sm:text-2xl font-black text-white block leading-none">
-                            {hasScores ? `${totalScore}/100` : '--/100'}
-                          </span>
-                          <span className="text-[10px] text-emerald-300 font-extrabold mt-0.5 block">
-                            {hasScores ? `${totalScore}% Aggregate` : 'Pending Input'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="space-y-2 pt-1">
-                  <button
-                    type="submit"
-                    disabled={isSavingScore || !selectedStudent}
-                    className={`w-full py-4 px-4 rounded-2xl font-black text-xs sm:text-sm text-white transition-all shadow-md flex items-center justify-center gap-2 ${
-                      !selectedStudent || isSavingScore
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-75 shadow-none'
-                        : 'bg-green-primary hover:bg-green-dark cursor-pointer active:scale-[0.99] hover:shadow-lg'
-                    }`}
-                  >
-                    {isSavingScore ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-white flex-shrink-0" />
-                        <span>Collating & Saving 3rd Term Scores...</span>
-                      </>
-                    ) : !selectedStudent ? (
-                      <>
-                        <AlertTriangle className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span>Select a Student to Save Score</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-200 flex-shrink-0" />
-                        <span>Save & Collate 3rd Term Score</span>
-                        <ArrowRight className="w-4 h-4 text-white flex-shrink-0" />
-                      </>
-                    )}
-                  </button>
-
-                  {selectedStudent && studentObj && (
-                    <p className="text-[11px] text-center text-gray-500 font-medium truncate px-1">
-                      Recording score for <strong className="text-[#1B2521]">{studentObj.name}</strong> ({studentObj.class}) · <span className="text-green-primary font-bold">{selectedSubject}</span>
-                    </p>
-                  )}
-                </div>
-              </form>
-            </div>
-
-            {/* Right Column / Live Saved Class Scores & Results Register */}
-            <div className={`${scoreTabMode === 'entry' ? 'hidden lg:block lg:col-span-5' : 'lg:col-span-12'} bg-white p-4 sm:p-6 rounded-3xl border border-gray-100 shadow-md space-y-4`}>
-              <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div>
-                  <h3 className="font-extrabold text-base sm:text-lg text-[#1B2521] flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-green-primary" />
-                    <span>Saved Scores: {selectedSubject || 'Subject'}</span>
-                  </h3>
-                  <p className="text-xs text-gray-500 font-medium">
-                    {selectedClassFilter === 'All' ? 'All Assigned Classes' : formatSeniorClass(selectedClassFilter)}
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-xl bg-emerald-50 text-[#06452C] font-black text-xs border border-emerald-200 shadow-2xs">
-                  {gradedCount} of {classFilteredStudents.length} Recorded ({Math.round((gradedCount / Math.max(1, classFilteredStudents.length)) * 100)}%)
-                </span>
-              </div>
-
-              {/* Quick Search within saved scores */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Filter saved scores by student name or admission ID..."
-                  value={savedScoresSearch}
-                  onChange={(e) => setSavedScoresSearch(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-medium"
-                />
-                {savedScoresSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setSavedScoresSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Live Saved Score Cards / List */}
-              <div className="space-y-2.5 max-h-[520px] overflow-y-auto pr-1">
-                {filteredSavedScores.length === 0 ? (
-                  <div className="p-8 text-center text-gray-400 text-xs bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
-                    <AlertTriangle className="w-6 h-6 text-gray-400 mx-auto" />
-                    <p className="font-bold">No students found matching "{savedScoresSearch}"</p>
-                  </div>
-                ) : (
-                  filteredSavedScores.map(({ student, score, hasScore }) => {
-                    const isCurrentlySelected = selectedStudent === student.id;
-                    return (
-                      <div
-                        key={student.id}
-                        className={`p-3.5 rounded-2xl border transition-all ${
-                          isCurrentlySelected
-                            ? 'bg-emerald-50/90 border-emerald-300 ring-2 ring-emerald-400/30 shadow-xs'
-                            : 'bg-[#FAFCFA] hover:bg-white hover:shadow-xs border-gray-200/80'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="min-w-0">
-                            <h4 className="font-extrabold text-xs sm:text-sm text-[#1B2521] truncate">
-                              {student.name}
-                            </h4>
-                            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium">
-                              {formatSeniorClass(student.class)} · <span className="font-mono">{student.id}</span>
-                            </p>
-                          </div>
-
-                          {hasScore ? (
-                            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-[#06452C] font-black text-[10px] sm:text-xs border border-emerald-300 flex-shrink-0 shadow-2xs">
-                              {score.grade || 'A1'} · {score.total || ((parseInt(score.ca1) || 0) + (parseInt(score.ca2) || 0) + (parseInt(score.exam) || 0))}/100
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 font-bold text-[10px] border border-gray-200 flex-shrink-0">
-                              Pending
-                            </span>
-                          )}
-                        </div>
-
-                        {hasScore ? (
-                          <div className="mt-2.5 pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
-                            <div className="text-gray-600 flex items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px] font-bold">
-                              <span>CA1: <strong className="text-gray-900">{score.ca1 || 0}</strong>/20</span>
-                              <span>CA2: <strong className="text-gray-900">{score.ca2 || 0}</strong>/20</span>
-                              <span>Exam: <strong className="text-green-primary">{score.exam || 0}</strong>/60</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedStudent(student.id);
-                                setScoreTabMode('entry');
-                                setScores({
-                                  ca1: score.ca1 !== undefined ? String(score.ca1) : '',
-                                  ca2: score.ca2 !== undefined ? String(score.ca2) : '',
-                                  exam: score.exam !== undefined ? String(score.exam) : '',
-                                });
-                              }}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-black text-[10px] transition-all cursor-pointer shadow-2xs"
-                            >
-                              Edit Score
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
-                            <span className="text-[10px] text-gray-400 italic">No score submitted yet</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedStudent(student.id);
-                                setScoreTabMode('entry');
-                              }}
-                              className="px-3 py-1 rounded-lg bg-green-primary text-white text-[10px] font-bold hover:bg-green-dark transition-all cursor-pointer shadow-2xs"
-                            >
-                              Enter Score
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-                <span className="font-bold text-gray-700">Live Auto-Sync Active</span>
-                <span className="text-emerald-700 font-mono text-[10px]">Instant Broadsheet Feed</span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -2181,6 +2439,129 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 3rd Term Promotional Past Scores Collation Modal (Option 1) */}
+      {collatePastModalStudent && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-gray-200 overflow-hidden my-auto animate-scaleUp">
+            <div className="bg-[#06452C] text-white p-5 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <Award className="w-5 h-5 text-emerald-300" />
+                <div>
+                  <h4 className="font-extrabold text-base">3rd Term Promotional Collation (Form Master)</h4>
+                  <p className="text-[11px] text-emerald-200">
+                    Input / Adjust 1st & 2nd Term Baseline Scores for {collatePastModalStudent.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCollatePastModalStudent(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCollatePastScores} className="p-5 sm:p-6 space-y-4 text-xs">
+              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <strong className="block text-sm text-[#06452C]">{collatePastModalStudent.name}</strong>
+                  <span className="text-[11px] text-emerald-800 font-mono">{collatePastModalStudent.id} · {collatePastModalStudent.class}</span>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#06452C] text-white font-black text-[10px] uppercase">
+                  Option 1 Collation Mode
+                </span>
+              </div>
+
+              <div className="overflow-x-auto max-h-80 overflow-y-auto rounded-2xl border border-gray-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200 text-[11px] uppercase">
+                      <th className="p-3">Subject</th>
+                      <th className="p-3 text-center">1st Term (/100)</th>
+                      <th className="p-3 text-center">2nd Term (/100)</th>
+                      <th className="p-3 text-center">3rd Term (Current)</th>
+                      <th className="p-3 text-right">Annual Avg</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {classOfferedSubjects.map((subj) => {
+                      const studentResults = (data?.results && data.results[collatePastModalStudent.id]) || [];
+                      const found = studentResults.find(r => r.subject?.toLowerCase() === subj.toLowerCase());
+                      const current3rd = found?.total !== undefined ? Number(found.total) : (found ? (Number(found.ca1 || 0) + Number(found.ca2 || 0) + Number(found.exam || 0)) : 0);
+                      const t1 = collatePastScores[subj]?.term1 !== undefined ? collatePastScores[subj].term1 : (found?.term1 !== undefined ? found.term1 : 60);
+                      const t2 = collatePastScores[subj]?.term2 !== undefined ? collatePastScores[subj].term2 : (found?.term2 !== undefined ? found.term2 : 65);
+                      const avg = Number(((Number(t1 || 0) + Number(t2 || 0) + Number(current3rd || 0)) / 3).toFixed(1));
+
+                      return (
+                        <tr key={subj} className="hover:bg-gray-50/50">
+                          <td className="p-3 font-extrabold text-[#1B2521]">{subj}</td>
+                          <td className="p-3 text-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={t1}
+                              onChange={(e) => setCollatePastScores(prev => ({
+                                ...prev,
+                                [subj]: { ...(prev[subj] || {}), term1: e.target.value }
+                              }))}
+                              className="w-20 p-2 rounded-xl border border-gray-200 font-black text-center bg-[#FAFCFA] focus:outline-none focus:border-green-primary text-xs"
+                              placeholder="0-100"
+                            />
+                          </td>
+                          <td className="p-3 text-center">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={t2}
+                              onChange={(e) => setCollatePastScores(prev => ({
+                                ...prev,
+                                [subj]: { ...(prev[subj] || {}), term2: e.target.value }
+                              }))}
+                              className="w-20 p-2 rounded-xl border border-gray-200 font-black text-center bg-[#FAFCFA] focus:outline-none focus:border-green-primary text-xs"
+                              placeholder="0-100"
+                            />
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="px-2.5 py-1 rounded-lg bg-gray-100 font-black text-gray-800 text-xs">
+                              {found ? current3rd : '—'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <span className={`font-black text-xs ${avg >= 50 ? 'text-green-primary' : 'text-rose-600'}`}>
+                              {avg}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setCollatePastModalStudent(null)}
+                  className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Save Collation & Update Broadsheet</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

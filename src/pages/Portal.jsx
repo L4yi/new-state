@@ -567,6 +567,48 @@ export default function Portal({ onNavigate }) {
     }
   };
 
+  const handleSavePastTermScores = (studentId, subject, { term1, term2 }) => {
+    setPortalData((prev) => {
+      const existingResults = prev.results || {};
+      const studentCurrentScores = existingResults[studentId] || [];
+      const matchIndex = studentCurrentScores.findIndex(s => s.subject?.toLowerCase() === subject?.toLowerCase());
+
+      let updatedScores;
+      if (matchIndex >= 0) {
+        const existing = studentCurrentScores[matchIndex];
+        const updated = {
+          ...existing,
+          term1: term1 !== undefined && term1 !== '' ? Number(term1) : (existing.term1 !== undefined ? Number(existing.term1) : 0),
+          term2: term2 !== undefined && term2 !== '' ? Number(term2) : (existing.term2 !== undefined ? Number(existing.term2) : 0),
+        };
+        updatedScores = [...studentCurrentScores];
+        updatedScores[matchIndex] = updated;
+      } else {
+        const newEntry = {
+          subject,
+          ca1: 0,
+          ca2: 0,
+          exam: 0,
+          total: 0,
+          term1: Number(term1 || 0),
+          term2: Number(term2 || 0),
+          grade: 'Pending',
+          remark: 'Pending Collation',
+        };
+        updatedScores = [...studentCurrentScores, newEntry];
+      }
+
+      const nextResults = {
+        ...existingResults,
+        [studentId]: updatedScores,
+      };
+
+      const nextState = { ...prev, results: nextResults };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+  };
+
   const handleAddAssignment = async (asn) => {
     // 1. Optimistic local update
     setPortalData((prev) => {
@@ -1227,6 +1269,7 @@ export default function Portal({ onNavigate }) {
                   onAddAssignment={handleAddAssignment}
                   onUploadMaterial={handleUploadMaterial}
                   onSaveAttendance={handleSaveAttendance}
+                  onSavePastTermScores={handleSavePastTermScores}
                 />
               )}
 
