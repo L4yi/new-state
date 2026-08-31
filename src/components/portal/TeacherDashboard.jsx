@@ -872,7 +872,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   </div>
                 </div>
 
-                {/* Clean Score Summary Preview */}
+                {/* Clean Score Summary Preview with Pass / Repeat Verdict */}
                 {(() => {
                   const hasScores = scores.ca1 !== '' || scores.ca2 !== '' || scores.exam !== '';
                   const ca1Num = parseInt(scores.ca1) || 0;
@@ -880,28 +880,53 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   const examNum = parseInt(scores.exam) || 0;
                   const totalScore = ca1Num + ca2Num + examNum;
 
+                  const verdict = !hasScores
+                    ? 'Awaiting Input'
+                    : totalScore >= 50
+                    ? 'Passed (Promoted)'
+                    : totalScore >= 40
+                    ? 'Pass on Trial'
+                    : 'To Repeat';
+
+                  const verdictBadge = !hasScores
+                    ? 'bg-emerald-900/60 text-emerald-300 border-emerald-700/50'
+                    : totalScore >= 50
+                    ? 'bg-emerald-400 text-emerald-950 border-emerald-300 font-black'
+                    : totalScore >= 40
+                    ? 'bg-amber-400 text-amber-950 border-amber-300 font-black'
+                    : 'bg-rose-500 text-white border-rose-400 font-black';
+
                   return (
-                    <div className="p-3.5 rounded-2xl bg-[#06452C] text-white flex items-center justify-between shadow-xs border border-emerald-700/60">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-800/80 flex items-center justify-center text-emerald-300 font-bold text-xs">
-                          Σ
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-[#06452C] via-[#085235] to-[#06452C] text-white shadow-md border border-emerald-700/60 space-y-2.5">
+                      <div className="flex justify-between items-center border-b border-emerald-800/80 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                          <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest leading-tight">
+                            Academic Performance Synthesis
+                          </span>
                         </div>
+                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black border shadow-2xs ${verdictBadge}`}>
+                          {verdict}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest block leading-tight">
-                            Total Score
+                          <span className="text-[10px] text-emerald-200/80 font-bold block uppercase tracking-wider">
+                            Score Breakdown
                           </span>
                           <span className="text-xs text-emerald-100 font-medium">
-                            CA 1 ({ca1Num}) + CA 2 ({ca2Num}) + Exam ({examNum})
+                            CA 1 ({ca1Num}/20) + CA 2 ({ca2Num}/20) + Exam ({examNum}/60)
                           </span>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-lg sm:text-xl font-black text-white block leading-none">
-                          {hasScores ? `${totalScore}/100` : '--/100'}
-                        </span>
-                        <span className="text-[10px] text-emerald-300 font-bold">
-                          {hasScores ? `${totalScore}%` : 'Pending Input'}
-                        </span>
+                        <div className="text-right">
+                          <span className="text-xl sm:text-2xl font-black text-white block leading-none">
+                            {hasScores ? `${totalScore}/100` : '--/100'}
+                          </span>
+                          <span className="text-[10px] text-emerald-300 font-extrabold mt-0.5 block">
+                            {hasScores ? `${totalScore}% Aggregate` : 'Pending Input'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
