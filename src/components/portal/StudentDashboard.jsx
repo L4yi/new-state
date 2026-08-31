@@ -8,6 +8,17 @@ import {
 import OfficialReportCardModal from './OfficialReportCardModal';
 import { printDocument } from '../../utils/printUtils';
 
+// Helper to extract clean 2-letter uppercase initials without brackets or titles
+export const getCleanInitials = (name) => {
+  if (!name) return 'ST';
+  const clean = name.toString().replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
+  const withoutTitles = clean.replace(/^(dr|mr|mrs|miss|ms|chief|alhaji|master|prof|engr|pastor|rev)\.?\s+/i, '');
+  const words = withoutTitles.split(/[\s_-]+/).filter(w => /^[a-zA-Z]/.test(w));
+  if (words.length === 0) return 'ST';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return `${words[0][0]}${words[1][0]}`.toUpperCase();
+};
+
 export default function StudentDashboard({ data, onUploadReceipt, currentStudentId, currentUser }) {
   const activeSchoolSession = data?.sessionInfo?.currentSession || '2026/2027';
   const activeSchoolTerm = data?.sessionInfo?.currentTerm || '3rd Term';
@@ -212,12 +223,14 @@ export default function StudentDashboard({ data, onUploadReceipt, currentStudent
       {/* Top Banner with Student Overview */}
       <div className="p-4 sm:p-6 rounded-2xl bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3 sm:gap-4 w-full">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-green-primary text-white text-lg sm:text-xl font-extrabold flex items-center justify-center flex-shrink-0 shadow-sm">
-            {(student?.name || 'Student').split(' ').map((n) => n[0] || '').join('')}
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#06452C] to-[#0A6B45] text-white text-base sm:text-lg font-black tracking-wider flex items-center justify-center flex-shrink-0 shadow-md border border-emerald-500/30">
+            {getCleanInitials(student?.name || 'Student')}
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-black text-[#1B2521] truncate">{student?.name || 'Student'}</h2>
+              <h2 className="text-lg sm:text-xl font-black text-[#1B2521] truncate">
+                {(student?.name || 'Student').replace(/\(.*?\)/g, '').trim()}
+              </h2>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-[10px] font-extrabold border border-green-primary/20">
                 {student?.class || 'SSS 3'}
               </span>

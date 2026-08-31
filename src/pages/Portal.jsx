@@ -13,6 +13,17 @@ import { initialPortalData, demoPortalData } from '../data/mockPortalData';
 import { generateDefaultSchoolTimetable } from '../data/defaultTimetableData';
 import { API_URL } from '../config/api';
 
+// Helper to extract clean 2-letter uppercase initials without brackets or titles
+const getCleanInitials = (name) => {
+  if (!name) return 'US';
+  const clean = name.toString().replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
+  const withoutTitles = clean.replace(/^(dr|mr|mrs|miss|ms|chief|alhaji|master|prof|engr|pastor|rev)\.?\s+/i, '');
+  const words = withoutTitles.split(/[\s_-]+/).filter(w => /^[a-zA-Z]/.test(w));
+  if (words.length === 0) return 'US';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return `${words[0][0]}${words[1][0]}`.toUpperCase();
+};
+
 class DashboardErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -1148,12 +1159,17 @@ export default function Portal({ onNavigate }) {
           /* LOGGED IN DASHBOARD VIEW */
           <div className="w-full text-[#1B2521] space-y-6">
             <div className="flex justify-between items-center bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-md gap-3">
-              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-green-primary animate-pulse flex-shrink-0" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-[#06452C] to-[#0A6B45] text-white font-black text-xs sm:text-sm tracking-wider flex items-center justify-center flex-shrink-0 shadow-xs border border-emerald-500/30">
+                  {getCleanInitials(currentUser?.name || currentUser?.staffId || currentUser?.id || currentUser?.email || 'User')}
+                </div>
                 <div className="min-w-0">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block leading-none mb-1">Logged in User</span>
+                  <div className="flex items-center gap-1.5 leading-none mb-1">
+                    <span className="w-2 h-2 rounded-full bg-green-primary animate-pulse flex-shrink-0" />
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Logged in User</span>
+                  </div>
                   <div className="text-sm sm:text-base font-extrabold text-[#1B2521] truncate">
-                    {currentUser?.name || currentUser?.staffId || currentUser?.id || currentUser?.email || loginCreds?.identifier || 'Active User'} · <span className="text-green-primary font-bold text-xs sm:text-sm">{roleConfig[activeRole]?.badge || (activeRole === 'admin' ? 'Principal / Admin' : activeRole)}</span>
+                    {(currentUser?.name || currentUser?.staffId || currentUser?.id || currentUser?.email || loginCreds?.identifier || 'Active User').replace(/\(.*?\)/g, '').trim()} · <span className="text-green-primary font-bold text-xs sm:text-sm">{roleConfig[activeRole]?.badge || (activeRole === 'admin' ? 'Principal / Admin' : activeRole)}</span>
                   </div>
                 </div>
               </div>
