@@ -872,95 +872,36 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   </div>
                 </div>
 
-                {/* 1st & 2nd Term Carryover Inputs */}
-                <div className="p-3.5 rounded-2xl bg-gray-50/80 border border-gray-200/80 space-y-2">
-                  <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                    <span>Termly Cumulative Carryover Scores</span>
-                    <span className="text-emerald-700 font-extrabold">Annual Synthesis</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-bold text-gray-700 mb-1 text-[11px]">1st Term Total (100)</label>
-                      <input
-                        type="number"
-                        max="100"
-                        min="0"
-                        value={scores.term1 !== undefined ? scores.term1 : '62'}
-                        placeholder="e.g. 62"
-                        onChange={(e) => setScores({ ...scores, term1: e.target.value })}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-bold text-center"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-bold text-gray-700 mb-1 text-[11px]">2nd Term Total (100)</label>
-                      <input
-                        type="number"
-                        max="100"
-                        min="0"
-                        value={scores.term2 !== undefined ? scores.term2 : '66'}
-                        placeholder="e.g. 66"
-                        onChange={(e) => setScores({ ...scores, term2: e.target.value })}
-                        className="w-full p-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-white font-bold text-center"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Live 3-Term Collation Preview Box */}
+                {/* Clean Score Summary Preview */}
                 {(() => {
-                  const t3 = (parseInt(scores.ca1) || 0) + (parseInt(scores.ca2) || 0) + (parseInt(scores.exam) || 0);
-                  const t1 = scores.term1 !== undefined && !isNaN(parseInt(scores.term1)) ? parseInt(scores.term1) : Math.max(40, t3 - 2);
-                  const t2 = scores.term2 !== undefined && !isNaN(parseInt(scores.term2)) ? parseInt(scores.term2) : Math.max(42, t3 + 1);
-                  const agg = t3 + t1 + t2;
-                  const avg = (agg / 3).toFixed(2);
-                  const gr = calculateGrade(avg);
-                  const verdict = avg >= 50 ? 'Promoted' : avg >= 45 ? 'Promoted on Trial' : 'To Repeat';
-                  
-                  // Color-coded WAEC grade badge styling
-                  const gradeBadgeClass = gr === 'A1' 
-                    ? 'bg-emerald-400 text-emerald-950 font-black ring-2 ring-emerald-300/50'
-                    : gr === 'B2' || gr === 'B3'
-                    ? 'bg-emerald-500 text-white font-black'
-                    : gr.startsWith('C')
-                    ? 'bg-sky-500 text-white font-black'
-                    : gr.startsWith('D') || gr.startsWith('E')
-                    ? 'bg-amber-500 text-amber-950 font-black'
-                    : 'bg-rose-500 text-white font-black';
-
-                  const verdictClass = avg >= 50 
-                    ? 'text-emerald-300 font-black' 
-                    : avg >= 45 
-                    ? 'text-amber-300 font-black' 
-                    : 'text-rose-300 font-black';
+                  const hasScores = scores.ca1 !== '' || scores.ca2 !== '' || scores.exam !== '';
+                  const ca1Num = parseInt(scores.ca1) || 0;
+                  const ca2Num = parseInt(scores.ca2) || 0;
+                  const examNum = parseInt(scores.exam) || 0;
+                  const totalScore = ca1Num + ca2Num + examNum;
 
                   return (
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-[#06452C] to-[#0A5637] text-white space-y-3 text-xs shadow-md border border-emerald-700/60">
-                      <div className="flex justify-between items-center border-b border-emerald-800/80 pb-2.5">
-                        <span className="font-black text-emerald-300 uppercase tracking-wider text-[10px] flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
-                          <span>3rd Term Promotional Collation</span>
-                        </span>
-                        <span className={`px-2.5 py-0.5 rounded-lg text-[10px] shadow-xs ${gradeBadgeClass}`}>
-                          WAEC {gr}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
-                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
-                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">3rd Term Score</span>
-                          <span className="font-black text-base mt-0.5 block">{t3}/100</span>
+                    <div className="p-3.5 rounded-2xl bg-[#06452C] text-white flex items-center justify-between shadow-xs border border-emerald-700/60">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-800/80 flex items-center justify-center text-emerald-300 font-bold text-xs">
+                          Σ
                         </div>
-                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
-                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">Cumulative</span>
-                          <span className="font-black text-base mt-0.5 block">{agg}/300</span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-emerald-950/60 border border-emerald-700/40 backdrop-blur-xs">
-                          <span className="text-emerald-300/90 block text-[9px] font-bold uppercase tracking-wider">Annual Average</span>
-                          <span className="font-black text-base text-[#FDE68A] mt-0.5 block">{avg}%</span>
+                        <div>
+                          <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest block leading-tight">
+                            Total Score
+                          </span>
+                          <span className="text-xs text-emerald-100 font-medium">
+                            CA 1 ({ca1Num}) + CA 2 ({ca2Num}) + Exam ({examNum})
+                          </span>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] text-emerald-200/90 pt-1 border-t border-emerald-800/40">
-                        <span>Collation Status: <strong className={verdictClass}>{verdict}</strong></span>
-                        <span className="text-[9px] text-emerald-300/70 font-mono">3-Term Formula Active</span>
+                      <div className="text-right">
+                        <span className="text-lg sm:text-xl font-black text-white block leading-none">
+                          {hasScores ? `${totalScore}/100` : '--/100'}
+                        </span>
+                        <span className="text-[10px] text-emerald-300 font-bold">
+                          {hasScores ? `${totalScore}%` : 'Pending Input'}
+                        </span>
                       </div>
                     </div>
                   );

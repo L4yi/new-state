@@ -336,6 +336,44 @@ export const initialPortalData = {
       subjectsTaught: []
     }
   ],
+  feePayments: [
+    {
+      id: 'RCP-2026-002',
+      paymentId: 'RCP-2026-002',
+      studentId: 'NSHS/2026/004',
+      studentName: 'Chidimma Okonkwo',
+      amount: '₦125,000',
+      bankName: 'GTBank Mobile App',
+      reference: 'GTB-TRF-4412093',
+      dateSubmitted: '2026-08-25',
+      status: 'Pending',
+      class: 'SSS 3C (Commerce)',
+    },
+    {
+      id: 'RCP-2026-003',
+      paymentId: 'RCP-2026-003',
+      studentId: 'NSHS/2026/007',
+      studentName: 'Ibrahim Danjuma',
+      amount: '₦125,000',
+      bankName: 'Zenith Bank Transfer',
+      reference: 'ZEN-PAY-7762190',
+      dateSubmitted: '2026-08-27',
+      status: 'Pending',
+      class: 'SSS 1A (Science)',
+    },
+    {
+      id: 'RCP-2026-001',
+      paymentId: 'RCP-2026-001',
+      studentId: 'NSHS/2026/001',
+      studentName: 'Oluwaseun Adeleke',
+      amount: '₦125,000',
+      bankName: 'First Bank Nigeria',
+      reference: 'FBN-TRF-9823411',
+      dateSubmitted: '2026-08-22',
+      status: 'Approved',
+      class: 'SSS 3A (Science)',
+    },
+  ],
   applications: []
 };
 

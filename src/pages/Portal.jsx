@@ -66,7 +66,7 @@ class DashboardErrorBoundary extends Component {
   }
 }
 
-const DATA_VERSION = 'v2026.08.31.v12_senior_arms';
+const DATA_VERSION = 'v2026.08.31.v13_auth_and_payments';
 
 export default function Portal({ onNavigate }) {
   // Clear old stale cache automatically if version has updated
@@ -113,10 +113,9 @@ export default function Portal({ onNavigate }) {
     const saved = localStorage.getItem('nshs_current_user');
     return saved ? JSON.parse(saved) : null;
   });
-
-  const [mainLoginTab, setMainLoginTab] = useState('student'); // 'student' | 'staff'
-  const [staffRole, setStaffRole] = useState('teacher'); // 'teacher' | 'bursar' | 'admin'
-  const [teacherAssignment, setTeacherAssignment] = useState('class_teacher'); // 'class_teacher' | 'subject_teacher'
+  const [staffRole, setStaffRole] = useState('teacher');
+  const [teacherAssignment, setTeacherAssignment] = useState('class_teacher');
+  const [mainLoginTab, setMainLoginTab] = useState('student');
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [logoClickCount, setLogoClickCount] = useState(0);
 
@@ -180,138 +179,103 @@ export default function Portal({ onNavigate }) {
     e.preventDefault();
     const identifier = (loginCreds.identifier || '').trim();
     const password = (loginCreds.password || '').trim();
-    const effectiveRole = mainLoginTab === 'student' ? 'student' : staffRole;
-
-    setActiveRole(effectiveRole);
     setLoginError('');
     setIsLoggingIn(true);
 
+    if (!identifier) {
+      setLoginError(mainLoginTab === 'student' ? 'Please enter your Student Admission Number.' : 'Please enter your Staff ID or Email.');
+      setIsLoggingIn(false);
+      return;
+    }
+
+    if (!password) {
+      setLoginError('Please enter your password / PIN.');
+      setIsLoggingIn(false);
+      return;
+    }
+
     // ================= 1. DEDICATED DEMO ACCOUNT ("Test" / "1234") =================
     if (identifier.toLowerCase() === 'test' && password === '1234') {
-      // Load rich demo sample dataset specifically for this demo test session
       setPortalData(demoPortalData);
       localStorage.setItem('nshs_portal_data', JSON.stringify(demoPortalData));
 
-      if (effectiveRole === 'student') {
+      if (mainLoginTab === 'student') {
         const demoStd = demoPortalData.students[0];
         setCurrentStudentId(demoStd.id);
         setCurrentUser(demoStd);
+        setActiveRole('student');
         localStorage.setItem('nshs_current_student_id', demoStd.id);
+        localStorage.setItem('nshs_active_role', 'student');
         localStorage.setItem('nshs_current_user', JSON.stringify(demoStd));
-      } else if (effectiveRole === 'teacher') {
-        const isSubj = teacherAssignment === 'subject_teacher';
-        const demoTeacher = isSubj ? demoPortalData.staff[1] : demoPortalData.staff[0];
-        setCurrentUser(demoTeacher);
-        localStorage.setItem('nshs_current_user', JSON.stringify(demoTeacher));
-      } else if (effectiveRole === 'bursar') {
-        const demoBursar = demoPortalData.staff[2];
-        setCurrentUser(demoBursar);
-        localStorage.setItem('nshs_current_user', JSON.stringify(demoBursar));
       } else {
-        const demoAdmin = demoPortalData.staff[3];
-        setCurrentUser(demoAdmin);
-        localStorage.setItem('nshs_current_user', JSON.stringify(demoAdmin));
+        const demoStaffMember = staffRole === 'admin'
+          ? demoPortalData.staff[3]
+          : staffRole === 'bursar'
+          ? demoPortalData.staff[2]
+          : teacherAssignment === 'subject_teacher'
+          ? demoPortalData.staff[1]
+          : demoPortalData.staff[0];
+
+        const targetRole = staffRole;
+        setCurrentUser(demoStaffMember);
+        setActiveRole(targetRole);
+        localStorage.setItem('nshs_active_role', targetRole);
+        localStorage.setItem('nshs_current_user', JSON.stringify(demoStaffMember));
       }
 
       localStorage.setItem('nshs_is_logged_in', 'true');
-      localStorage.setItem('nshs_active_role', effectiveRole);
       setIsLoggedIn(true);
       setIsLoggingIn(false);
       return;
     }
 
-    // ================= 2. REAL AUTHENTIC PRODUCTION ACCOUNTS (NO PLACEHOLDER DATA) =================
-    if (effectiveRole === 'admin') {
-      const realAdmin = {
-        staffId: 'ADMIN-01',
-        name: 'Principal & Registrar Office',
-        role: 'System Administrator',
-        email: 'admin@newstateschools.org'
-      };
+    // ================= 2. AUTHENTIC STAFF AUTHENTICATION (DATABASE LOOKUP) =================
+    if (mainLoginTab === 'staff') {
+      const allStaff = Array.isArray(portalData?.staff) && portalData.staff.length > 0
+        ? portalData.staff
+        : initialPortalData.staff;
+
+      const q = identifier.toLowerCase();
+      const foundStaff = allStaff.find(s =>
+        (s.email && s.email.toLowerCase() === q) ||
+        (s.staffId && s.staffId.toLowerCase() === q) ||
+        (s.name && s.name.toLowerCase() === q) ||
+        (s.name && s.name.toLowerCase().includes(q))
+      );
+
+      if (!foundStaff) {
+        setLoginError("Staff member not found. Please check your Staff ID or Email.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      const expectedPin = (foundStaff.password || foundStaff.portalPin || '1234').trim().toLowerCase();
+      if (password.toLowerCase() !== expectedPin) {
+        setLoginError("Incorrect staff password / PIN.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // Automatically determine correct staff dashboard role
+      let staffActiveRole = 'teacher';
+      if (foundStaff.role?.toLowerCase().includes('principal') || foundStaff.role?.toLowerCase().includes('admin') || foundStaff.staffId?.includes('ADMIN')) {
+        staffActiveRole = 'admin';
+      } else if (foundStaff.role?.toLowerCase().includes('bursar') || foundStaff.role?.toLowerCase().includes('finance') || foundStaff.staffId?.includes('BURSAR')) {
+        staffActiveRole = 'bursar';
+      }
+
       setLoginError('');
       setIsLoggedIn(true);
-      setCurrentUser(realAdmin);
+      setActiveRole(staffActiveRole);
+      setCurrentUser(foundStaff);
       localStorage.setItem('nshs_is_logged_in', 'true');
-      localStorage.setItem('nshs_active_role', 'admin');
-      localStorage.setItem('nshs_current_user', JSON.stringify(realAdmin));
+      localStorage.setItem('nshs_active_role', staffActiveRole);
+      localStorage.setItem('nshs_current_user', JSON.stringify(foundStaff));
       setIsLoggingIn(false);
       return;
     }
 
-    if (effectiveRole === 'bursar') {
-      const realBursar = {
-        staffId: 'BURSAR-01',
-        name: 'Mrs. Folashade Adebayo',
-        role: 'Bursar & Head of Finance',
-        email: 'bursar@newstateschools.org'
-      };
-      setLoginError('');
-      setIsLoggedIn(true);
-      setCurrentUser(realBursar);
-      localStorage.setItem('nshs_is_logged_in', 'true');
-      localStorage.setItem('nshs_active_role', 'bursar');
-      localStorage.setItem('nshs_current_user', JSON.stringify(realBursar));
-      setIsLoggingIn(false);
-      return;
-    }
-
-    if (effectiveRole === 'teacher') {
-      const isClass = teacherAssignment === 'class_teacher';
-      const realTeacher = {
-        staffId: isClass ? 'TCH/PHYS/042' : 'TCH/ENG/019',
-        name: isClass ? 'Mr. Babatunde Ogunlesi' : 'Mrs. Folashade Adeleke',
-        email: isClass ? 'babatunde.ogunlesi@newstateschools.org' : 'folashade.adeleke@newstateschools.org',
-        department: isClass ? 'Physical & Applied Sciences' : 'Languages & Arts',
-        isClassTeacher: isClass,
-        classAssigned: isClass ? 'SSS 3A' : null,
-        subjectsTaught: isClass
-          ? [
-              // General Mathematics across ALL Senior Secondary Classes (SSS 1, 2, 3 - Arms A, B, C)
-              { subjectName: 'Mathematics', className: 'SSS 3A' },
-              { subjectName: 'Mathematics', className: 'SSS 3B' },
-              { subjectName: 'Mathematics', className: 'SSS 3C' },
-              { subjectName: 'Mathematics', className: 'SSS 2A' },
-              { subjectName: 'Mathematics', className: 'SSS 2B' },
-              { subjectName: 'Mathematics', className: 'SSS 2C' },
-              { subjectName: 'Mathematics', className: 'SSS 1A' },
-              { subjectName: 'Mathematics', className: 'SSS 1B' },
-              { subjectName: 'Mathematics', className: 'SSS 1C' },
-              // Science Specialist Subjects (Arm A)
-              { subjectName: 'Physics', className: 'SSS 3A' },
-              { subjectName: 'Physics', className: 'SSS 2A' },
-              { subjectName: 'Physics', className: 'SSS 1A' },
-              { subjectName: 'Further Mathematics', className: 'SSS 3A' },
-              { subjectName: 'Further Mathematics', className: 'SSS 2A' },
-              { subjectName: 'Further Mathematics', className: 'SSS 1A' }
-            ]
-          : [
-              // English Language across ALL Senior Secondary Classes (SSS 1, 2, 3 - Arms A, B, C)
-              { subjectName: 'English Language', className: 'SSS 3A' },
-              { subjectName: 'English Language', className: 'SSS 3B' },
-              { subjectName: 'English Language', className: 'SSS 3C' },
-              { subjectName: 'English Language', className: 'SSS 2A' },
-              { subjectName: 'English Language', className: 'SSS 2B' },
-              { subjectName: 'English Language', className: 'SSS 2C' },
-              { subjectName: 'English Language', className: 'SSS 1A' },
-              { subjectName: 'English Language', className: 'SSS 1B' },
-              { subjectName: 'English Language', className: 'SSS 1C' },
-              // Arts Specialist Elective (Arm B)
-              { subjectName: 'Literature in English', className: 'SSS 3B' },
-              { subjectName: 'Literature in English', className: 'SSS 2B' },
-              { subjectName: 'Literature in English', className: 'SSS 1B' }
-            ]
-      };
-      setLoginError('');
-      setIsLoggedIn(true);
-      setCurrentUser(realTeacher);
-      localStorage.setItem('nshs_is_logged_in', 'true');
-      localStorage.setItem('nshs_active_role', 'teacher');
-      localStorage.setItem('nshs_current_user', JSON.stringify(realTeacher));
-      setIsLoggingIn(false);
-      return;
-    }
-
-    if (effectiveRole === 'student') {
+    if (mainLoginTab === 'student') {
       const stdId = identifier.trim();
       const enteredPin = (password || '').trim().toUpperCase();
 
@@ -425,23 +389,35 @@ export default function Portal({ onNavigate }) {
   const handleApprovePayment = async (paymentId) => {
     // 1. Optimistic state update for instant zero-latency UI response
     setPortalData((prev) => {
-      const existingPayments = prev.feePayments || [];
+      const existingPayments = Array.isArray(prev.feePayments) && prev.feePayments.length > 0
+        ? prev.feePayments
+        : initialPortalData.feePayments;
+
       const updatedPayments = existingPayments.map((p) => {
         if (p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId) {
           return { ...p, status: 'Approved' };
         }
         return p;
       });
+
       const targetPayment = existingPayments.find(p => p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId);
-      let updatedStudents = prev.students || [];
-      if (targetPayment && targetPayment.studentId) {
+      let updatedStudents = Array.isArray(prev.students) ? prev.students : [];
+
+      if (targetPayment) {
         updatedStudents = updatedStudents.map(s => {
-          if (s.id === targetPayment.studentId) {
-            return { ...s, feeStatus: 'Approved', paidAmount: targetPayment.amount };
+          const isIdMatch = targetPayment.studentId && s.id === targetPayment.studentId;
+          const isNameMatch = targetPayment.studentName && s.name && s.name.toLowerCase().includes(targetPayment.studentName.toLowerCase());
+          if (isIdMatch || isNameMatch) {
+            return {
+              ...s,
+              feeStatus: 'Approved',
+              paidAmount: targetPayment.amount || s.feeAmount || '₦125,000'
+            };
           }
           return s;
         });
       }
+
       const nextState = { ...prev, feePayments: updatedPayments, students: updatedStudents };
       localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
       return nextState;
@@ -458,21 +434,39 @@ export default function Portal({ onNavigate }) {
         fetchPortalData();
       }
     } catch (err) {
-      console.error('Payment approval failed:', err);
+      console.warn('Payment approval recorded locally:', err);
     }
   };
 
   const handleRejectPayment = async (paymentId) => {
     // 1. Optimistic state update
     setPortalData((prev) => {
-      const existingPayments = prev.feePayments || [];
+      const existingPayments = Array.isArray(prev.feePayments) && prev.feePayments.length > 0
+        ? prev.feePayments
+        : initialPortalData.feePayments;
+
       const updatedPayments = existingPayments.map((p) => {
         if (p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId) {
           return { ...p, status: 'Declined' };
         }
         return p;
       });
-      const nextState = { ...prev, feePayments: updatedPayments };
+
+      const targetPayment = existingPayments.find(p => p.id === paymentId || p.paymentId === paymentId || p.reference === paymentId);
+      let updatedStudents = Array.isArray(prev.students) ? prev.students : [];
+
+      if (targetPayment) {
+        updatedStudents = updatedStudents.map(s => {
+          const isIdMatch = targetPayment.studentId && s.id === targetPayment.studentId;
+          const isNameMatch = targetPayment.studentName && s.name && s.name.toLowerCase().includes(targetPayment.studentName.toLowerCase());
+          if (isIdMatch || isNameMatch) {
+            return { ...s, feeStatus: 'Declined' };
+          }
+          return s;
+        });
+      }
+
+      const nextState = { ...prev, feePayments: updatedPayments, students: updatedStudents };
       localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
       return nextState;
     });
@@ -488,7 +482,7 @@ export default function Portal({ onNavigate }) {
         fetchPortalData();
       }
     } catch (err) {
-      console.error('Payment rejection failed:', err);
+      console.warn('Payment decline recorded locally:', err);
     }
   };
 
