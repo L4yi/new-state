@@ -679,7 +679,7 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                 </span>
               )}
 
-              {teacherSubjectsTaught.length > 0 && (
+              {!isClassTeacher && teacherSubjectsTaught.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-black border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
@@ -816,7 +816,27 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         <div className="space-y-5">
           
           {/* ================= DEDICATED CLASS & SUBJECT WORKSPACE DROPDOWNS ================= */}
-          {distinctClasses.length > 0 && (
+          {isClassTeacher ? (
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                  <Users className="w-5 h-5 text-emerald-300" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
+                    Class Form Master Collation
+                  </span>
+                  <h3 className="text-base font-extrabold text-white">
+                    {currentUser.classAssigned} Results Collation & Broadsheet
+                  </h3>
+                </div>
+              </div>
+
+              <span className="px-3 py-1 rounded-full bg-emerald-900/90 text-emerald-200 font-black text-xs border border-emerald-700/60">
+                {formClassStudents.length} Students in Form Class
+              </span>
+            </div>
+          ) : distinctClasses.length > 0 && (
             <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md space-y-3.5">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div className="flex items-center gap-2.5">
@@ -825,10 +845,10 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
-                      Class & Subject Workspace Selector
+                      Subject Grading Workspace Selector
                     </span>
                     <p className="text-xs text-emerald-100 font-medium">
-                      Select the class arm and subject you want to work on:
+                      Select the class arm and subject you want to record scores for:
                     </p>
                   </div>
                 </div>
