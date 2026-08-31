@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
 import { STANDARD_PERIODS, JSS_SUBJECTS, SSS_SUBJECTS, STANDARD_ROOMS, STANDARD_DAYS } from '../../data/defaultTimetableData';
+import SuccessModal from './SuccessModal';
 
 // Generates a clean, cryptographically random, unambiguous 6-character alphanumeric PIN
 const generateRandomPin = () => {
@@ -33,6 +34,12 @@ export default function AdminDashboard({
 }) {
   const [activeAdminTab, setActiveAdminTab] = useState('applications');
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalFeedback, setModalFeedback] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success',
+  });
 
   const defaultAvailableSessions = ['2027/2028', '2026/2027', '2025/2026', '2024/2025', '2023/2024'];
   const [availableSessions, setAvailableSessions] = useState(() => {
@@ -447,6 +454,12 @@ export default function AdminDashboard({
       setShowAddSlotModal(false);
       setEditingSlot(null);
       setTimetableFeedback(`Timetable period for ${slotPayload.subject} (${slotPayload.day}) saved successfully!`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Timetable Period Saved!',
+        message: `${slotPayload.subject} scheduled for ${targetClass} on ${slotPayload.day} (${slotPayload.time || slotPayload.period}).`,
+        type: 'success'
+      });
       setTimeout(() => setTimetableFeedback(''), 4500);
     } catch (err) {
       console.error('Failed to save timetable slot:', err);
@@ -462,6 +475,12 @@ export default function AdminDashboard({
         await onDeleteTimetableSlot(slotId);
       }
       setTimetableFeedback('Period slot removed from schedule.');
+      setModalFeedback({
+        isOpen: true,
+        title: 'Period Slot Deleted',
+        message: 'The selected subject period slot has been removed from the class schedule.',
+        type: 'delete'
+      });
       setTimeout(() => setTimetableFeedback(''), 3500);
     } catch (err) {
       console.error('Failed to delete timetable slot:', err);
@@ -473,6 +492,12 @@ export default function AdminDashboard({
     if (onResetClassTimetable) {
       onResetClassTimetable(className);
       setTimetableFeedback(`Timetable for ${className} reset to standard school template!`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Timetable Schedule Reset',
+        message: `Class timetable for ${className} has been restored to standard curriculum template.`,
+        type: 'delete'
+      });
       setTimeout(() => setTimetableFeedback(''), 4500);
     }
   };
@@ -485,16 +510,23 @@ export default function AdminDashboard({
         isClassTeacher: Boolean(classVal)
       });
     }
-    setStaffUpdateFeedback(
-      classVal
-        ? `${teacher.name} is now designated as the Class Teacher for ${classVal}.`
-        : `${teacher.name} is now designated as a Subject Teacher only.`
-    );
+    const feedbackText = classVal
+      ? `Teacher ${teacher.name} assigned as Class Teacher for ${classVal}!`
+      : `Teacher ${teacher.name} updated to Subject Specialist (Non-Class Teacher)!`;
+    setStaffUpdateFeedback(feedbackText);
+    setModalFeedback({
+      isOpen: true,
+      title: 'Teacher Allocation Updated!',
+      message: feedbackText,
+      type: 'success'
+    });
     setTimeout(() => setStaffUpdateFeedback(''), 4500);
   };
 
   const handleCreateStaffSubmit = async (e) => {
     e.preventDefault();
+    if (!newStaffForm.name || !newStaffForm.email) return;
+
     const classVal = newStaffForm.classAssigned === 'None' || newStaffForm.classAssigned === 'None (Subject Teacher Only)'
       ? null
       : newStaffForm.classAssigned;
@@ -530,6 +562,12 @@ export default function AdminDashboard({
         classAssigned: 'None',
       });
       setStaffUpdateFeedback(`Staff member ${newStaffObj.name} successfully onboarded!`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Teacher Onboarded Successfully!',
+        message: `${newStaffObj.name} (${newStaffObj.staffId}) has been added with email ${newStaffObj.email}.`,
+        type: 'success'
+      });
       setTimeout(() => setStaffUpdateFeedback(''), 4500);
     } catch (err) {
       console.error('Error onboarding staff member:', err);
@@ -551,8 +589,15 @@ export default function AdminDashboard({
           content: newNotice.content,
         });
       }
+      const titleSaved = newNotice.title;
       setNewNotice({ title: '', content: '' });
       setNoticeMsg('Announcement broadcasted to all students, parents, and teachers!');
+      setModalFeedback({
+        isOpen: true,
+        title: 'Announcement Broadcasted!',
+        message: `"${titleSaved}" is now live on the Student, Teacher, and Staff portals.`,
+        type: 'success'
+      });
       setTimeout(() => setNoticeMsg(''), 4000);
     } catch (err) {
       console.error('Error broadcasting announcement:', err);
@@ -623,6 +668,12 @@ export default function AdminDashboard({
       if (selectedApplicationForReview && onUpdateApplication) {
         await onUpdateApplication(selectedApplicationForReview.applicationId || selectedApplicationForReview.id, 'Accepted & Enrolled');
       }
+      setModalFeedback({
+        isOpen: true,
+        title: 'Student Enrolled Successfully!',
+        message: `Admission recorded for ${newStudentData.name} (${newStudentData.id}) into ${newStudentData.class} with Portal PIN ${newStudentData.password}.`,
+        type: 'success'
+      });
     } catch (err) {
       console.error('Error adding student:', err);
     } finally {
@@ -3171,6 +3222,15 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+      {/* Admin Action Success / Feedback Popup Modal */}
+      <SuccessModal
+        isOpen={modalFeedback.isOpen}
+        onClose={() => setModalFeedback(prev => ({ ...prev, isOpen: false }))}
+        title={modalFeedback.title}
+        message={modalFeedback.message}
+        type={modalFeedback.type}
+      />
     </div>
   );
 }

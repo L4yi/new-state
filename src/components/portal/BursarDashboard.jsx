@@ -3,6 +3,7 @@ import {
   CheckCircle2, XCircle, Clock, CreditCard, Building2, Check, X,
   ShieldCheck, Loader2, FileText, UserCheck, Search, Filter, AlertCircle, Megaphone
 } from 'lucide-react';
+import SuccessModal from './SuccessModal';
 
 const defaultFeePayments = [
   {
@@ -49,6 +50,12 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
   const [actionFeedback, setActionFeedback] = useState('');
   const [processingId, setProcessingId] = useState(null);
   const [processingAction, setProcessingAction] = useState('');
+  const [modalFeedback, setModalFeedback] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success',
+  });
 
   const rawPayments = Array.isArray(data?.feePayments) && data.feePayments.length > 0
     ? data.feePayments
@@ -80,6 +87,12 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
         await onApprovePayment(payId);
       }
       setActionFeedback(`Payment for ${payment.studentName} (${payment.amount}) approved successfully! Fee clearance issued.`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Payment Approved & Cleared!',
+        message: `Official fee clearance issued for ${payment.studentName} (${payment.amount} - ${payment.reference}). Student can now access report cards.`,
+        type: 'success'
+      });
       setTimeout(() => setActionFeedback(''), 4500);
     } catch (err) {
       console.error('Approval failed:', err);
@@ -99,6 +112,12 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
         await onRejectPayment(payId);
       }
       setActionFeedback(`Payment for ${payment.studentName} (${payment.amount}) declined.`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Payment Record Declined',
+        message: `Payment transfer submission (${payment.reference}) for ${payment.studentName} has been declined.`,
+        type: 'delete'
+      });
       setTimeout(() => setActionFeedback(''), 4500);
     } catch (err) {
       console.error('Rejection failed:', err);
@@ -406,6 +425,15 @@ export default function BursarDashboard({ data, onApprovePayment, onRejectPaymen
           </table>
         </div>
       </div>
+
+      {/* Action Confirmation Modal */}
+      <SuccessModal
+        isOpen={modalFeedback.isOpen}
+        onClose={() => setModalFeedback(prev => ({ ...prev, isOpen: false }))}
+        title={modalFeedback.title}
+        message={modalFeedback.message}
+        type={modalFeedback.type}
+      />
     </div>
   );
 }

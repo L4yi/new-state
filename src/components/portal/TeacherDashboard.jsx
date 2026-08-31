@@ -4,9 +4,10 @@ import {
   Calendar, BookOpen, Sparkles, UserCheck, UserX, Clock, ArrowRight,
   Award, ShieldCheck, FileText, Check, ListChecks, MessageSquare,
   Layers, Filter, Loader2, Paperclip, Link2, FileSpreadsheet, File, Printer,
-  CalendarDays, MapPin, Megaphone, AlertTriangle
+  CalendarDays, MapPin, Megaphone, AlertTriangle, Search, X
 } from 'lucide-react';
 import OfficialReportCardModal from './OfficialReportCardModal';
+import SuccessModal from './SuccessModal';
 
 // Helper for flexible, whitespace/hyphen-agnostic class matching (handles 'SSS 3A', 'SSS 3 - Arm A', 'SSS 3', etc.)
 const normalizeClassName = (str) => (str || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -28,6 +29,13 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportStudent, setReportStudent] = useState(null);
   const [selectedTeacherTimetableDay, setSelectedTeacherTimetableDay] = useState('All');
+  const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [modalFeedback, setModalFeedback] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success',
+  });
 
   const isClassTeacher = Boolean(currentUser?.classAssigned);
 
@@ -71,6 +79,17 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     return allowedStudents.filter(s => isClassMatch(s.class, selectedClassFilter));
   }, [allowedStudents, selectedClassFilter]);
 
+  // Search-filtered students (for large classes / rosters)
+  const searchableStudents = useMemo(() => {
+    if (!studentSearchTerm.trim()) return classFilteredStudents;
+    const q = studentSearchTerm.trim().toLowerCase();
+    return classFilteredStudents.filter(s =>
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.id && s.id.toLowerCase().includes(q)) ||
+      (s.class && s.class.toLowerCase().includes(q))
+    );
+  }, [classFilteredStudents, studentSearchTerm]);
+
   // Class specific students for assigned class
   const formClassStudents = useMemo(() => {
     if (!currentUser?.classAssigned) return [];
@@ -100,16 +119,16 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
   });
   const [formSavedMsg, setFormSavedMsg] = useState('');
 
-  // Sync selectedStudent when classFilteredStudents changes
+  // Sync selectedStudent when searchableStudents changes
   useEffect(() => {
-    if (classFilteredStudents.length > 0) {
-      if (!classFilteredStudents.some(s => s.id === selectedStudent)) {
-        setSelectedStudent(classFilteredStudents[0].id);
+    if (searchableStudents.length > 0) {
+      if (!searchableStudents.some(s => s.id === selectedStudent)) {
+        setSelectedStudent(searchableStudents[0].id);
       }
     } else {
       setSelectedStudent('');
     }
-  }, [classFilteredStudents, selectedStudent]);
+  }, [searchableStudents, selectedStudent]);
 
   // Sync selectedFormStudent
   useEffect(() => {
@@ -291,7 +310,14 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
           remark,
         });
       }
-      setSavedMsg(`3rd Term score & Annual Collation saved for ${(data?.students || []).find((s) => s.id === selectedStudent)?.name}! ${selectedSubject}: 3rd Term ${term3Total}/100 · Aggregate ${aggregate300}/300 · Annual Avg ${annualAverage}% (${grade})`);
+      const savedStudentName = (data?.students || []).find((s) => s.id === selectedStudent)?.name || 'Student';
+      setSavedMsg(`3rd Term score & Annual Collation saved for ${savedStudentName}! ${selectedSubject}: 3rd Term ${term3Total}/100 · Aggregate ${aggregate300}/300 · Annual Avg ${annualAverage}% (${grade})`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Score Saved & Collated!',
+        message: `${selectedSubject} scores for ${savedStudentName} recorded successfully: 3rd Term ${term3Total}/100, Cumulative ${aggregate300}/300, Annual Average ${annualAverage}% (${grade} - ${remark}).`,
+        type: 'success'
+      });
       setTimeout(() => setSavedMsg(''), 5500);
     } catch (err) {
       console.error('Error saving score:', err);
@@ -335,6 +361,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         linkUrl: '',
       });
       setAsnMsg(`Assignment published to students in ${payload.targetClass}!`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Assignment Published!',
+        message: `"${payload.title}" has been dispatched to students in ${payload.targetClass} (Due: ${payload.dueDate}).`,
+        type: 'success'
+      });
       setTimeout(() => setAsnMsg(''), 4500);
     } catch (err) {
       console.error('Error posting assignment:', err);
@@ -374,6 +406,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
         linkUrl: '',
       });
       setMatMsg(`Learning material uploaded & dispatched to ${payload.targetClass}!`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Learning Material Uploaded!',
+        message: `"${payload.title}" is now available in the e-Library repository for ${payload.targetClass}.`,
+        type: 'success'
+      });
       setTimeout(() => setMatMsg(''), 4500);
     } catch (err) {
       console.error('Error uploading material:', err);
@@ -404,6 +442,12 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       }
     } catch (err) {}
     setFormSavedMsg(`Class Teacher evaluation and terminal remark saved for ${student?.name || selectedFormStudent}!`);
+    setModalFeedback({
+      isOpen: true,
+      title: 'Class Teacher Evaluation Saved!',
+      message: `Terminal remark and affective conduct ratings recorded for ${student?.name || selectedFormStudent} on their official terminal dossier.`,
+      type: 'success'
+    });
     setTimeout(() => setFormSavedMsg(''), 4500);
   };
 
@@ -648,21 +692,47 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                       <span>Select Student</span>
                     </label>
                     <span className="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-md">
-                      Showing {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
+                      Showing {searchableStudents.length} of {classFilteredStudents.length} students {selectedClassFilter !== 'All' ? `in ${selectedClassFilter}` : ''}
                     </span>
                   </div>
+
+                  {/* Real-time Student Search Filter */}
+                  <div className="relative mb-2">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Search student by name, admission no, or class..."
+                      value={studentSearchTerm}
+                      onChange={(e) => setStudentSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-medium text-[#1B2521] placeholder-gray-400 transition-all"
+                    />
+                    {studentSearchTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setStudentSearchTerm('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                        aria-label="Clear search filter"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtered Student Dropdown */}
                   <select
                     value={selectedStudent}
                     onChange={(e) => setSelectedStudent(e.target.value)}
-                    disabled={classFilteredStudents.length === 0}
+                    disabled={searchableStudents.length === 0}
                     className="w-full p-3.5 rounded-2xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary focus:ring-2 focus:ring-emerald-500/20 bg-[#FAFCFA] font-bold text-[#1B2521] transition-all disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                   >
-                    {classFilteredStudents.length === 0 ? (
-                      <option value="">-- No registered students in this class --</option>
+                    {searchableStudents.length === 0 ? (
+                      <option value="">
+                        {studentSearchTerm ? `-- No student matches "${studentSearchTerm}" --` : '-- No registered students in this class --'}
+                      </option>
                     ) : (
                       <>
-                        <option value="">-- Select a Student --</option>
-                        {classFilteredStudents.map((s) => (
+                        <option value="">-- Select a Student ({searchableStudents.length} available) --</option>
+                        {searchableStudents.map((s) => (
                           <option key={s.id} value={s.id}>
                             {s.name} ({s.class} · {s.id})
                           </option>
@@ -670,6 +740,19 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
                       </>
                     )}
                   </select>
+
+                  {studentSearchTerm && searchableStudents.length === 0 && (
+                    <div className="mt-2 flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 shadow-xs">
+                      <span>No student found matching "<strong>{studentSearchTerm}</strong>"</span>
+                      <button
+                        type="button"
+                        onClick={() => setStudentSearchTerm('')}
+                        className="text-amber-800 font-bold underline hover:text-amber-950 cursor-pointer ml-2"
+                      >
+                        Clear search
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* STRICT SUBJECT DROPDOWN (ONLY TEACHER'S ASSIGNED SUBJECTS) */}
@@ -1526,6 +1609,15 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
           onClose={() => setShowReportModal(false)}
         />
       )}
+
+      {/* Action Success / Feedback Popup Modal */}
+      <SuccessModal
+        isOpen={modalFeedback.isOpen}
+        onClose={() => setModalFeedback(prev => ({ ...prev, isOpen: false }))}
+        title={modalFeedback.title}
+        message={modalFeedback.message}
+        type={modalFeedback.type}
+      />
     </div>
   );
 }

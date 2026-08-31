@@ -310,7 +310,7 @@ export default function Portal({ onNavigate }) {
 
       // 1. Verify Student Existence in Database
       if (!foundStd) {
-        setLoginError(`Student record with Admission Number "${stdId}" was not found. Please check the Admission Number on your admission slip or contact the school administrative office.`);
+        setLoginError("Student doesn't exist. Please check your Admission Number or contact administration.");
         setIsLoggingIn(false);
         return;
       }
@@ -320,7 +320,7 @@ export default function Portal({ onNavigate }) {
       const isPinMatch = enteredPin === storedPin;
 
       if (!isPinMatch) {
-        setLoginError(`Incorrect Student Portal PIN for ${foundStd.name}. Please check the 6-character PIN on your admission slip or contact the school administration.`);
+        setLoginError("Incorrect Student Portal PIN. Please check your PIN and try again.");
         setIsLoggingIn(false);
         return;
       }
