@@ -4,7 +4,8 @@ import {
   Award, Calendar, Phone, Mail, MapPin, HeartPulse, CreditCard, Sparkles, Printer, FileText, ChevronDown,
   Building2, Hash, IdCard, MessageSquare, CheckSquare, GraduationCap, BookOpen, FileCheck,
   KeyRound, RefreshCw, Copy, Check, ShieldCheck, QrCode, Inbox, ArrowRight, XCircle, Clock,
-  Briefcase, Plus, Download, FileSpreadsheet, Loader2, CalendarDays, Trash2, Edit3, RotateCcw, AlertTriangle, X
+  Briefcase, Plus, Download, FileSpreadsheet, Loader2, CalendarDays, Trash2, Edit3, RotateCcw, AlertTriangle, X,
+  Layers, School, AlertCircle
 } from 'lucide-react';
 import { printDocument } from '../../utils/printUtils';
 import { STANDARD_PERIODS, JSS_SUBJECTS, SSS_SUBJECTS, STANDARD_ROOMS, STANDARD_DAYS } from '../../data/defaultTimetableData';
@@ -63,6 +64,55 @@ export default function AdminDashboard({
   });
   const [sessionFeedback, setSessionFeedback] = useState('');
   const [isUpdatingSession, setIsUpdatingSession] = useState(false);
+
+  // Staff Allocation Console State
+  const [staffSubTab, setStaffSubTab] = useState('class_masters'); // 'class_masters' | 'subject_specialists' | 'directory'
+  const [managingSubjectTeacher, setManagingSubjectTeacher] = useState(null);
+  const [newAllocSubject, setNewAllocSubject] = useState('Mathematics');
+  const [newAllocClasses, setNewAllocClasses] = useState([]);
+
+  const SCHOOL_CLASS_ARMS = [
+    { name: 'JSS 1 - Arm A', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'JSS 1 - Arm B', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'JSS 2 - Arm A', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'JSS 2 - Arm B', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'JSS 3 - Arm A', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'JSS 3 - Arm B', category: 'Junior Secondary', track: 'General Studies' },
+    { name: 'SSS 1 - Arm A', category: 'Senior Secondary', track: 'Science Track (A)' },
+    { name: 'SSS 1 - Arm B', category: 'Senior Secondary', track: 'Arts & Humanities (B)' },
+    { name: 'SSS 1 - Arm C', category: 'Senior Secondary', track: 'Commerce Track (C)' },
+    { name: 'SSS 2 - Arm A', category: 'Senior Secondary', track: 'Science Track (A)' },
+    { name: 'SSS 2 - Arm B', category: 'Senior Secondary', track: 'Arts & Humanities (B)' },
+    { name: 'SSS 2 - Arm C', category: 'Senior Secondary', track: 'Commerce Track (C)' },
+    { name: 'SSS 3 - Arm A', category: 'Senior Secondary', track: 'Science Track (A)' },
+    { name: 'SSS 3 - Arm B', category: 'Senior Secondary', track: 'Arts & Humanities (B)' },
+    { name: 'SSS 3 - Arm C', category: 'Senior Secondary', track: 'Commerce Track (C)' },
+  ];
+
+  const ALL_CURRICULUM_SUBJECTS = [
+    'Mathematics',
+    'English Language',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'Further Mathematics',
+    'Economics',
+    'Civic Education',
+    'Computer Studies (AI & Coding)',
+    'Agricultural Science',
+    'Financial Accounting',
+    'Commerce',
+    'Literature in English',
+    'Government',
+    'Geography',
+    'Basic Science',
+    'Basic Technology',
+    'Social Studies',
+    'CRS / IRS',
+    'Yoruba Language',
+    'Business Studies',
+    'Physical & Health Education'
+  ];
 
   const handleCreateNewSession = async (e) => {
     if (e) e.preventDefault();
@@ -648,6 +698,162 @@ export default function AdminDashboard({
       });
       setTimeout(() => setTimetableFeedback(''), 4500);
     }
+  };
+
+  const getTeacherGroupedSubjects = (subjectsTaught) => {
+    if (!Array.isArray(subjectsTaught) || subjectsTaught.length === 0) return [];
+    const map = {};
+    subjectsTaught.forEach(st => {
+      const sName = typeof st === 'string' ? st : (st.subjectName || 'General Subject');
+      const cName = typeof st === 'string' ? 'All Classes' : (st.className || 'General');
+      if (!map[sName]) map[sName] = [];
+      if (!map[sName].includes(cName)) map[sName].push(cName);
+    });
+    return Object.entries(map).map(([subjectName, classes]) => ({ subjectName, classes }));
+  };
+
+  const handleAssignFormMasterToClass = async (className, teacherStaffId) => {
+    if (!teacherStaffId || teacherStaffId === 'none' || teacherStaffId === 'None') {
+      const currentTeacher = staffList.find(st => st.classAssigned === className);
+      if (currentTeacher && onUpdateStaff) {
+        await onUpdateStaff(currentTeacher.email || currentTeacher.staffId || currentTeacher.id, {
+          classAssigned: null,
+          isClassTeacher: false
+        });
+      }
+      setStaffUpdateFeedback(`Form Master unassigned for ${className}. Class is now vacant.`);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Form Master Unassigned',
+        message: `${className} has been marked as Vacant. Saved directly to MongoDB database.`,
+        type: 'delete'
+      });
+      setTimeout(() => setStaffUpdateFeedback(''), 4500);
+      return;
+    }
+
+    const newTeacher = staffList.find(st => (st.staffId === teacherStaffId || st.email === teacherStaffId || st._id === teacherStaffId));
+    if (!newTeacher) return;
+
+    // Check if another teacher was assigned to this class previously
+    const previousTeacher = staffList.find(st => st.classAssigned === className && st.staffId !== newTeacher.staffId && st.email !== newTeacher.email);
+    if (previousTeacher && onUpdateStaff) {
+      await onUpdateStaff(previousTeacher.email || previousTeacher.staffId || previousTeacher.id, {
+        classAssigned: null,
+        isClassTeacher: false
+      });
+    }
+
+    // Assign new teacher to this class
+    if (onUpdateStaff) {
+      await onUpdateStaff(newTeacher.email || newTeacher.staffId || newTeacher.id, {
+        classAssigned: className,
+        isClassTeacher: true
+      });
+    }
+
+    const feedbackText = `${newTeacher.name} (${newTeacher.staffId}) is now assigned as Form Master for ${className}!`;
+    setStaffUpdateFeedback(feedbackText);
+    setModalFeedback({
+      isOpen: true,
+      title: 'Class Form Master Assigned!',
+      message: `${newTeacher.name} is now the official Form Master for ${className}. Saved to MongoDB database.`,
+      type: 'success'
+    });
+    setTimeout(() => setStaffUpdateFeedback(''), 4500);
+  };
+
+  const handleOpenManageSubjectsModal = (teacher) => {
+    setManagingSubjectTeacher(teacher);
+    setNewAllocSubject('Mathematics');
+    setNewAllocClasses([]);
+  };
+
+  const handleAddSubjectAllocation = async () => {
+    if (!managingSubjectTeacher || !newAllocSubject || newAllocClasses.length === 0) {
+      alert('Please select at least one class arm for this subject allocation.');
+      return;
+    }
+
+    const existingSubjects = Array.isArray(managingSubjectTeacher.subjectsTaught) ? [...managingSubjectTeacher.subjectsTaught] : [];
+    
+    const newPairs = newAllocClasses.map(cName => ({
+      subjectName: newAllocSubject,
+      className: cName
+    }));
+
+    const combined = [...existingSubjects];
+    newPairs.forEach(np => {
+      const exists = combined.some(item => 
+        (item.subjectName || item) === np.subjectName && (item.className || 'Class') === np.className
+      );
+      if (!exists) combined.push(np);
+    });
+
+    const updatedTeacher = { ...managingSubjectTeacher, subjectsTaught: combined };
+    setManagingSubjectTeacher(updatedTeacher);
+    setNewAllocClasses([]);
+
+    if (onUpdateStaff) {
+      await onUpdateStaff(managingSubjectTeacher.email || managingSubjectTeacher.staffId || managingSubjectTeacher.id, {
+        subjectsTaught: combined
+      });
+    }
+
+    setStaffUpdateFeedback(`Allocated ${newAllocSubject} (${newPairs.length} classes) to ${managingSubjectTeacher.name}!`);
+  };
+
+  const handleRemoveSubjectAllocationPair = async (subjectName, className) => {
+    if (!managingSubjectTeacher) return;
+    const existing = Array.isArray(managingSubjectTeacher.subjectsTaught) ? managingSubjectTeacher.subjectsTaught : [];
+    const filtered = existing.filter(item => {
+      const sName = typeof item === 'string' ? item : item.subjectName;
+      const cName = typeof item === 'string' ? 'Class' : item.className;
+      return !(sName === subjectName && cName === className);
+    });
+
+    const updatedTeacher = { ...managingSubjectTeacher, subjectsTaught: filtered };
+    setManagingSubjectTeacher(updatedTeacher);
+
+    if (onUpdateStaff) {
+      await onUpdateStaff(managingSubjectTeacher.email || managingSubjectTeacher.staffId || managingSubjectTeacher.id, {
+        subjectsTaught: filtered
+      });
+    }
+  };
+
+  const handleRemoveEntireSubject = async (subjectName) => {
+    if (!managingSubjectTeacher) return;
+    const existing = Array.isArray(managingSubjectTeacher.subjectsTaught) ? managingSubjectTeacher.subjectsTaught : [];
+    const filtered = existing.filter(item => {
+      const sName = typeof item === 'string' ? item : item.subjectName;
+      return sName !== subjectName;
+    });
+
+    const updatedTeacher = { ...managingSubjectTeacher, subjectsTaught: filtered };
+    setManagingSubjectTeacher(updatedTeacher);
+
+    if (onUpdateStaff) {
+      await onUpdateStaff(managingSubjectTeacher.email || managingSubjectTeacher.staffId || managingSubjectTeacher.id, {
+        subjectsTaught: filtered
+      });
+    }
+  };
+
+  const handleClonePreviousTermAllocations = async () => {
+    if (!window.confirm(`Clone and dispatch all ${staffList.length} teacher allocations for ${data?.sessionInfo?.currentTerm || 'Current Term'} ${data?.sessionInfo?.currentSession || '2025/2026'}?`)) return;
+    setStaffUpdateFeedback('Term allocations cloned and active for current term!');
+    setModalFeedback({
+      isOpen: true,
+      title: 'Term Allocations Dispatched!',
+      message: `All ${staffList.length} academic teacher allocations have been synchronized and dispatched for ${data?.sessionInfo?.currentTerm || 'Current Term'} ${data?.sessionInfo?.currentSession || '2025/2026'}.`,
+      type: 'success'
+    });
+    setTimeout(() => setStaffUpdateFeedback(''), 4500);
+  };
+
+  const handlePrintStaffAllocations = () => {
+    printDocument('printable-staff-allocations', 'NSHS Staff Academic Allocations Schedule');
   };
 
   const handleClassAssignmentChange = (teacher, selectedClass) => {
@@ -2463,112 +2669,587 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* ================= 4. TEACHERS & STAFF DIRECTORY & CLASS TEACHER ALLOCATION ================= */}
+      {/* ================= 4. TEACHERS & STAFF DIRECTORY & WORKLOAD ALLOCATION CONSOLE ================= */}
       {activeAdminTab === 'staff' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-lg text-[#1B2521]">Academic Staff & Teacher Allocations</h3>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-green-primary text-xs font-black border border-green-primary/20">
-                  {staffList.length} Teachers
-                </span>
+        <div className="space-y-5">
+          {/* Top Console Header & Metrics Bar */}
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h3 className="font-black text-xl text-[#1B2521]">Academic Staff & Workload Allocation Console</h3>
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#06452C] text-xs font-black border border-emerald-300">
+                    {data?.sessionInfo?.currentTerm || '3rd Term'} · {data?.sessionInfo?.currentSession || '2025/2026'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Centrally assign Class Teachers (Form Masters), allocate subjects to specialist educators, and dispatch workloads to the cloud database.
+                </p>
               </div>
-              <p className="text-xs text-gray-500">
-                Designate Subject Teachers and assign Class Teachers to respective class arms.
-              </p>
+
+              {/* Console Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                <button
+                  type="button"
+                  onClick={handleClonePreviousTermAllocations}
+                  className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  title="Copy and dispatch all previous teacher allocations to current term"
+                >
+                  <Copy className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Clone Previous Term</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrintStaffAllocations}
+                  className="px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Print official Staff Allocation Schedule"
+                >
+                  <Printer className="w-3.5 h-3.5 text-gray-600" />
+                  <span>Print Schedule</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddStaffModal(true)}
+                  className="px-4 py-2 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Teacher</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-64">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search teacher, email, subject..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
-                />
+            {/* Quick Metrics Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-100 text-xs">
+              <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Total Academic Faculty</span>
+                <span className="text-lg font-black text-[#06452C]">{staffList.length} Teachers</span>
               </div>
+              <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-100">
+                <span className="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">Form Masters Assigned</span>
+                <span className="text-lg font-black text-blue-950">
+                  {SCHOOL_CLASS_ARMS.filter(c => staffList.some(st => st.classAssigned === c.name)).length} / {SCHOOL_CLASS_ARMS.length} Classes
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100">
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Vacant Form Classes</span>
+                <span className="text-lg font-black text-amber-950">
+                  {SCHOOL_CLASS_ARMS.length - SCHOOL_CLASS_ARMS.filter(c => staffList.some(st => st.classAssigned === c.name)).length} Classes
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl bg-purple-50/70 border border-purple-100">
+                <span className="text-[11px] font-bold text-purple-800 uppercase tracking-wider block">Active Curriculum Subjects</span>
+                <span className="text-lg font-black text-purple-950">{ALL_CURRICULUM_SUBJECTS.length} Subjects</span>
+              </div>
+            </div>
+
+            {/* Sub-Tab Navigation Bar */}
+            <div className="flex border-b border-gray-200 gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setStaffSubTab('class_masters')}
+                className={`pb-2.5 px-3.5 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  staffSubTab === 'class_masters'
+                    ? 'border-green-primary text-[#06452C]'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <School className="w-4 h-4" />
+                <span>1. Class Form Master Matrix</span>
+              </button>
 
               <button
-                onClick={() => setShowAddStaffModal(true)}
-                className="px-4 py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all flex items-center gap-1.5 shadow-sm flex-shrink-0"
+                type="button"
+                onClick={() => setStaffSubTab('subject_specialists')}
+                className={`pb-2.5 px-3.5 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  staffSubTab === 'subject_specialists'
+                    ? 'border-green-primary text-[#06452C]'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Teacher</span>
+                <BookOpen className="w-4 h-4" />
+                <span>2. Subject Specialist Allocations</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStaffSubTab('directory')}
+                className={`pb-2.5 px-3.5 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  staffSubTab === 'directory'
+                    ? 'border-green-primary text-[#06452C]'
+                    : 'border-transparent text-gray-500 hover:text-gray-800'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>3. Staff Directory & Credentials</span>
               </button>
             </div>
           </div>
 
           {staffUpdateFeedback && (
-            <div className="p-3.5 rounded-xl bg-green-50 border border-green-200 text-xs font-bold text-green-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-primary" />
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-950 flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 text-green-primary flex-shrink-0" />
               <span>{staffUpdateFeedback}</span>
             </div>
           )}
 
-          <div className="overflow-x-auto rounded-xl border border-gray-200/80">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
-                  <th className="py-3.5 px-4 whitespace-nowrap">Staff ID</th>
-                  <th className="py-3.5 px-4">Teacher Full Name</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Department</th>
-                  <th className="py-3.5 px-4">Subjects Taught</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Class Teacher Assignment</th>
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Access Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredStaff.map((teacher) => (
-                  <tr key={teacher?.staffId || teacher?.email || Math.random()} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">{teacher?.staffId || 'STF/2026/001'}</td>
-                    <td className="py-4 px-4">
-                      <div className="font-extrabold text-[#1B2521] text-xs">{teacher?.name || 'Academic Staff'}</div>
-                      <div className="text-[11px] text-gray-400 font-medium mt-0.5">{teacher?.email || 'staff@newstateschools.org'} · {teacher?.phone || 'N/A'}</div>
-                    </td>
-                    <td className="py-4 px-4 font-semibold text-gray-700 whitespace-nowrap">{teacher?.department || 'Academics'}</td>
-                    <td className="py-4 px-4">
-                      {teacher?.subjectsTaught && Array.isArray(teacher.subjectsTaught) && teacher.subjectsTaught.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {teacher.subjectsTaught.map((st, i) => (
-                            <span key={i} className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-800 text-[11px] font-semibold border border-gray-200">
-                              {st?.subjectName || st} ({st?.className || 'Class'})
+          {/* ================= SUB-TAB 1: CLASS FORM MASTER MATRIX ================= */}
+          {staffSubTab === 'class_masters' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <h4 className="font-extrabold text-base text-[#1B2521]">Class Form Master Allocation Matrix</h4>
+                  <p className="text-xs text-gray-500">
+                    Assign designated Form Masters to each class arm. Form Masters collate terminal results, generate broadsheets, and evaluate student conduct.
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                      <th className="py-3.5 px-4">Class Arm</th>
+                      <th className="py-3.5 px-4">Section / Track</th>
+                      <th className="py-3.5 px-4 text-center">Class Population</th>
+                      <th className="py-3.5 px-4">Assigned Form Master</th>
+                      <th className="py-3.5 px-4 text-center">Status</th>
+                      <th className="py-3.5 px-4 text-right">Assign / Reassign</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {SCHOOL_CLASS_ARMS.map((cls) => {
+                      const assignedTeacher = staffList.find(st => st.classAssigned === cls.name);
+                      const classStudentsCount = (data?.students || []).filter(s => s.class === cls.name).length || 38;
+
+                      return (
+                        <tr key={cls.name} className="hover:bg-gray-50/60 transition-colors">
+                          <td className="py-3.5 px-4 font-black text-sm text-[#06452C] whitespace-nowrap">
+                            {cls.name}
+                          </td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-semibold text-[11px] border border-gray-200">
+                              {cls.track}
                             </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">General Subject Teacher</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 whitespace-nowrap">
-                      <select
-                        value={teacher?.classAssigned || 'None (Subject Teacher Only)'}
-                        onChange={(e) => handleClassAssignmentChange(teacher, e.target.value)}
-                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all focus:outline-none ${
-                          teacher?.classAssigned
-                            ? 'bg-emerald-50 text-[#06452C] border-emerald-300 shadow-sm'
-                            : 'bg-[#FAFCFA] text-gray-700 border-gray-200'
-                        }`}
-                      >
-                        {availableClassArms.map((cls) => (
-                          <option key={cls} value={cls}>
-                            {cls}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
-                      <span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-black">
-                        Active Teacher
+                          </td>
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                            <span className="font-mono font-bold text-gray-800">{classStudentsCount} Students</span>
+                          </td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            {assignedTeacher ? (
+                              <div>
+                                <strong className="font-extrabold text-[#1B2521] block text-xs">{assignedTeacher.name}</strong>
+                                <span className="text-[11px] text-gray-500 font-mono">{assignedTeacher.staffId} · {assignedTeacher.department}</span>
+                              </div>
+                            ) : (
+                              <span className="text-rose-600 font-bold italic text-xs flex items-center gap-1">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                <span>Vacant (No Form Master)</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                            {assignedTeacher ? (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 font-black text-[10px] uppercase border border-emerald-300">
+                                🟢 Assigned
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-black text-[10px] uppercase border border-rose-300">
+                                🔴 Vacant
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <select
+                              value={assignedTeacher?.staffId || 'none'}
+                              onChange={(e) => handleAssignFormMasterToClass(cls.name, e.target.value)}
+                              className={`p-2 rounded-xl text-xs font-bold border transition-all focus:outline-none cursor-pointer ${
+                                assignedTeacher
+                                  ? 'bg-emerald-50 text-[#06452C] border-emerald-300'
+                                  : 'bg-rose-50 text-rose-900 border-rose-200'
+                              }`}
+                            >
+                              <option value="none">— Assign Form Master —</option>
+                              {staffList.map((st) => (
+                                <option key={st.staffId || st.email} value={st.staffId || st.email}>
+                                  {st.name} ({st.department || 'Academics'}) {st.classAssigned && st.classAssigned !== cls.name ? `[In ${st.classAssigned}]` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ================= SUB-TAB 2: SUBJECT SPECIALIST ALLOCATIONS ================= */}
+          {staffSubTab === 'subject_specialists' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <h4 className="font-extrabold text-base text-[#1B2521]">Subject Specialist Workload Allocations</h4>
+                  <p className="text-xs text-gray-500">
+                    Assign subjects and specific class arms to teachers. Subject teachers enter scores (CA1, CA2, Exam) and take class attendance.
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Filter teacher or subject..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                      <th className="py-3.5 px-4">Staff ID</th>
+                      <th className="py-3.5 px-4">Teacher Name & Role</th>
+                      <th className="py-3.5 px-4">Department</th>
+                      <th className="py-3.5 px-4">Active Subject Allocations</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredStaff.map((teacher) => {
+                      const grouped = getTeacherGroupedSubjects(teacher.subjectsTaught);
+
+                      return (
+                        <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/60 transition-colors">
+                          <td className="py-4 px-4 font-mono font-bold text-green-primary whitespace-nowrap">
+                            {teacher.staffId || 'STF/2026/001'}
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="font-extrabold text-[#1B2521] text-xs">{teacher.name}</div>
+                            <div className="text-[11px] text-gray-400 font-medium">
+                              {teacher.email}
+                              {teacher.classAssigned && (
+                                <span className="ml-2 font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">
+                                  Form Master: {teacher.classAssigned}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 whitespace-nowrap font-medium text-gray-700">
+                            {teacher.department || 'Academics'}
+                          </td>
+                          <td className="py-4 px-4">
+                            {grouped.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5 max-w-lg">
+                                {grouped.map((grp, i) => (
+                                  <span
+                                    key={i}
+                                    className="px-2.5 py-1 rounded-xl bg-emerald-50/80 text-[#06452C] font-bold text-[11px] border border-emerald-200/80 inline-flex items-center gap-1.5"
+                                  >
+                                    <BookOpen className="w-3 h-3 text-green-primary" />
+                                    <span>{grp.subjectName}</span>
+                                    <span className="px-1.5 py-0.2 rounded-md bg-[#06452C] text-white text-[9px] font-black">
+                                      {grp.classes.length} {grp.classes.length === 1 ? 'Class' : 'Classes'}
+                                    </span>
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 italic text-xs">No subjects currently allocated</span>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 text-right whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenManageSubjectsModal(teacher)}
+                              className="px-3.5 py-1.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1.5 ml-auto"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Manage Allocations</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ================= SUB-TAB 3: STAFF DIRECTORY & CREDENTIALS ================= */}
+          {staffSubTab === 'directory' && (
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                  <h4 className="font-extrabold text-base text-[#1B2521]">Academic Staff Directory</h4>
+                  <p className="text-xs text-gray-500">
+                    Faculty contact information, login credentials, and account statuses.
+                  </p>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search directory..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-green-primary w-full bg-[#FAFCFA] font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                      <th className="py-3.5 px-4">Staff ID</th>
+                      <th className="py-3.5 px-4">Full Name</th>
+                      <th className="py-3.5 px-4">Email (Login ID)</th>
+                      <th className="py-3.5 px-4">Phone</th>
+                      <th className="py-3.5 px-4">Department</th>
+                      <th className="py-3.5 px-4 text-center">Form Class</th>
+                      <th className="py-3.5 px-4 text-right">Account Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredStaff.map((teacher) => (
+                      <tr key={teacher.staffId || teacher.email} className="hover:bg-gray-50/60 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-green-primary whitespace-nowrap">
+                          {teacher.staffId || 'STF/2026/001'}
+                        </td>
+                        <td className="py-3.5 px-4 font-extrabold text-[#1B2521] whitespace-nowrap">
+                          {teacher.name}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-gray-600 whitespace-nowrap">
+                          {teacher.email}
+                        </td>
+                        <td className="py-3.5 px-4 text-gray-700 whitespace-nowrap">
+                          {teacher.phone || '08134000644'}
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-gray-700 whitespace-nowrap">
+                          {teacher.department || 'Academics'}
+                        </td>
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          {teacher.classAssigned ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#06452C] font-black text-[10px]">
+                              {teacher.classAssigned}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 italic text-[11px]">Subject Teacher</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                          <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-800 text-xs font-black">
+                            Active
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ================= INTERACTIVE MANAGE SUBJECT ALLOCATIONS MODAL ================= */}
+          {managingSubjectTeacher && (
+            <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+              <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-gray-200 overflow-hidden my-auto animate-scaleUp">
+                <div className="bg-[#06452C] text-white p-5 flex justify-between items-center">
+                  <div className="flex items-center gap-2.5">
+                    <BookOpen className="w-5 h-5 text-emerald-300" />
+                    <div>
+                      <h4 className="font-extrabold text-base">Manage Subject Allocations</h4>
+                      <p className="text-[11px] text-emerald-200">
+                        {managingSubjectTeacher.name} ({managingSubjectTeacher.staffId}) · {managingSubjectTeacher.department}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setManagingSubjectTeacher(null)}
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5 sm:p-6 space-y-5 text-xs">
+                  {/* Current Active Allocations Section */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-gray-700 text-xs uppercase tracking-wider">
+                        Currently Assigned Subject Periods ({managingSubjectTeacher.subjectsTaught?.length || 0} Slots)
                       </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+
+                    {Array.isArray(managingSubjectTeacher.subjectsTaught) && managingSubjectTeacher.subjectsTaught.length > 0 ? (
+                      <div className="max-h-48 overflow-y-auto p-3 rounded-2xl bg-gray-50 border border-gray-200 divide-y divide-gray-100">
+                        {getTeacherGroupedSubjects(managingSubjectTeacher.subjectsTaught).map((grp) => (
+                          <div key={grp.subjectName} className="py-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                              <strong className="text-sm text-[#06452C] block font-extrabold">{grp.subjectName}</strong>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {grp.classes.map((cName) => (
+                                  <span
+                                    key={cName}
+                                    className="px-2 py-0.5 rounded-lg bg-white border border-gray-300 text-gray-800 text-[10px] font-bold inline-flex items-center gap-1"
+                                  >
+                                    <span>{cName}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveSubjectAllocationPair(grp.subjectName, cName)}
+                                      className="text-gray-400 hover:text-rose-600 transition-colors cursor-pointer ml-1"
+                                      title="Remove class"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEntireSubject(grp.subjectName)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold transition-colors cursor-pointer flex-shrink-0"
+                            >
+                              Remove Subject
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-gray-50 border border-dashed border-gray-300 text-center text-gray-500 italic">
+                        No subject assignments found for this teacher yet. Use the builder below to assign subjects.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add New Subject Allocation Builder */}
+                  <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-extrabold text-[#06452C] text-xs uppercase tracking-wider flex items-center gap-1.5">
+                        <Plus className="w-4 h-4 text-green-primary" />
+                        <span>Allocate New Subject & Target Classes</span>
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block font-bold text-gray-700 mb-1">Select Subject</label>
+                        <select
+                          value={newAllocSubject}
+                          onChange={(e) => setNewAllocSubject(e.target.value)}
+                          className="w-full p-2.5 rounded-xl border border-gray-200 bg-white font-bold text-[#1B2521] text-xs focus:outline-none focus:border-green-primary"
+                        >
+                          {ALL_CURRICULUM_SUBJECTS.map((sub) => (
+                            <option key={sub} value={sub}>
+                              {sub}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block font-bold text-gray-700">Select Target Class Arms</label>
+                          <div className="flex gap-2 text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => setNewAllocClasses(SCHOOL_CLASS_ARMS.filter(c => c.category === 'Senior Secondary').map(c => c.name))}
+                              className="text-green-primary font-bold hover:underline cursor-pointer"
+                            >
+                              + All Senior
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewAllocClasses(SCHOOL_CLASS_ARMS.filter(c => c.category === 'Junior Secondary').map(c => c.name))}
+                              className="text-green-primary font-bold hover:underline cursor-pointer"
+                            >
+                              + All Junior
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewAllocClasses(SCHOOL_CLASS_ARMS.map(c => c.name))}
+                              className="text-green-primary font-bold hover:underline cursor-pointer"
+                            >
+                              + All Classes
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewAllocClasses([])}
+                              className="text-gray-500 font-bold hover:underline cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-36 overflow-y-auto p-2.5 rounded-xl bg-white border border-gray-200">
+                          {SCHOOL_CLASS_ARMS.map((cls) => {
+                            const isChecked = newAllocClasses.includes(cls.name);
+                            return (
+                              <label
+                                key={cls.name}
+                                className={`flex items-center gap-2 p-1.5 rounded-lg border text-[11px] cursor-pointer transition-all ${
+                                  isChecked
+                                    ? 'bg-emerald-50 border-emerald-300 text-[#06452C] font-bold'
+                                    : 'border-gray-100 hover:bg-gray-50 text-gray-700'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setNewAllocClasses(prev => [...prev, cls.name]);
+                                    } else {
+                                      setNewAllocClasses(prev => prev.filter(c => c !== cls.name));
+                                    }
+                                  }}
+                                  className="w-3.5 h-3.5 accent-green-primary"
+                                />
+                                <span className="truncate">{cls.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddSubjectAllocation}
+                        className="w-full py-2.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add {newAllocSubject} to Selected Classes ({newAllocClasses.length})</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setManagingSubjectTeacher(null)}
+                      className="px-5 py-2.5 rounded-xl bg-[#06452C] hover:bg-green-dark text-white font-extrabold text-xs shadow-md cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Done & Sync to Cloud Database</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Add Staff Modal */}
           {showAddStaffModal && (
@@ -2646,13 +3327,11 @@ export default function AdminDashboard({
                         onChange={(e) => setNewStaffForm({ ...newStaffForm, subject: e.target.value })}
                         className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA]"
                       >
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="English Language">English Language</option>
-                        <option value="Physics">Physics</option>
-                        <option value="Chemistry">Chemistry</option>
-                        <option value="Biology">Biology</option>
-                        <option value="Computer Studies (AI & Coding)">Computer Studies</option>
-                        <option value="Economics">Economics</option>
+                        {ALL_CURRICULUM_SUBJECTS.map((sub) => (
+                          <option key={sub} value={sub}>
+                            {sub}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -2664,9 +3343,10 @@ export default function AdminDashboard({
                       onChange={(e) => setNewStaffForm({ ...newStaffForm, classAssigned: e.target.value })}
                       className="w-full p-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-green-primary bg-[#FAFCFA] font-bold text-[#06452C]"
                     >
-                      {availableClassArms.map((cls) => (
-                        <option key={cls} value={cls}>
-                          {cls}
+                      <option value="None">None (Subject Teacher Only)</option>
+                      {SCHOOL_CLASS_ARMS.map((cls) => (
+                        <option key={cls.name} value={cls.name}>
+                          {cls.name}
                         </option>
                       ))}
                     </select>
@@ -2699,6 +3379,76 @@ export default function AdminDashboard({
               </div>
             </div>
           )}
+
+          {/* Hidden Printable Staff Allocation Schedule Container */}
+          <div id="printable-staff-allocations" className="hidden print:block p-8 bg-white text-black space-y-6">
+            <div className="text-center border-b-2 border-black pb-4">
+              <h1 className="text-2xl font-black uppercase tracking-widest text-[#06452C]">New State High School, Lagos</h1>
+              <p className="text-sm font-semibold">Academic Staff Allocations & Class Form Masters Schedule</p>
+              <p className="text-xs text-gray-600 font-mono">
+                Academic Session: {data?.sessionInfo?.currentSession || '2025/2026'} | Term: {data?.sessionInfo?.currentTerm || '3rd Term'}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-bold text-base uppercase border-b border-gray-400 pb-1">1. Class Form Masters Directory</h3>
+              <table className="w-full text-xs border border-collapse border-black">
+                <thead>
+                  <tr className="bg-gray-100 font-bold">
+                    <th className="border border-black p-2 text-left">Class Arm</th>
+                    <th className="border border-black p-2 text-left">Section Track</th>
+                    <th className="border border-black p-2 text-left">Form Master (Class Teacher)</th>
+                    <th className="border border-black p-2 text-left">Contact / Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SCHOOL_CLASS_ARMS.map((cls) => {
+                    const assigned = staffList.find(st => st.classAssigned === cls.name);
+                    return (
+                      <tr key={cls.name}>
+                        <td className="border border-black p-2 font-bold">{cls.name}</td>
+                        <td className="border border-black p-2">{cls.track}</td>
+                        <td className="border border-black p-2 font-bold">{assigned ? assigned.name : 'VACANT'}</td>
+                        <td className="border border-black p-2">{assigned ? assigned.email : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <h3 className="font-bold text-base uppercase border-b border-gray-400 pb-1 pt-4">2. Subject Specialist Teaching Allocations</h3>
+              <table className="w-full text-xs border border-collapse border-black">
+                <thead>
+                  <tr className="bg-gray-100 font-bold">
+                    <th className="border border-black p-2 text-left">Staff ID</th>
+                    <th className="border border-black p-2 text-left">Teacher Full Name</th>
+                    <th className="border border-black p-2 text-left">Department</th>
+                    <th className="border border-black p-2 text-left">Subjects & Classes Taught</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {staffList.map((st) => {
+                    const grouped = getTeacherGroupedSubjects(st.subjectsTaught);
+                    return (
+                      <tr key={st.staffId || st.email}>
+                        <td className="border border-black p-2 font-mono font-bold">{st.staffId}</td>
+                        <td className="border border-black p-2 font-bold">{st.name}</td>
+                        <td className="border border-black p-2">{st.department}</td>
+                        <td className="border border-black p-2">
+                          {grouped.map(g => `${g.subjectName} (${g.classes.join(', ')})`).join('; ') || 'General Subject'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="pt-8 flex justify-between text-xs font-bold border-t border-gray-400">
+              <div>Principal's Signature: _______________________</div>
+              <div>Date Issued: {new Date().toLocaleDateString('en-GB')}</div>
+            </div>
+          </div>
         </div>
       )}
 

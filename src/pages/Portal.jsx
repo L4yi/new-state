@@ -567,7 +567,9 @@ export default function Portal({ onNavigate }) {
     }
   };
 
-  const handleSavePastTermScores = (studentId, subject, { term1, term2 }) => {
+  const handleSavePastTermScores = async (studentId, subject, { term1, term2 }) => {
+    let payloadToSave = null;
+
     setPortalData((prev) => {
       const existingResults = prev.results || {};
       const studentCurrentScores = existingResults[studentId] || [];
@@ -581,6 +583,7 @@ export default function Portal({ onNavigate }) {
           term1: term1 !== undefined && term1 !== '' ? Number(term1) : (existing.term1 !== undefined ? Number(existing.term1) : 0),
           term2: term2 !== undefined && term2 !== '' ? Number(term2) : (existing.term2 !== undefined ? Number(existing.term2) : 0),
         };
+        payloadToSave = updated;
         updatedScores = [...studentCurrentScores];
         updatedScores[matchIndex] = updated;
       } else {
@@ -595,6 +598,7 @@ export default function Portal({ onNavigate }) {
           grade: 'Pending',
           remark: 'Pending Collation',
         };
+        payloadToSave = newEntry;
         updatedScores = [...studentCurrentScores, newEntry];
       }
 
@@ -607,6 +611,23 @@ export default function Portal({ onNavigate }) {
       localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
       return nextState;
     });
+
+    // 2. Persist directly to MongoDB Database API
+    if (payloadToSave) {
+      try {
+        await fetch(`${API_URL}/results`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            studentId,
+            result: payloadToSave,
+            teacherId: currentUser?._id || currentUser?.staffId,
+          }),
+        });
+      } catch (err) {
+        console.warn('Past term scores saved in local cache, network fallback:', err);
+      }
+    }
   };
 
   const handleAddAssignment = async (asn) => {
@@ -764,7 +785,8 @@ export default function Portal({ onNavigate }) {
       const existingStaff = prev.staff || [];
       const updatedStaff = existingStaff.map((s) => {
         if (s.email?.toLowerCase() === staffIdOrEmail?.toLowerCase() || s.staffId === staffIdOrEmail || s._id === staffIdOrEmail) {
-          return { ...s, ...updates, isClassTeacher: Boolean(updates.classAssigned) };
+          const isClassTeacher = updates.classAssigned !== undefined ? Boolean(updates.classAssigned) : s.isClassTeacher;
+          return { ...s, ...updates, isClassTeacher };
         }
         return s;
       });
@@ -772,6 +794,16 @@ export default function Portal({ onNavigate }) {
       localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
       return nextState;
     });
+
+    // Update currentUser if the logged-in user is this staff member
+    if (currentUser && (currentUser.email?.toLowerCase() === staffIdOrEmail?.toLowerCase() || currentUser.staffId === staffIdOrEmail || currentUser._id === staffIdOrEmail)) {
+      setCurrentUser(prev => {
+        const isClassTeacher = updates.classAssigned !== undefined ? Boolean(updates.classAssigned) : prev.isClassTeacher;
+        const updated = { ...prev, ...updates, isClassTeacher };
+        localStorage.setItem('nshs_portal_user', JSON.stringify(updated));
+        return updated;
+      });
+    }
 
     // 2. Persist to API
     try {
