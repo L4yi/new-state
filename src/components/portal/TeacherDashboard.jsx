@@ -203,6 +203,17 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
     return teacherDistinctSubjects;
   }, [currentUser, studentObj, teacherSubjectsTaught, selectedClassFilter, teacherDistinctSubjects]);
 
+  // Auto-sync selectedSubject to availableSubjects when class filter or student changes
+  useEffect(() => {
+    if (availableSubjects.length > 0) {
+      if (!selectedSubject || !availableSubjects.includes(selectedSubject)) {
+        setSelectedSubject(availableSubjects[0]);
+      }
+    } else {
+      setSelectedSubject('');
+    }
+  }, [availableSubjects, selectedSubject]);
+
   // Personalized Teaching Schedule
   const teacherTimetable = useMemo(() => {
     const rawTimetable = Array.isArray(data?.timetable) ? data.timetable : [];
@@ -512,10 +523,16 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
               )}
 
               {teacherSubjectsTaught.length > 0 && (
-                <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-bold border border-emerald-200/60 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Assigned: {teacherSubjectsTaught.map(s => `${s.subjectName} (${s.className})`).join(' · ')}</span>
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-lg bg-emerald-50 text-green-primary text-xs font-black border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <span>Subjects: {teacherDistinctSubjects.join(', ')}</span>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-bold border border-gray-200 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+                    <span>{distinctClasses.length} Classes Assigned</span>
+                  </span>
+                </div>
               )}
             </div>
           </div>
@@ -601,65 +618,74 @@ export default function TeacherDashboard({ data, currentUser, onSaveScore, onAdd
       {activeTab === 'scores' && (
         <div className="space-y-5">
           
-          {/* ================= INTERACTIVE CLASS TOGGLE / WORKSPACE SWITCHER ================= */}
+          {/* ================= DEDICATED CLASS & SUBJECT WORKSPACE DROPDOWNS ================= */}
           {distinctClasses.length > 0 && (
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3.5 shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
-                  <Layers className="w-5 h-5 text-emerald-300" />
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-[#06452C] to-emerald-950 text-white border border-emerald-700/60 shadow-md space-y-3.5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-800/80 border border-emerald-600/50 flex items-center justify-center flex-shrink-0 shadow-inner">
+                    <Layers className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
+                      Class & Subject Workspace Selector
+                    </span>
+                    <p className="text-xs text-emerald-100 font-medium">
+                      Select the class arm and subject you want to work on:
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 block leading-tight">
-                    Class Workspace Filter
-                  </span>
-                  <p className="text-xs text-emerald-100 font-medium">
-                    Filter student roster and lock score entry by class:
-                  </p>
-                </div>
+
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-900/90 text-emerald-200 font-black text-[10px] border border-emerald-700/60">
+                  {classFilteredStudents.length} Students in Roster
+                </span>
               </div>
 
-              {/* Class Toggle Buttons */}
-              <div className="flex flex-wrap gap-1.5 p-1.5 bg-emerald-900/80 rounded-2xl border border-emerald-700/50 w-full sm:w-auto shadow-inner">
-                <button
-                  type="button"
-                  onClick={() => setSelectedClassFilter('All')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                    selectedClassFilter === 'All'
-                      ? 'bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
-                      : 'text-emerald-200 hover:text-white hover:bg-emerald-800/60'
-                  }`}
-                >
-                  <span>All Classes</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                    selectedClassFilter === 'All' ? 'bg-emerald-950/30 text-emerald-950' : 'bg-emerald-800 text-emerald-300'
-                  }`}>
-                    {allowedStudents.length}
-                  </span>
-                </button>
+              {/* Class & Subject Dropdowns Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                {/* 1. Target Class Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Select Class / Arm:</span>
+                  </label>
+                  <select
+                    value={selectedClassFilter}
+                    onChange={(e) => setSelectedClassFilter(e.target.value)}
+                    className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
+                  >
+                    <option value="All" className="bg-[#06452C] text-white">
+                      -- All Assigned Classes ({allowedStudents.length} Students) --
+                    </option>
+                    {distinctClasses.map((cls) => {
+                      const countInClass = allowedStudents.filter(s => isClassMatch(s.class, cls)).length;
+                      return (
+                        <option key={cls} value={cls} className="bg-[#06452C] text-white font-bold">
+                          {formatSeniorClass(cls)} ({countInClass} Students)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
 
-                {distinctClasses.map((cls) => {
-                  const countInClass = allowedStudents.filter(s => isClassMatch(s.class, cls)).length;
-                  return (
-                    <button
-                      key={cls}
-                      type="button"
-                      onClick={() => setSelectedClassFilter(cls)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                        selectedClassFilter === cls
-                          ? 'bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
-                          : 'text-emerald-200 hover:text-white hover:bg-emerald-800/60'
-                      }`}
-                    >
-                      <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>{formatSeniorClass(cls)}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                        selectedClassFilter === cls ? 'bg-emerald-950/30 text-emerald-950' : 'bg-emerald-800 text-emerald-300'
-                      }`}>
-                        {countInClass}
-                      </span>
-                    </button>
-                  );
-                })}
+                {/* 2. Target Subject Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-extrabold text-emerald-200 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Select Subject to Grade:</span>
+                  </label>
+                  <select
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    className="w-full p-3.5 rounded-2xl bg-emerald-900/90 border border-emerald-600/80 text-white font-black text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer shadow-inner"
+                  >
+                    {availableSubjects.map((sub) => (
+                      <option key={sub} value={sub} className="bg-[#06452C] text-white font-bold">
+                        {sub} {selectedClassFilter !== 'All' ? `(${selectedClassFilter})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           )}
