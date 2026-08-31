@@ -264,6 +264,26 @@ export default function Portal({ onNavigate }) {
         staffActiveRole = 'bursar';
       }
 
+      // Check role authorization against selected staff tab
+      if (staffRole === 'admin' && staffActiveRole !== 'admin') {
+        setLoginError("Access Denied: This account is registered as a Teacher. Please select the 'Teacher' role tab to log in.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (staffRole === 'bursar' && staffActiveRole !== 'bursar') {
+        setLoginError("Access Denied: This account does not have Bursary / Finance clearance. Please select the 'Teacher' role tab to log in.");
+        setIsLoggingIn(false);
+        return;
+      }
+
+      if (staffRole === 'teacher' && staffActiveRole !== 'teacher') {
+        const targetTab = staffActiveRole === 'admin' ? 'Principal' : 'Bursar';
+        setLoginError(`Access Denied: This account is registered as ${foundStaff.role}. Please select the '${targetTab}' role tab to log in.`);
+        setIsLoggingIn(false);
+        return;
+      }
+
       setLoginError('');
       setIsLoggedIn(true);
       setActiveRole(staffActiveRole);
