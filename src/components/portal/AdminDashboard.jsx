@@ -25,6 +25,7 @@ export default function AdminDashboard({
   onAddAnnouncement,
   onAddStudent,
   onUpdateApplication,
+  onUpdateTeacherApplication,
   onUpdateStaff,
   onAddStaff,
   onUpdateSessionInfo,
@@ -241,6 +242,81 @@ export default function AdminDashboard({
       (app?.guardianName || app?.guardian || '')?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Fallback sample teacher recruitment applications
+  const defaultTeacherApplications = [
+    {
+      id: 'APP-TCH-2026-001',
+      name: 'Mr. Kelechi Emmanuel Nnamdi',
+      phone: '0803 456 7812',
+      email: 'kelechi.nnamdi@gmail.com',
+      homeAddress: '24 Agege Motor Road, Mushin, Lagos',
+      subjects: ['Mathematics', 'Physics'],
+      classes: ['Senior Secondary School', 'Junior Secondary School'],
+      qualifications: ['BSc', 'B. Education'],
+      experience: '6 - 10 years',
+      hasCertificates: 'Yes',
+      startDate: 'Immediately',
+      status: 'Under Review',
+      submittedAt: '2026-08-28T14:30:00Z',
+      dateFormatted: '28 Aug 2026'
+    },
+    {
+      id: 'APP-TCH-2026-002',
+      name: 'Mrs. Aminat Opeyemi Bakare',
+      phone: '0812 345 6789',
+      email: 'aminat.bakare@yahoo.com',
+      homeAddress: '12 Palm Avenue, Mushin, Lagos',
+      subjects: ['English Language', 'English Literature'],
+      classes: ['Senior Secondary School'],
+      qualifications: ['BA', 'B. Education'],
+      experience: 'Over 10 years',
+      hasCertificates: 'Yes',
+      startDate: 'Next term',
+      status: 'Shortlisted',
+      submittedAt: '2026-08-29T10:15:00Z',
+      dateFormatted: '29 Aug 2026'
+    },
+    {
+      id: 'APP-TCH-2026-003',
+      name: 'Mr. David Ayomide Fashola',
+      phone: '0808 765 4321',
+      email: 'david.fashola@gmail.com',
+      homeAddress: '5 Isolo Road, Mushin, Lagos',
+      subjects: ['Computer Science', 'Physics'],
+      classes: ['Junior Secondary School', 'Senior Secondary School'],
+      qualifications: ['BSc', 'HND'],
+      experience: '1 - 5 years',
+      hasCertificates: 'Yes',
+      startDate: '2 weeks',
+      status: 'Interview Scheduled',
+      submittedAt: '2026-08-30T09:00:00Z',
+      dateFormatted: '30 Aug 2026'
+    }
+  ];
+
+  const teacherApplicationsList = (Array.isArray(data?.teacherApplications) && data.teacherApplications.length > 0)
+    ? data.teacherApplications
+    : defaultTeacherApplications;
+
+  const pendingTeacherAppsCount = teacherApplicationsList.filter(a => a?.status === 'Under Review' || a?.status === 'Pending Review').length;
+
+  const [selectedTeacherAppForReview, setSelectedTeacherAppForReview] = useState(null);
+  const [teacherAppStatusFilter, setTeacherAppStatusFilter] = useState('All');
+  const [teacherAppSearch, setTeacherAppSearch] = useState('');
+
+  const filteredTeacherApplications = teacherApplicationsList.filter((app) => {
+    const searchLow = teacherAppSearch.toLowerCase();
+    const matchesSearch =
+      (app?.name || '')?.toLowerCase().includes(searchLow) ||
+      (app?.id || '')?.toLowerCase().includes(searchLow) ||
+      (app?.phone || '')?.toLowerCase().includes(searchLow) ||
+      (Array.isArray(app?.subjects) ? app.subjects.join(' ') : (app?.subjects || ''))?.toLowerCase().includes(searchLow) ||
+      (Array.isArray(app?.qualifications) ? app.qualifications.join(' ') : (app?.qualifications || ''))?.toLowerCase().includes(searchLow);
+
+    const matchesStatus = teacherAppStatusFilter === 'All' || app?.status === teacherAppStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   // Default teachers list with standard Arm naming
   const defaultStaff = [
     {
@@ -407,6 +483,78 @@ export default function AdminDashboard({
       a.dateSubmitted || ''
     ]);
     exportToCSV('NSHS_Admissions_Applications', rows, headers);
+  };
+
+  const exportTeacherApplicationsCSV = () => {
+    const headers = ['Application ID', 'Applicant Name', 'Phone', 'Email', 'Address', 'Subjects', 'Target Classes', 'Qualifications', 'Experience', 'Start Date', 'Status', 'Date Submitted'];
+    const rows = teacherApplicationsList.map(a => [
+      a.id || '',
+      a.name || '',
+      a.phone || '',
+      a.email || '',
+      a.homeAddress || '',
+      Array.isArray(a.subjects) ? a.subjects.join('; ') : (a.subjects || ''),
+      Array.isArray(a.classes) ? a.classes.join('; ') : (a.classes || ''),
+      Array.isArray(a.qualifications) ? a.qualifications.join('; ') : (a.qualifications || ''),
+      a.experience || '',
+      a.startDate || '',
+      a.status || '',
+      a.dateFormatted || a.submittedAt || ''
+    ]);
+    exportToCSV('NSHS_Teacher_Recruitment_Applications', rows, headers);
+  };
+
+  const handleUpdateTeacherAppStatus = async (appId, newStatus) => {
+    if (onUpdateTeacherApplication) {
+      await onUpdateTeacherApplication(appId, newStatus);
+    }
+    if (selectedTeacherAppForReview && selectedTeacherAppForReview.id === appId) {
+      setSelectedTeacherAppForReview({ ...selectedTeacherAppForReview, status: newStatus });
+    }
+    setModalFeedback({
+      isOpen: true,
+      title: 'Teacher Application Status Updated!',
+      message: `Application ${appId} has been marked as "${newStatus}".`,
+      type: 'success'
+    });
+  };
+
+  const handleHireTeacherFromApp = async (app) => {
+    const newStaffObj = {
+      staffId: `STF/2026/00${staffList.length + 1}`,
+      name: app.name,
+      email: app.email || `${app.name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@newstateschools.org`,
+      phone: app.phone || '08134000644',
+      role: 'Teacher',
+      department: (app.subjects || []).some(s => s.includes('Math') || s.includes('Physics') || s.includes('Chem') || s.includes('Bio') || s.includes('Computer'))
+        ? 'Sciences & Technology'
+        : 'Languages & Arts',
+      password: '1234',
+      isClassTeacher: false,
+      classAssigned: null,
+      subjectsTaught: (app.subjects || ['General Subject']).map(sub => ({
+        subjectName: sub,
+        className: 'SSS 1 - Arm A'
+      }))
+    };
+
+    try {
+      if (onAddStaff) {
+        await onAddStaff(newStaffObj);
+      }
+      if (onUpdateTeacherApplication) {
+        await onUpdateTeacherApplication(app.id, 'Hired');
+      }
+      setSelectedTeacherAppForReview(null);
+      setModalFeedback({
+        isOpen: true,
+        title: 'Teacher Hired & Onboarded Successfully!',
+        message: `${app.name} has been hired and assigned Staff ID ${newStaffObj.staffId}. Login email: ${newStaffObj.email} (Password: 1234).`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error('Failed to onboard hired teacher:', err);
+    }
   };
 
   // Timetable & Schedules State
@@ -920,8 +1068,8 @@ export default function AdminDashboard({
         )}
 
         {/* Full-Width Tab Grid Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          {/* 1. Online Applications */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {/* 1. Student Applications */}
           <button
             onClick={() => { setActiveAdminTab('applications'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
@@ -932,7 +1080,7 @@ export default function AdminDashboard({
           >
             <div className="flex items-center gap-1.5 min-w-0">
               <Inbox className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Applications</span>
+              <span className="truncate">Student Apps</span>
             </div>
             {pendingAppsCount > 0 && (
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
@@ -943,7 +1091,29 @@ export default function AdminDashboard({
             )}
           </button>
 
-          {/* 2. Student Registry */}
+          {/* 2. Teacher Applications */}
+          <button
+            onClick={() => { setActiveAdminTab('teacher-applications'); setRegisteredStudentSlip(null); }}
+            className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
+              activeAdminTab === 'teacher-applications'
+                ? 'bg-green-primary text-white border-green-primary shadow-md'
+                : 'bg-[#FAFCFA] text-gray-700 hover:bg-gray-100 hover:text-[#1B2521] border-gray-200/80'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <GraduationCap className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Teacher Apps</span>
+            </div>
+            {pendingTeacherAppsCount > 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex-shrink-0 leading-none ${
+                activeAdminTab === 'teacher-applications' ? 'bg-amber-400 text-emerald-950' : 'bg-amber-500 text-white'
+              }`}>
+                {pendingTeacherAppsCount}
+              </span>
+            )}
+          </button>
+
+          {/* 3. Student Registry */}
           <button
             onClick={() => { setActiveAdminTab('database'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
@@ -963,7 +1133,7 @@ export default function AdminDashboard({
             </span>
           </button>
 
-          {/* 3. Admissions & Enrollment */}
+          {/* 4. Admissions & Enrollment */}
           <button
             onClick={() => { setActiveAdminTab('register'); setSelectedApplicationForReview(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
@@ -976,7 +1146,7 @@ export default function AdminDashboard({
             <span className="truncate">Admissions Form</span>
           </button>
 
-          {/* 4. Teachers & Staff */}
+          {/* 5. Teachers & Staff */}
           <button
             onClick={() => { setActiveAdminTab('staff'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
@@ -996,7 +1166,7 @@ export default function AdminDashboard({
             </span>
           </button>
 
-          {/* 5. Timetable & Schedules */}
+          {/* 6. Timetable & Schedules */}
           <button
             onClick={() => { setActiveAdminTab('timetable'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-between gap-1.5 border ${
@@ -1016,7 +1186,7 @@ export default function AdminDashboard({
             </span>
           </button>
 
-          {/* 6. Broadcast Notices */}
+          {/* 7. Broadcast Notices */}
           <button
             onClick={() => { setActiveAdminTab('announcements'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
@@ -1029,7 +1199,7 @@ export default function AdminDashboard({
             <span className="truncate">School Notices</span>
           </button>
 
-          {/* 7. Academic Session & Term Control */}
+          {/* 8. Academic Session & Term Control */}
           <button
             onClick={() => { setActiveAdminTab('session'); setRegisteredStudentSlip(null); }}
             className={`p-2.5 sm:p-3 rounded-2xl text-[11px] sm:text-xs font-black transition-all flex items-center justify-center gap-1.5 border ${
@@ -1181,7 +1351,187 @@ export default function AdminDashboard({
         </div>
       )}
 
-      {/* ================= 2. CENTRAL STUDENT REGISTRY DATABASE ================= */}
+      {/* ================= 2. TEACHER APPLICATIONS MANAGEMENT TAB ================= */}
+      {activeAdminTab === 'teacher-applications' && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-extrabold text-lg text-[#1B2521]">
+                  Faculty & Teacher Recruitment Applications
+                </h3>
+                <span className="px-3 py-1 rounded-full bg-emerald-50 text-green-primary text-xs font-black border border-emerald-200">
+                  {teacherApplicationsList.length} Total Applicants
+                </span>
+                {pendingTeacherAppsCount > 0 && (
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black">
+                    {pendingTeacherAppsCount} Pending Review
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Incoming teacher recruitment submissions from the public website. Review qualifications, schedule interviews, and onboard hired educators.
+              </p>
+            </div>
+
+            <button
+              onClick={exportTeacherApplicationsCSV}
+              className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-[#06452C] hover:text-white text-[#06452C] text-xs font-bold border border-emerald-200 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+          </div>
+
+          {/* Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-2xl bg-[#FAFCFA] border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Under Review</span>
+              <div className="text-xl font-black text-amber-600">
+                {teacherApplicationsList.filter(a => a.status === 'Under Review' || a.status === 'Pending Review').length}
+              </div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#FAFCFA] border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Shortlisted</span>
+              <div className="text-xl font-black text-blue-600">
+                {teacherApplicationsList.filter(a => a.status === 'Shortlisted').length}
+              </div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#FAFCFA] border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Interviews Scheduled</span>
+              <div className="text-xl font-black text-purple-600">
+                {teacherApplicationsList.filter(a => a.status === 'Interview Scheduled').length}
+              </div>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-[#FAFCFA] border border-gray-200">
+              <span className="text-[10px] font-bold text-gray-500 uppercase">Hired / Active</span>
+              <div className="text-xl font-black text-emerald-600">
+                {teacherApplicationsList.filter(a => a.status === 'Hired').length}
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                placeholder="Search teacher by name, phone, subject, or qualification..."
+                value={teacherAppSearch}
+                onChange={(e) => setTeacherAppSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-green-primary bg-[#FAFCFA]"
+              />
+            </div>
+
+            <select
+              value={teacherAppStatusFilter}
+              onChange={(e) => setTeacherAppStatusFilter(e.target.value)}
+              className="py-2 px-3 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Shortlisted">Shortlisted</option>
+              <option value="Interview Scheduled">Interview Scheduled</option>
+              <option value="Hired">Hired</option>
+              <option value="Declined">Declined</option>
+            </select>
+          </div>
+
+          {/* Teacher Applications Table */}
+          <div className="overflow-x-auto rounded-xl border border-gray-200/80">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50/90 text-gray-600 font-bold border-b border-gray-200 text-[11px] uppercase tracking-wider">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Applicant</th>
+                  <th className="py-3.5 px-4">Subjects & Levels</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Qualifications & Exp.</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Availability</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredTeacherApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-gray-400 italic">
+                      No teacher recruitment applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTeacherApplications.map((app) => (
+                    <tr key={app.id} className="hover:bg-gray-50/60 transition-colors">
+                      <td className="py-4 px-4">
+                        <div className="font-extrabold text-[#1B2521] text-xs uppercase">{app.name}</div>
+                        <div className="text-[11px] text-gray-500 font-mono mt-0.5">{app.phone} · {app.email}</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">{app.homeAddress}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(Array.isArray(app.subjects) ? app.subjects : [app.subjects]).map((sub, idx) => (
+                            <span key={idx} className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 font-extrabold text-[10px] border border-emerald-200">
+                              {sub}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-1 font-medium">
+                          Levels: {(Array.isArray(app.classes) ? app.classes.join(', ') : app.classes)}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="font-extrabold text-gray-800">
+                          {(Array.isArray(app.qualifications) ? app.qualifications.join(', ') : app.qualifications)}
+                        </div>
+                        <div className="text-[10px] text-gray-500 font-medium mt-0.5">Exp: {app.experience}</div>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className="font-bold text-gray-700 block">{app.startDate || 'Immediately'}</span>
+                        <span className="text-[10px] text-gray-400">{app.dateFormatted || 'Recent'}</span>
+                      </td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black inline-block ${
+                          app.status === 'Hired'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : app.status === 'Shortlisted'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                            : app.status === 'Interview Scheduled'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                            : app.status === 'Declined'
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            : 'bg-amber-100 text-amber-900 border border-amber-300'
+                        }`}>
+                          {app.status || 'Under Review'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right whitespace-nowrap space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTeacherAppForReview(app)}
+                          className="px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition-all cursor-pointer"
+                        >
+                          Review Profile
+                        </button>
+                        {app.status !== 'Hired' && (
+                          <button
+                            type="button"
+                            onClick={() => handleHireTeacherFromApp(app)}
+                            className="px-3.5 py-1.5 rounded-xl bg-green-primary hover:bg-green-dark text-white font-black text-xs transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <span>Hire Staff</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ================= 3. CENTRAL STUDENT REGISTRY DATABASE ================= */}
       {activeAdminTab === 'database' && (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -3216,6 +3566,152 @@ export default function AdminDashboard({
                     Principal's Office
                   </div>
                   <p className="text-[10px] text-gray-600 text-center">Approved & Authorized</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL: TEACHER APPLICATION REVIEW ================= */}
+      {selectedTeacherAppForReview && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-gray-200 overflow-hidden my-auto animate-scaleUp">
+            <div className="bg-[#06452C] text-white p-5 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <GraduationCap className="w-5 h-5 text-emerald-300" />
+                <div>
+                  <h4 className="font-extrabold text-base">Teacher Candidate Profile</h4>
+                  <p className="text-[11px] text-emerald-200 font-mono">{selectedTeacherAppForReview.id}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTeacherAppForReview(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 text-xs text-[#1B2521]">
+              <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+                <div>
+                  <h3 className="text-base font-black text-[#1B2521]">{selectedTeacherAppForReview.name}</h3>
+                  <div className="text-gray-500 font-medium mt-0.5">
+                    📞 {selectedTeacherAppForReview.phone} · ✉️ {selectedTeacherAppForReview.email}
+                  </div>
+                  <div className="text-gray-400 text-[11px] mt-0.5">
+                    📍 {selectedTeacherAppForReview.homeAddress}
+                  </div>
+                </div>
+
+                <span className={`px-3 py-1 rounded-full text-xs font-black border ${
+                  selectedTeacherAppForReview.status === 'Hired'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : selectedTeacherAppForReview.status === 'Shortlisted'
+                    ? 'bg-blue-100 text-blue-800 border-blue-300'
+                    : selectedTeacherAppForReview.status === 'Interview Scheduled'
+                    ? 'bg-purple-100 text-purple-800 border-purple-300'
+                    : selectedTeacherAppForReview.status === 'Declined'
+                    ? 'bg-rose-100 text-rose-800 border-rose-300'
+                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                }`}>
+                  {selectedTeacherAppForReview.status || 'Under Review'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200/80">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Qualifications</span>
+                  <strong className="text-gray-900 text-xs">
+                    {(Array.isArray(selectedTeacherAppForReview.qualifications)
+                      ? selectedTeacherAppForReview.qualifications.join(', ')
+                      : selectedTeacherAppForReview.qualifications)}
+                  </strong>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200/80">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Teaching Experience</span>
+                  <strong className="text-gray-900 text-xs">{selectedTeacherAppForReview.experience}</strong>
+                </div>
+
+                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200/80">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase">Start Availability</span>
+                  <strong className="text-gray-900 text-xs">{selectedTeacherAppForReview.startDate || 'Immediately'}</strong>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
+                  Subjects Qualified to Teach:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {(Array.isArray(selectedTeacherAppForReview.subjects)
+                    ? selectedTeacherAppForReview.subjects
+                    : [selectedTeacherAppForReview.subjects]).map((sub, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-950 font-extrabold text-xs border border-emerald-200">
+                      {sub}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
+                  Target Academic Levels:
+                </span>
+                <p className="font-semibold text-gray-700">
+                  {(Array.isArray(selectedTeacherAppForReview.classes)
+                    ? selectedTeacherAppForReview.classes.join(', ')
+                    : selectedTeacherAppForReview.classes)}
+                </p>
+              </div>
+
+              {/* Status Action Buttons */}
+              <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateTeacherAppStatus(selectedTeacherAppForReview.id, 'Shortlisted')}
+                    className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold text-xs cursor-pointer"
+                  >
+                    Shortlist
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateTeacherAppStatus(selectedTeacherAppForReview.id, 'Interview Scheduled')}
+                    className="px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs cursor-pointer"
+                  >
+                    Schedule Interview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateTeacherAppStatus(selectedTeacherAppForReview.id, 'Declined')}
+                    className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs cursor-pointer"
+                  >
+                    Decline
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTeacherAppForReview(null)}
+                    className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  {selectedTeacherAppForReview.status !== 'Hired' && (
+                    <button
+                      type="button"
+                      onClick={() => handleHireTeacherFromApp(selectedTeacherAppForReview)}
+                      className="px-4 py-2 rounded-xl bg-green-primary hover:bg-green-dark text-white font-extrabold text-xs shadow-md cursor-pointer inline-flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Hire & Onboard Staff</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

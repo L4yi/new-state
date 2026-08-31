@@ -51,6 +51,37 @@ export default function TeachersApply({ onNavigate }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const newApp = {
+      id: `APP-TCH-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: formData.name,
+      phone: formData.phone,
+      email: `${formData.name.toLowerCase().replace(/[^a-z0-9]/g, '.')}@gmail.com`,
+      homeAddress: formData.homeAddress,
+      subjects: formData.subjects.length > 0 ? formData.subjects : ['General Subject'],
+      classes: formData.classes.length > 0 ? formData.classes : ['Senior Secondary School'],
+      qualifications: formData.qualifications.length > 0 ? formData.qualifications : ['BSc'],
+      experience: formData.experience || '1 - 5 years',
+      hasCertificates: formData.hasCertificates || 'Yes',
+      startDate: formData.startDate || 'Immediately',
+      status: 'Under Review',
+      submittedAt: new Date().toISOString(),
+      dateFormatted: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+
+    try {
+      const stored = localStorage.getItem('nshs_portal_data');
+      const parsed = stored ? JSON.parse(stored) : {};
+      const existingTeacherApps = Array.isArray(parsed.teacherApplications) ? parsed.teacherApplications : [];
+      const updatedData = {
+        ...parsed,
+        teacherApplications: [newApp, ...existingTeacherApps]
+      };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(updatedData));
+    } catch (err) {
+      console.warn('Saved teacher application locally:', err);
+    }
+
     setTimeout(() => {
       setIsSubmitting(false);
       setSubmitted(true);

@@ -21,6 +21,7 @@ const navItems = [
       { label: 'Get Access Plan', page: 'buy-plan' },
     ],
   },
+  { label: 'FAQ', page: 'faq' },
 ];
 
 export default function Header({ currentPage, onNavigate }) {

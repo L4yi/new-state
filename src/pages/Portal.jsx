@@ -765,6 +765,36 @@ export default function Portal({ onNavigate }) {
     }
   };
 
+  const handleUpdateTeacherApplication = async (applicationId, newStatus) => {
+    // 1. Optimistic instant local update
+    setPortalData((prev) => {
+      const existing = prev.teacherApplications || initialPortalData.teacherApplications || [];
+      const updated = existing.map(app => {
+        if (app.id === applicationId) {
+          return { ...app, status: newStatus };
+        }
+        return app;
+      });
+      const nextState = { ...prev, teacherApplications: updated };
+      localStorage.setItem('nshs_portal_data', JSON.stringify(nextState));
+      return nextState;
+    });
+
+    // 2. Persist to API
+    try {
+      const res = await fetch(`${API_URL}/teacher-applications/${encodeURIComponent(applicationId)}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        fetchPortalData();
+      }
+    } catch (err) {
+      console.warn('Backend offline, teacher application updated locally:', err);
+    }
+  };
+
   const handleSaveTimetableSlot = async (slotData) => {
     // 1. Optimistic update
     setPortalData((prev) => {
@@ -1175,6 +1205,7 @@ export default function Portal({ onNavigate }) {
                   onAddAnnouncement={handleAddAnnouncement}
                   onAddStudent={handleAddStudent}
                   onUpdateApplication={handleUpdateApplication}
+                  onUpdateTeacherApplication={handleUpdateTeacherApplication}
                   onUpdateStaff={handleUpdateStaff}
                   onAddStaff={handleAddStaff}
                   onUpdateSessionInfo={handleUpdateSessionInfo}

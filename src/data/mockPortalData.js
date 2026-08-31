@@ -696,5 +696,55 @@ export const demoPortalData = {
       dateSubmitted: '2026-08-29',
       status: 'Pending Review'
     }
+  ],
+  teacherApplications: [
+    {
+      id: 'APP-TCH-2026-001',
+      name: 'Mr. Kelechi Emmanuel Nnamdi',
+      phone: '0803 456 7812',
+      email: 'kelechi.nnamdi@gmail.com',
+      homeAddress: '24 Agege Motor Road, Mushin, Lagos',
+      subjects: ['Mathematics', 'Physics'],
+      classes: ['Senior Secondary School', 'Junior Secondary School'],
+      qualifications: ['BSc', 'B. Education'],
+      experience: '6 - 10 years',
+      hasCertificates: 'Yes',
+      startDate: 'Immediately',
+      status: 'Under Review',
+      submittedAt: '2026-08-28T14:30:00Z',
+      dateFormatted: '28 Aug 2026'
+    },
+    {
+      id: 'APP-TCH-2026-002',
+      name: 'Mrs. Aminat Opeyemi Bakare',
+      phone: '0812 345 6789',
+      email: 'aminat.bakare@yahoo.com',
+      homeAddress: '12 Palm Avenue, Mushin, Lagos',
+      subjects: ['English Language', 'English Literature'],
+      classes: ['Senior Secondary School'],
+      qualifications: ['BA', 'B. Education'],
+      experience: 'Over 10 years',
+      hasCertificates: 'Yes',
+      startDate: 'Next term',
+      status: 'Shortlisted',
+      submittedAt: '2026-08-29T10:15:00Z',
+      dateFormatted: '29 Aug 2026'
+    },
+    {
+      id: 'APP-TCH-2026-003',
+      name: 'Mr. David Ayomide Fashola',
+      phone: '0808 765 4321',
+      email: 'david.fashola@gmail.com',
+      homeAddress: '5 Isolo Road, Mushin, Lagos',
+      subjects: ['Computer Science', 'Physics'],
+      classes: ['Junior Secondary School', 'Senior Secondary School'],
+      qualifications: ['BSc', 'HND'],
+      experience: '1 - 5 years',
+      hasCertificates: 'Yes',
+      startDate: '2 weeks',
+      status: 'Interview Scheduled',
+      submittedAt: '2026-08-30T09:00:00Z',
+      dateFormatted: '30 Aug 2026'
+    }
   ]
 };
